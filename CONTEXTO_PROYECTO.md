@@ -136,7 +136,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 ## 11. Checklist de pendientes
 
 - [ ] Revisar las 6 entidades JPA restantes
-- [ ] Corregir `Animal.java`: quitar el campo `aniPesoActual`
+- [x] Corregir `Animal.java`: quitar el campo `aniPesoActual`
 - [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
 - [ ] Instalar PostgreSQL y crear la base `efganados`
 - [ ] Generar repositorios y servicios
