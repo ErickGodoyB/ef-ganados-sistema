@@ -63,12 +63,19 @@ Entidades y relaciones (ver también el modelo DBML usado en dbdiagram.io):
 - **Grupo**(grp_id PK; grp_descripcion) → 1:N → **SubGrupo**
 - **SubGrupo**(sb_id PK; grp_id FK; sb_descripcion)
 - **Animal**(ani_id PK; per_id FK [dueño], rz_id FK, sb_id FK; ani_caravana,
-  ani_fechaIngreso, ani_pesoInicial, ani_pesoActual, ani_fechaEgreso, ani_observacion)
+  ani_fechaIngreso, ani_pesoInicial, ani_fechaEgreso, ani_observacion)
+  — **corrección del tutor**: no se guarda `pesoActual` como campo propio (para
+  evitar datos duplicados/desincronizados); el "peso actual" siempre se calcula
+  consultando el pesaje más reciente en la tabla `Pesajes` (o `pesoInicial` si
+  el animal todavía no tiene ningún pesaje registrado).
 - **Pesajes**(pesa_id PK; ani_id FK, per_id_responsable FK; pesa_fecha, pesa_peso, pesa_observaciones)
 
 ## 5. Diagrama de clases (comportamiento)
 
-- **Animal**: `calcularGMD()`, `estaAptoParaVenta()`, `registrarPesaje(peso, fecha, responsable)`
+- **Animal**: `calcularGMD()` y `estaAptoParaVenta()` — ambos consultan el/los
+  pesaje(s) más reciente(s) en `Pesajes`, no un campo propio de `Animal`.
+  `registrarPesaje(peso, fecha, responsable)` — crea un nuevo registro en
+  `Pesajes`; ya no actualiza ningún campo dentro de `Animal`.
 - **Usuario**: `iniciarSesion()`, `cerrarSesion()`
 - **Persona**, **Raza**, **Grupo**, **SubGrupo**, **Pesajes**: sin métodos propios de negocio (solo almacenan datos)
 
@@ -103,6 +110,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - Cada pesaje es un **registro nuevo**, nunca se sobrescribe uno viejo — necesario para poder calcular la GMD comparando pesajes.
 - Se descartaron (movidos a "futuras investigaciones", **no forman parte del alcance actual**): módulo de salud/farmacia, identificación por chip/RFID, calendario por colores.
 - RF010 y RF011 se agregaron durante el proceso de diseño (no estaban en el anteproyecto original) — están documentados como evolución natural de RF001/RF002, no como expansión de alcance.
+- **Corrección del tutor**: `Animal` no guarda `pesoActual` como campo propio — se calcula siempre a partir de `Pesajes` (el pesaje más reciente), evitando duplicar y desincronizar datos. Aplica a `Animal.java`, al diagrama ER, al diagrama de clases, y a la lógica de `calcularGMD()`/`estaAptoParaVenta()`.
 
 ## 9. Estado del informe (Overleaf / LaTeX)
 
@@ -128,6 +136,8 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 ## 11. Checklist de pendientes
 
 - [ ] Revisar las 6 entidades JPA restantes
+- [ ] Corregir `Animal.java`: quitar el campo `aniPesoActual`
+- [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
 - [ ] Instalar PostgreSQL y crear la base `efganados`
 - [ ] Generar repositorios y servicios
 - [ ] Generar el proyecto frontend (Vite + React)
