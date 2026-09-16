@@ -43,8 +43,6 @@ public class Animal {
 
     private double aniPesoInicial;
 
-    private double aniPesoActual;
-
     private LocalDate aniFechaEgreso;
 
     private String aniObservacion;
