@@ -55,9 +55,15 @@ colaborador nuevo).
 
 Entidades y relaciones (ver también el modelo DBML usado en dbdiagram.io):
 
-- **Persona**(per_id PK; nombre, apellido, RUC, CI, tipo, telefono, correo, direccion)
+- **Persona**(per_id PK; per_nombre, per_apellido, per_ruc, per_ci, per_tipo,
+  per_telefono, per_correo, per_direccion)
   — se conecta **3 veces** al resto del modelo, cada vez con un rol distinto:
   como dueño de Animal, como responsable de Pesajes, y opcionalmente como Usuario.
+  `per_tipo` es un rol de negocio con valores cerrados **`PROPIETARIO`** /
+  **`EMPLEADO`** (String simple, no enum de Java) — distingue quién es dueño de
+  animales de quién solo opera el sistema; dejado abierto para agregar
+  `CLIENTE` en el futuro si el alcance crece a compra/venta. No confundir con
+  CI/RUC, que ya indican por sí solos si la persona es física o jurídica.
 - **Usuario**(usu_id PK; per_id FK 1↔0..1; usu_nombre, usu_password)
 - **Raza**(rz_id PK; rz_descripcion, **rz_pesoObjetivoVenta** — define el umbral de venta por raza, usado en RF005)
 - **Grupo**(grp_id PK; grp_descripcion) → 1:N → **SubGrupo**
@@ -111,6 +117,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - Se descartaron (movidos a "futuras investigaciones", **no forman parte del alcance actual**): módulo de salud/farmacia, identificación por chip/RFID, calendario por colores.
 - RF010 y RF011 se agregaron durante el proceso de diseño (no estaban en el anteproyecto original) — están documentados como evolución natural de RF001/RF002, no como expansión de alcance.
 - **Corrección del tutor**: `Animal` no guarda `pesoActual` como campo propio — se calcula siempre a partir de `Pesajes` (el pesaje más reciente), evitando duplicar y desincronizar datos. Aplica a `Animal.java`, al diagrama ER, al diagrama de clases, y a la lógica de `calcularGMD()`/`estaAptoParaVenta()`.
+- **Convención de nombres en las entidades JPA**: todo atributo escalar propio de la tabla lleva el prefijo de la entidad (ej. `ani_...` en Animal, `per_...` en Persona). Las relaciones (`@ManyToOne`/`@OneToOne`, ej. `duenio`, `raza`, `subGrupo`) **no** llevan prefijo, porque no son columnas propias sino referencias a otra entidad.
 
 ## 9. Estado del informe (Overleaf / LaTeX)
 
@@ -130,13 +137,14 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - **Repositorio**: GitHub privado `ef-ganados-sistema`, con carpeta `backend/` (proyecto Spring Boot: dependencias Web, Data JPA, PostgreSQL Driver, Security, Lombok)
 - **PostgreSQL**: aún no instalado
 - **Frontend (Vite + React)**: aún no generado
-- **Entidades JPA**: generadas (7 clases en `model/`). `Animal.java` revisada y confirmada correcta. Faltan revisar: `Persona`, `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`.
+- **Entidades JPA**: generadas (7 clases en `model/`). `Animal.java` revisada y confirmada correcta (sin `pesoActual`). `Persona.java` revisada y corregida (prefijo `per_` aplicado a todos los atributos escalares; commit+push ya hecho). Faltan revisar: `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`.
 - **Siguiente en código**: repositorios (Spring Data JPA) → servicios (`calcularGMD()`, `estaAptoParaVenta()`) → controladores → luego frontend.
 
 ## 11. Checklist de pendientes
 
-- [ ] Revisar las 6 entidades JPA restantes
 - [x] Corregir `Animal.java`: quitar el campo `aniPesoActual`
+- [x] Corregir `Persona.java`: aplicar prefijo `per_` a todos los atributos escalares
+- [ ] Revisar las 5 entidades JPA restantes: `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`
 - [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
 - [ ] Instalar PostgreSQL y crear la base `efganados`
 - [ ] Generar repositorios y servicios
