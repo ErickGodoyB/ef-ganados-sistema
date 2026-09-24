@@ -1,5 +1,6 @@
 package com.efganados.sistemabovino.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,9 +25,10 @@ public class Usuario {
     private Long usuId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "per_id")
+    @JoinColumn(name = "per_id", unique = true)
     private Persona persona;
 
+    @Column(unique = true)
     private String usuNombre;
 
     private String usuPassword;
