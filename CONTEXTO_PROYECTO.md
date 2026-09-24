@@ -138,16 +138,22 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - **Repositorio**: GitHub privado `ef-ganados-sistema`, con carpeta `backend/` (proyecto Spring Boot: dependencias Web, Data JPA, PostgreSQL Driver, Security, Lombok)
 - **PostgreSQL**: aún no instalado
 - **Frontend (Vite + React)**: aún no generado
-- **Entidades JPA**: generadas (7 clases en `model/`). `Animal.java` revisada y confirmada correcta (sin `pesoActual`). `Persona.java` revisada y corregida (prefijo `per_` aplicado a todos los atributos escalares; commit+push ya hecho). Faltan revisar: `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`.
+- **Entidades JPA**: las 7 clases revisadas y corregidas, todo commiteado y pusheado a GitHub:
+  - `Animal`: sin `pesoActual` (corrección del tutor aplicada).
+  - `Persona`: prefijo `per_` en todos los atributos escalares.
+  - `Usuario`: `unique = true` en `per_id` (FK a Persona) y en `usuNombre`.
+  - `Raza`: `rzDescripcion` única y `nullable = false`; `rzPesoObjetivoVenta` `nullable = false`.
+  - `Grupo`: `grpDescripcion` `nullable = false`. Javadoc/comentarios agregados (primera clase con el nuevo estándar de comentarios).
+  - `SubGrupo`: `sbDescripcion` `nullable = false`, con comentarios.
+  - `Pesajes`: `pesaFecha` y `pesaPeso` `nullable = false`; columna FK de responsable renombrada a `per_id_responsable` (para diferenciarla claramente de `Animal.per_id`, que es el dueño); con comentarios.
 - **Siguiente en código**: repositorios (Spring Data JPA) → servicios (`calcularGMD()`, `estaAptoParaVenta()`) → controladores → luego frontend.
 
 ## 11. Checklist de pendientes
 
-- [x] Corregir `Animal.java`: quitar el campo `aniPesoActual`
-- [x] Corregir `Persona.java`: aplicar prefijo `per_` a todos los atributos escalares
-- [ ] Revisar las 5 entidades JPA restantes: `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`
+- [x] Revisar y corregir las 7 entidades JPA (`Animal`, `Persona`, `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`) — todas commiteadas y pusheadas
 - [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
-- [ ] Instalar PostgreSQL y crear la base `efganados`
+- [ ] (Opcional, cuando haya tiempo) Agregar comentarios Javadoc retroactivos a `Animal`, `Persona`, `Usuario`, `Raza` (las 4 revisadas antes de adoptar el estándar de comentarios)
+- [ ] Instalar PostgreSQL y crear la base `efganados` ⏳ en curso
 - [ ] Generar repositorios y servicios
 - [ ] Generar el proyecto frontend (Vite + React)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
