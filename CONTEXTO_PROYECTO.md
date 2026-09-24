@@ -136,7 +136,8 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 
 - **Entorno instalado** (PC principal): JDK 25 (compatible con proyecto configurado en Java 21), Node.js LTS, Git, VS Code + "Extension Pack for Java" + extensión oficial **Claude Code** (`anthropic.claude-code`)
 - **Repositorio**: GitHub privado `ef-ganados-sistema`, con carpeta `backend/` (proyecto Spring Boot: dependencias Web, Data JPA, PostgreSQL Driver, Security, Lombok)
-- **PostgreSQL**: aún no instalado
+- **PostgreSQL**: instalado, base `efganados` creada. `application.properties` configurado (datasource + `ddl-auto=update`). Las 7 tablas ya existen en la base, generadas automáticamente por Hibernate a partir de las entidades, con FKs y constraints `unique`/`not null` correctas.
+- **Corrección de paquetes**: la clase principal `SistemaBovinoApplication` estaba en el paquete `com.efganados.sistema_bovino` (con guión bajo), mientras que las entidades estaban en `com.efganados.sistemabovino.model` (sin guión bajo) — dos paquetes distintos no anidados, por lo que Spring Boot no detectaba las entidades y no creaba las tablas. Se corrigió moviendo `SistemaBovinoApplication.java` dentro de `com.efganados.sistemabovino` (paquete base único = `com.efganados.sistemabovino`). Importante: todo código nuevo (repositorios, servicios, controladores) debe crearse como subpaquete de `com.efganados.sistemabovino` para que el auto-scan de Spring Boot lo detecte.
 - **Frontend (Vite + React)**: aún no generado
 - **Entidades JPA**: las 7 clases revisadas y corregidas, todo commiteado y pusheado a GitHub:
   - `Animal`: sin `pesoActual` (corrección del tutor aplicada).
@@ -153,8 +154,9 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [x] Revisar y corregir las 7 entidades JPA (`Animal`, `Persona`, `Usuario`, `Raza`, `Grupo`, `SubGrupo`, `Pesajes`) — todas commiteadas y pusheadas
 - [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
 - [ ] (Opcional, cuando haya tiempo) Agregar comentarios Javadoc retroactivos a `Animal`, `Persona`, `Usuario`, `Raza` (las 4 revisadas antes de adoptar el estándar de comentarios)
-- [ ] Instalar PostgreSQL y crear la base `efganados` ⏳ en curso
-- [ ] Generar repositorios y servicios
+- [x] Instalar PostgreSQL, crear la base `efganados`, conectar Spring Boot y confirmar que las 7 tablas se crean correctamente
+- [ ] Generar repositorios (Spring Data JPA) — siguiente paso
+- [ ] Generar servicios (`calcularGMD()`, `estaAptoParaVenta()`)
 - [ ] Generar el proyecto frontend (Vite + React)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
