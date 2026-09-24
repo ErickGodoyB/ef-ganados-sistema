@@ -147,7 +147,9 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - `Grupo`: `grpDescripcion` `nullable = false`. Javadoc/comentarios agregados (primera clase con el nuevo estándar de comentarios).
   - `SubGrupo`: `sbDescripcion` `nullable = false`, con comentarios.
   - `Pesajes`: `pesaFecha` y `pesaPeso` `nullable = false`; columna FK de responsable renombrada a `per_id_responsable` (para diferenciarla claramente de `Animal.per_id`, que es el dueño); con comentarios.
-- **Siguiente en código**: repositorios (Spring Data JPA) → servicios (`calcularGMD()`, `estaAptoParaVenta()`) → controladores → luego frontend.
+- **Repositorios**: generados (7 interfaces en `repository/`, verificadas — commit+push pendiente de confirmar).
+- **Siguiente en código**: servicios (`calcularGMD()`, `estaAptoParaVenta()`, `registrarPesaje()`) → controladores → luego frontend.
+- **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
 ## 11. Checklist de pendientes
 
@@ -155,8 +157,8 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
 - [ ] (Opcional, cuando haya tiempo) Agregar comentarios Javadoc retroactivos a `Animal`, `Persona`, `Usuario`, `Raza` (las 4 revisadas antes de adoptar el estándar de comentarios)
 - [x] Instalar PostgreSQL, crear la base `efganados`, conectar Spring Boot y confirmar que las 7 tablas se crean correctamente
-- [ ] Generar repositorios (Spring Data JPA) — siguiente paso
-- [ ] Generar servicios (`calcularGMD()`, `estaAptoParaVenta()`)
+- [x] Generar repositorios (Spring Data JPA) — 7 interfaces en `repository/`, verificadas. `UsuarioRepository` con `findByUsuNombre()`
+- [ ] Generar servicios (`calcularGMD()`, `estaAptoParaVenta()`) — siguiente paso
 - [ ] Generar el proyecto frontend (Vite + React)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
