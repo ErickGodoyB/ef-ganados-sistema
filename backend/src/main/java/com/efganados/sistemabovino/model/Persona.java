@@ -20,19 +20,19 @@ public class Persona {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long perId;
 
-    private String nombre;
+    private String perNombre;
 
-    private String apellido;
+    private String perApellido;
 
-    private String ruc;
+    private String perRuc;
 
-    private String ci;
+    private String perCi;
 
-    private String tipo;
+    private String perTipo;
 
-    private String telefono;
+    private String perTelefono;
 
-    private String correo;
+    private String perCorreo;
 
-    private String direccion;
+    private String perDireccion;
 }
