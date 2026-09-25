@@ -149,12 +149,8 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - `SubGrupo`: `sbDescripcion` `nullable = false`, con comentarios.
   - `Pesajes`: `pesaFecha` y `pesaPeso` `nullable = false`; columna FK de responsable renombrada a `per_id_responsable` (para diferenciarla claramente de `Animal.per_id`, que es el dueño); con comentarios.
 - **Repositorios**: generados y verificados (7 interfaces en `repository/`), commiteados y pusheados.
-- **Lógica de negocio definida (para `AnimalService`)**, lista para pedirle a Claude Code que la implemente:
-  - `pesoActual(animal)`: peso del pesaje más reciente si existe; si no, `aniPesoInicial`.
-  - `calcularGMD(animal)`: con <2 pesajes → `null`. Con ≥2 pesajes → `(pesoMásReciente − pesoAnterior) / díasEntreAmbos`; si los días son 0, devuelve `0` (evita división entre cero). El peso inicial **nunca** entra en este cálculo, es solo informativo.
-  - `estaAptoParaVenta(animal)`: `pesoActual(animal) >= animal.raza.rzPesoObjetivoVenta`.
-  - `registrarPesaje(animal, peso, fecha, responsable)`: crea un nuevo `Pesajes`, no modifica `Animal`.
-- **Siguiente en código**: implementar `AnimalService` con la lógica de arriba → controladores → luego frontend.
+- **`AnimalService`**: implementado y verificado en `service/`, compila sin errores ni warnings. Métodos: `pesoActual()`, `calcularGMD()`, `estaAptoParaVenta()`, `registrarPesaje()`, `buscarPorId()`. Lógica confirmada exactamente como se definió (GMD nunca usa el peso inicial; `null` con <2 pesajes; 0.0 si los días son 0). También se agregó `findTop2ByAnimal_AniIdOrderByPesaFechaDesc()` en `PesajesRepository`. Todo commiteado y pusheado.
+- **Siguiente en código**: controladores (para poder probar todo esto con peticiones HTTP reales, ej. Thunder Client) → luego frontend.
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
 ## 11. Checklist de pendientes
@@ -163,6 +159,8 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] Actualizar el diagrama ER (dbdiagram.io) y el diagrama de clases quitando `pesoActual`
 - [ ] (Opcional, cuando haya tiempo) Agregar comentarios Javadoc retroactivos a `Animal`, `Persona`, `Usuario`, `Raza` (las 4 revisadas antes de adoptar el estándar de comentarios)
 - [x] Instalar PostgreSQL, crear la base `efganados`, conectar Spring Boot y confirmar que las 7 tablas se crean correctamente
+- [x] Generar y verificar `AnimalService` (GMD, aptitud para venta, registrar pesaje, buscar por ID)
+- [ ] Generar controladores REST (siguiente paso)
 - [x] Generar repositorios (Spring Data JPA) — 7 interfaces en `repository/`, verificadas. `UsuarioRepository` con `findByUsuNombre()`
 - [ ] Generar servicios (`calcularGMD()`, `estaAptoParaVenta()`) — siguiente paso
 - [ ] Generar el proyecto frontend (Vite + React)

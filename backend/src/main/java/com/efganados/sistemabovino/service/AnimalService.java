@@ -81,4 +81,14 @@ public class AnimalService {
         pesaje.setResponsable(responsable);
         return pesajesRepository.save(pesaje);
     }
+
+    /**
+     * Busca un animal por su ID. Lanza una excepción si no existe, para que
+     * el controlador pueda responder con un error claro (ej. 404).
+     */
+    public Animal buscarPorId(Long id) {
+        return animalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Animal no encontrado con id: " + id));
+    }
+
 }
