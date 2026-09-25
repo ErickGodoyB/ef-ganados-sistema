@@ -131,6 +131,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - ❌ Cap. 4 (Resultados) y Cap. 5 (Conclusión): todavía tienen texto de plantilla, sin reemplazar
 - ⏳ Pendiente menor: confirmar si se aclara el cambio de autoría (el anteproyecto tenía 2 autores, el informe final solo 1)
 - ⏳ Pendiente opcional: agregar cita de ISO 9241-11 y Nielsen en el marco teórico (texto ya redactado, falta pegar y agregar referencias bibliográficas)
+- ⏳ Pendiente: revisar si la sección del diagrama entidad-relación ya tiene un `\label{...}` puesto (para poder referenciarla con `\ref{}`); si no tiene, agregar `\label{sec:modelo_datos}` justo debajo de su título. Necesario antes de insertar la nueva subsección "Lógica de negocio: cálculo de indicadores" (texto LaTeX ya redactado — fórmulas de GMD y aptitud para venta, con los casos límite de 0/1/2+ pesajes), que va después del diagrama de clases.
 
 ## 10. Estado del desarrollo (código)
 
@@ -147,8 +148,13 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - `Grupo`: `grpDescripcion` `nullable = false`. Javadoc/comentarios agregados (primera clase con el nuevo estándar de comentarios).
   - `SubGrupo`: `sbDescripcion` `nullable = false`, con comentarios.
   - `Pesajes`: `pesaFecha` y `pesaPeso` `nullable = false`; columna FK de responsable renombrada a `per_id_responsable` (para diferenciarla claramente de `Animal.per_id`, que es el dueño); con comentarios.
-- **Repositorios**: generados (7 interfaces en `repository/`, verificadas — commit+push pendiente de confirmar).
-- **Siguiente en código**: servicios (`calcularGMD()`, `estaAptoParaVenta()`, `registrarPesaje()`) → controladores → luego frontend.
+- **Repositorios**: generados y verificados (7 interfaces en `repository/`), commiteados y pusheados.
+- **Lógica de negocio definida (para `AnimalService`)**, lista para pedirle a Claude Code que la implemente:
+  - `pesoActual(animal)`: peso del pesaje más reciente si existe; si no, `aniPesoInicial`.
+  - `calcularGMD(animal)`: con <2 pesajes → `null`. Con ≥2 pesajes → `(pesoMásReciente − pesoAnterior) / díasEntreAmbos`; si los días son 0, devuelve `0` (evita división entre cero). El peso inicial **nunca** entra en este cálculo, es solo informativo.
+  - `estaAptoParaVenta(animal)`: `pesoActual(animal) >= animal.raza.rzPesoObjetivoVenta`.
+  - `registrarPesaje(animal, peso, fecha, responsable)`: crea un nuevo `Pesajes`, no modifica `Animal`.
+- **Siguiente en código**: implementar `AnimalService` con la lógica de arriba → controladores → luego frontend.
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
 ## 11. Checklist de pendientes
