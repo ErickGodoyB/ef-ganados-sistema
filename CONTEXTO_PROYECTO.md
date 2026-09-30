@@ -150,7 +150,13 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - `Pesajes`: `pesaFecha` y `pesaPeso` `nullable = false`; columna FK de responsable renombrada a `per_id_responsable` (para diferenciarla claramente de `Animal.per_id`, que es el dueño); con comentarios.
 - **Repositorios**: generados y verificados (7 interfaces en `repository/`), commiteados y pusheados.
 - **`AnimalService`**: implementado y verificado en `service/`, compila sin errores ni warnings. Métodos: `pesoActual()`, `calcularGMD()`, `estaAptoParaVenta()`, `registrarPesaje()`, `buscarPorId()`. Lógica confirmada exactamente como se definió (GMD nunca usa el peso inicial; `null` con <2 pesajes; 0.0 si los días son 0). También se agregó `findTop2ByAnimal_AniIdOrderByPesaFechaDesc()` en `PesajesRepository`. Todo commiteado y pusheado.
-- **Siguiente en código**: controladores (para poder probar todo esto con peticiones HTTP reales, ej. Thunder Client) → luego frontend.
+- **Controladores REST**: generados y compilando sin errores/warnings en `controller/`:
+  - CRUD simples: `PersonaController` (`/api/personas`), `UsuarioController` (`/api/usuarios`), `RazaController` (`/api/razas`), `GrupoController` (`/api/grupos`), `SubGrupoController` (`/api/subgrupos`).
+  - `AnimalController` (`/api/animales`): CRUD vía `AnimalRepository` + `GET /{id}/gmd`, `GET /{id}/apto-venta`, `POST /{id}/pesajes` (record `NuevoPesajeRequest(peso, fecha, responsableId)`) vía `AnimalService`.
+  - `PesajesController` (`/api/pesajes`): solo lectura (`GET` todos, `GET /{id}`) — la creación de pesajes es exclusivamente vía `AnimalController`, a propósito.
+  - `GlobalExceptionHandler` (`@RestControllerAdvice`): mapea `IllegalArgumentException` (la que lanza `AnimalService.buscarPorId()`) a una respuesta 404 limpia, en vez de un 500 con stack trace.
+  - Todo commiteado y pusheado. **Pendiente**: aún no se probaron los endpoints en ejecución con Thunder Client (falta cargar datos de prueba: una raza, una persona, un animal).
+- **Siguiente en código**: probar los endpoints con Thunder Client (cargar datos de prueba primero) → luego frontend (Vite + React).
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
 ## 11. Checklist de pendientes
@@ -160,9 +166,9 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] (Opcional, cuando haya tiempo) Agregar comentarios Javadoc retroactivos a `Animal`, `Persona`, `Usuario`, `Raza` (las 4 revisadas antes de adoptar el estándar de comentarios)
 - [x] Instalar PostgreSQL, crear la base `efganados`, conectar Spring Boot y confirmar que las 7 tablas se crean correctamente
 - [x] Generar y verificar `AnimalService` (GMD, aptitud para venta, registrar pesaje, buscar por ID)
-- [ ] Generar controladores REST (siguiente paso)
+- [x] Generar controladores REST (7 controladores + `GlobalExceptionHandler`), compilando sin errores
 - [x] Generar repositorios (Spring Data JPA) — 7 interfaces en `repository/`, verificadas. `UsuarioRepository` con `findByUsuNombre()`
-- [ ] Generar servicios (`calcularGMD()`, `estaAptoParaVenta()`) — siguiente paso
+- [ ] Probar los endpoints con Thunder Client (siguiente paso) — antes hay que instalar la extensión Thunder Client en VS Code y cargar algunos datos de prueba (raza, persona, animal) para poder probar `/gmd` y `/apto-venta`
 - [ ] Generar el proyecto frontend (Vite + React)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
