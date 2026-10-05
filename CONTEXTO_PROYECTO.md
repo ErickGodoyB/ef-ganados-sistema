@@ -156,6 +156,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - `PesajesController` (`/api/pesajes`): solo lectura (`GET` todos, `GET /{id}`) — la creación de pesajes es exclusivamente vía `AnimalController`, a propósito.
   - `GlobalExceptionHandler` (`@RestControllerAdvice`): mapea `IllegalArgumentException` (la que lanza `AnimalService.buscarPorId()`) a una respuesta 404 limpia, en vez de un 500 con stack trace.
   - Todo commiteado y pusheado. **Pendiente**: aún no se probaron los endpoints en ejecución con Thunder Client (falta cargar datos de prueba: una raza, una persona, un animal).
+- **⚠️ `SecurityConfig` TEMPORAL (en curso)**: Spring Security bloquea todo por defecto (401 en GET, 403 por CSRF en POST/PUT/DELETE), lo que impide probar con Thunder Client. Se agrega una `SecurityConfig` en `config/` que deshabilita CSRF y permite todas las peticiones, **solo para desarrollo**. Debe reemplazarse por la autenticación real (RF009: login con `UsuarioRepository.findByUsuNombre()` y contraseñas cifradas, RNF006) antes de dar el sistema por terminado.
 - **Siguiente en código**: probar los endpoints con Thunder Client (cargar datos de prueba primero) → luego frontend (Vite + React).
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
@@ -168,7 +169,10 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [x] Generar y verificar `AnimalService` (GMD, aptitud para venta, registrar pesaje, buscar por ID)
 - [x] Generar controladores REST (7 controladores + `GlobalExceptionHandler`), compilando sin errores
 - [x] Generar repositorios (Spring Data JPA) — 7 interfaces en `repository/`, verificadas. `UsuarioRepository` con `findByUsuNombre()`
-- [ ] Probar los endpoints con Thunder Client (siguiente paso) — antes hay que instalar la extensión Thunder Client en VS Code y cargar algunos datos de prueba (raza, persona, animal) para poder probar `/gmd` y `/apto-venta`
+- [ ] Reemplazar la `SecurityConfig` temporal (permitAll + CSRF off) por autenticación real (RF009, RNF006)
+- [ ] Probar los endpoints con Thunder Client (en curso; los casos y resultados se llevan en `CASOS_DE_PRUEBA.md`)
+- [ ] Decidir solución definitiva para el error `Cannot map null into type double` al crear un animal mandando `"raza": {"rzId": 1}` (Raza tiene `rzPesoObjetivoVenta` primitivo `double`): opción A, `spring.jackson.deserialization.fail-on-null-for-primitives=false`; opción B, un objeto de solicitud propio para crear animales (como `NuevoPesajeRequest`). Resolver ANTES de armar el frontend.
+- [ ] Antes de la versión final, quitar de `application.properties` las líneas de desarrollo `server.error.include-message=always` y `server.error.include-binding-errors=always` (si se agregaron), y reemplazar la `SecurityConfig` temporal. — antes hay que instalar la extensión Thunder Client en VS Code y cargar algunos datos de prueba (raza, persona, animal) para poder probar `/gmd` y `/apto-venta`
 - [ ] Generar el proyecto frontend (Vite + React)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
