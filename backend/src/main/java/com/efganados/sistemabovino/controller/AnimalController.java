@@ -17,8 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.efganados.sistemabovino.model.Animal;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
+import com.efganados.sistemabovino.model.Raza;
+import com.efganados.sistemabovino.model.SubGrupo;
 import com.efganados.sistemabovino.repository.AnimalRepository;
 import com.efganados.sistemabovino.repository.PersonaRepository;
+import com.efganados.sistemabovino.repository.RazaRepository;
+import com.efganados.sistemabovino.repository.SubGrupoRepository;
 import com.efganados.sistemabovino.service.AnimalService;
 
 /**
@@ -33,12 +37,17 @@ public class AnimalController {
     private final AnimalRepository animalRepository;
     private final AnimalService animalService;
     private final PersonaRepository personaRepository;
+    private final RazaRepository razaRepository;
+    private final SubGrupoRepository subGrupoRepository;
 
     public AnimalController(AnimalRepository animalRepository, AnimalService animalService,
-            PersonaRepository personaRepository) {
+            PersonaRepository personaRepository, RazaRepository razaRepository,
+            SubGrupoRepository subGrupoRepository) {
         this.animalRepository = animalRepository;
         this.animalService = animalService;
         this.personaRepository = personaRepository;
+        this.razaRepository = razaRepository;
+        this.subGrupoRepository = subGrupoRepository;
     }
 
     /** Devuelve todos los animales registrados. */
@@ -55,29 +64,100 @@ public class AnimalController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** Crea un nuevo animal. */
+    /**
+     * Crea un nuevo animal a partir de un {@link AnimalRequest}. Devuelve 400
+     * si falta algún campo obligatorio, o 404 (vía {@code GlobalExceptionHandler})
+     * si el dueño, la raza o el subgrupo indicados no existen.
+     */
     @PostMapping
-    public ResponseEntity<Animal> crear(@RequestBody Animal animal) {
+    public ResponseEntity<?> crear(@RequestBody AnimalRequest request) {
+        String error = validar(request);
+        if (error != null) {
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (animalRepository.existsByAniCaravana(request.aniCaravana())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Ya existe un animal con la caravana: " + request.aniCaravana());
+        }
+        Animal animal = new Animal();
+        aplicarDatos(animal, request);
         Animal guardado = animalRepository.save(animal);
         return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
     }
 
-    /** Actualiza los datos de un animal existente; 404 si no existe. */
+    /**
+     * Actualiza un animal existente a partir de un {@link AnimalRequest}. 404
+     * si el animal no existe; 400 si falta algún campo obligatorio del request.
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<Animal> actualizar(@PathVariable Long id, @RequestBody Animal datos) {
+    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody AnimalRequest request) {
+        String error = validar(request);
+        if (error != null) {
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (animalRepository.existsByAniCaravanaAndAniIdNot(request.aniCaravana(), id)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Ya existe un animal con la caravana: " + request.aniCaravana());
+        }
         return animalRepository.findById(id)
                 .map(existente -> {
-                    existente.setDuenio(datos.getDuenio());
-                    existente.setRaza(datos.getRaza());
-                    existente.setSubGrupo(datos.getSubGrupo());
-                    existente.setAniCaravana(datos.getAniCaravana());
-                    existente.setAniFechaIngreso(datos.getAniFechaIngreso());
-                    existente.setAniPesoInicial(datos.getAniPesoInicial());
-                    existente.setAniFechaEgreso(datos.getAniFechaEgreso());
-                    existente.setAniObservacion(datos.getAniObservacion());
+                    aplicarDatos(existente, request);
                     return ResponseEntity.ok(animalRepository.save(existente));
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Valida que el request traiga todos los campos obligatorios para crear o
+     * actualizar un animal. Devuelve un mensaje indicando el campo faltante,
+     * o null si el request es válido.
+     */
+    private String validar(AnimalRequest request) {
+        if (request.duenioId() == null) {
+            return "Falta el campo duenioId";
+        }
+        if (request.razaId() == null) {
+            return "Falta el campo razaId";
+        }
+        if (request.subGrupoId() == null) {
+            return "Falta el campo subGrupoId";
+        }
+        if (request.aniCaravana() == null || request.aniCaravana().isBlank()) {
+            return "Falta el campo aniCaravana";
+        }
+        if (request.aniFechaIngreso() == null) {
+            return "Falta el campo aniFechaIngreso";
+        }
+        if (request.aniPesoInicial() == null) {
+            return "Falta el campo aniPesoInicial";
+        }
+        return null;
+    }
+
+    /**
+     * Resuelve los IDs del request contra sus repositorios (lanzando
+     * IllegalArgumentException, convertida en 404, si alguno no existe) y
+     * copia todos los datos del request sobre el animal dado.
+     */
+    private void aplicarDatos(Animal animal, AnimalRequest request) {
+        Persona duenio = personaRepository.findById(request.duenioId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Persona no encontrada con id: " + request.duenioId()));
+        Raza raza = razaRepository.findById(request.razaId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Raza no encontrada con id: " + request.razaId()));
+        SubGrupo subGrupo = subGrupoRepository.findById(request.subGrupoId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "SubGrupo no encontrado con id: " + request.subGrupoId()));
+
+        animal.setDuenio(duenio);
+        animal.setRaza(raza);
+        animal.setSubGrupo(subGrupo);
+        animal.setAniCaravana(request.aniCaravana());
+        animal.setAniFechaIngreso(request.aniFechaIngreso());
+        animal.setAniPesoInicial(request.aniPesoInicial());
+        animal.setAniFechaEgreso(request.aniFechaEgreso());
+        animal.setAniObservacion(request.aniObservacion());
     }
 
     /** Elimina un animal por su ID; 404 si no existe. */
@@ -104,9 +184,16 @@ public class AnimalController {
         return ResponseEntity.ok(animalService.estaAptoParaVenta(animal));
     }
 
-    /** Registra un nuevo pesaje para el animal. */
+    /**
+     * Registra un nuevo pesaje para el animal. Devuelve 400 si falta
+     * responsableId, o 404 (vía {@code GlobalExceptionHandler}) si no existe
+     * la persona responsable.
+     */
     @PostMapping("/{id}/pesajes")
-    public ResponseEntity<Pesajes> registrarPesaje(@PathVariable Long id, @RequestBody NuevoPesajeRequest request) {
+    public ResponseEntity<?> registrarPesaje(@PathVariable Long id, @RequestBody NuevoPesajeRequest request) {
+        if (request.responsableId() == null) {
+            return ResponseEntity.badRequest().body("Falta el campo responsableId");
+        }
         Animal animal = animalService.buscarPorId(id);
         Persona responsable = personaRepository.findById(request.responsableId())
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -117,5 +204,14 @@ public class AnimalController {
 
     /** Datos de entrada para registrar un pesaje de un animal. */
     public record NuevoPesajeRequest(double peso, LocalDate fecha, Long responsableId) {
+    }
+
+    /**
+     * Datos de entrada para crear o actualizar un animal: referencia a sus
+     * relaciones (dueño, raza, subgrupo) solo por ID, en vez de objetos
+     * anidados completos.
+     */
+    public record AnimalRequest(Long duenioId, Long razaId, Long subGrupoId, String aniCaravana,
+            LocalDate aniFechaIngreso, Double aniPesoInicial, LocalDate aniFechaEgreso, String aniObservacion) {
     }
 }
