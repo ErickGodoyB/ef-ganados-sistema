@@ -153,11 +153,14 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - **Controladores REST**: generados y compilando sin errores/warnings en `controller/`:
   - CRUD simples: `PersonaController` (`/api/personas`), `UsuarioController` (`/api/usuarios`), `RazaController` (`/api/razas`), `GrupoController` (`/api/grupos`), `SubGrupoController` (`/api/subgrupos`).
   - `AnimalController` (`/api/animales`): CRUD vía `AnimalRepository` + `GET /{id}/gmd`, `GET /{id}/apto-venta`, `POST /{id}/pesajes` (record `NuevoPesajeRequest(peso, fecha, responsableId)`) vía `AnimalService`.
+    - **Opción B aplicada**: `POST` y `PUT` reciben el record `AnimalRequest(duenioId, razaId, subGrupoId, aniCaravana, aniFechaIngreso, aniPesoInicial, aniFechaEgreso, aniObservacion)`, con solo IDs en vez de objetos anidados (esto resolvió el error `Cannot map null into type double`). Validaciones: 400 con mensaje `Falta el campo X` si falta un campo obligatorio o la caravana está en blanco; 404 (`... no encontrada con id: X`) si un ID no existe; 409 `Ya existe un animal con la caravana: X` si la caravana está repetida (en el `PUT`, el animal puede conservar la suya); 201 al crear. `registrarPesaje` devuelve 400 si falta `responsableId`.
+    - **Caravana única**: `Animal.aniCaravana` es `@Column(nullable = false, unique = true)`; `AnimalRepository` tiene `existsByAniCaravana()` y `existsByAniCaravanaAndAniIdNot()`. Con `ddl-auto=update` Hibernate NO creó la restricción en la base ya existente, así que se agregó a mano en pgAdmin: `ALTER TABLE animal ADD CONSTRAINT uk_animal_ani_caravana UNIQUE (ani_caravana);` (si se recrea la base desde cero, Hibernate la genera solo).
   - `PesajesController` (`/api/pesajes`): solo lectura (`GET` todos, `GET /{id}`) — la creación de pesajes es exclusivamente vía `AnimalController`, a propósito.
   - `GlobalExceptionHandler` (`@RestControllerAdvice`): mapea `IllegalArgumentException` (la que lanza `AnimalService.buscarPorId()`) a una respuesta 404 limpia, en vez de un 500 con stack trace.
-  - Todo commiteado y pusheado. **Pendiente**: aún no se probaron los endpoints en ejecución con Thunder Client (falta cargar datos de prueba: una raza, una persona, un animal).
+  - Todo commiteado y pusheado. Endpoints probados con Thunder Client (casos CP01 a CP18 en `CASOS_DE_PRUEBA.md`, capturas en `docs/pruebas/`). Faltan pruebas de borde: GMD con 1 pesaje, con 2 pesajes en la misma fecha y con más de 2; apto-venta en `true`; 404 de GMD con animal inexistente.
+  - **Pendiente de decisión**: `DELETE` de un animal que ya tiene pesajes daría 500 por la clave foránea; definir la regla (bloquear con 409 o eliminar también sus pesajes). Además, las respuestas JSON traen `"hibernateLazyInitializer": {}` en las relaciones (inofensivo; se limpia más adelante con objetos de respuesta propios).
 - **⚠️ `SecurityConfig` TEMPORAL (en curso)**: Spring Security bloquea todo por defecto (401 en GET, 403 por CSRF en POST/PUT/DELETE), lo que impide probar con Thunder Client. Se agrega una `SecurityConfig` en `config/` que deshabilita CSRF y permite todas las peticiones, **solo para desarrollo**. Debe reemplazarse por la autenticación real (RF009: login con `UsuarioRepository.findByUsuNombre()` y contraseñas cifradas, RNF006) antes de dar el sistema por terminado.
-- **Siguiente en código**: probar los endpoints con Thunder Client (cargar datos de prueba primero) → luego frontend (Vite + React).
+- **Siguiente en código**: terminar pruebas de borde, decidir la regla del borrado de animales con pesajes, y luego frontend (Vite + React).
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
 ## 11. Checklist de pendientes
@@ -171,7 +174,11 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [x] Generar repositorios (Spring Data JPA) — 7 interfaces en `repository/`, verificadas. `UsuarioRepository` con `findByUsuNombre()`
 - [ ] Reemplazar la `SecurityConfig` temporal (permitAll + CSRF off) por autenticación real (RF009, RNF006)
 - [ ] Probar los endpoints con Thunder Client (en curso; los casos y resultados se llevan en `CASOS_DE_PRUEBA.md`)
-- [ ] Decidir solución definitiva para el error `Cannot map null into type double` al crear un animal mandando `"raza": {"rzId": 1}` (Raza tiene `rzPesoObjetivoVenta` primitivo `double`): opción A, `spring.jackson.deserialization.fail-on-null-for-primitives=false`; opción B, un objeto de solicitud propio para crear animales (como `NuevoPesajeRequest`). Resolver ANTES de armar el frontend.
+- [x] Resolver el error `Cannot map null into type double` al crear un animal: se aplicó la opción B (`AnimalRequest` con IDs), verificado en CP12
+- [x] Caravana única (código + restricción en la base) y validaciones 400/404/409, verificadas en CP13 a CP18
+- [ ] Decidir qué pasa al borrar un animal que tiene pesajes (hoy daría 500)
+- [ ] Terminar las pruebas de borde de GMD/apto-venta pendientes (ver `CASOS_DE_PRUEBA.md`)
+- [ ] Vincular la sesión de Claude a la PC desde la app de escritorio (para que pueda leer el código directamente)
 - [ ] Antes de la versión final, quitar de `application.properties` las líneas de desarrollo `server.error.include-message=always` y `server.error.include-binding-errors=always` (si se agregaron), y reemplazar la `SecurityConfig` temporal. — antes hay que instalar la extensión Thunder Client en VS Code y cargar algunos datos de prueba (raza, persona, animal) para poder probar `/gmd` y `/apto-venta`
 - [ ] Generar el proyecto frontend (Vite + React)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
