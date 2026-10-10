@@ -1,5 +1,6 @@
 package com.efganados.sistemabovino.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +13,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Representa un subgrupo (subdivisión de un Grupo/lote), usado para
+ * organizar animales con más granularidad dentro de un mismo lote.
+ */
 @Entity
 @Table(name = "sub_grupo")
 @Data
@@ -27,5 +32,6 @@ public class SubGrupo {
     @JoinColumn(name = "grp_id")
     private Grupo grupo;
 
+    @Column(nullable = false)
     private String sbDescripcion;
 }

@@ -2,6 +2,7 @@ package com.efganados.sistemabovino.model;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -37,6 +38,8 @@ public class Animal {
     @JoinColumn(name = "sb_id")
     private SubGrupo subGrupo;
 
+    /** Identificador físico del animal (caravana); debe ser único entre todos los animales. */
+    @Column(nullable = false, unique = true)
     private String aniCaravana;
 
     private LocalDate aniFechaIngreso;

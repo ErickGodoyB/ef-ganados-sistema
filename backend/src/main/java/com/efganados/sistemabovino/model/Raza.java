@@ -1,5 +1,6 @@
 package com.efganados.sistemabovino.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,7 +21,9 @@ public class Raza {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long rzId;
 
+    @Column(unique = true, nullable = false)
     private String rzDescripcion;
 
+    @Column(nullable = false)
     private double rzPesoObjetivoVenta;
 }
