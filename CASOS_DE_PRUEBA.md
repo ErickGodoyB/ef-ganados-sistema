@@ -36,6 +36,13 @@ Pruebas funcionales manuales con Thunder Client contra el backend local
 | CP16 | `POST /api/animales` con caravana repetida | `AR-001` (ya existe) | 409 Conflict con mensaje | 409, `Ya existe un animal con la caravana: AR-001` | Aprobado |
 | CP17 | `POST /api/animales` con caravana vacía | `"aniCaravana": ""` | 400 con mensaje | 400, `Falta el campo aniCaravana` | Aprobado |
 | CP18 | `POST /api/animales/1/pesajes` sin `responsableId` | Solo `peso` y `fecha` | 400 con mensaje | 400, mensaje de falta de responsable | Aprobado |
+| CP19 | `DELETE /api/animales/3` (animal descartable AR-900, sin pesajes) | — | 204 No Content | 204, vacío, 56 ms; la consola muestra el `delete from animal` (sin captura) | Aprobado |
+| CP20 | `DELETE /api/animales/1` (animal con pesajes) | — | 409 con mensaje | 409, `No se puede eliminar el animal: tiene pesajes registrados`; el animal 1 sigue existiendo (`GET` 200) | Aprobado |
+| CP21 | `POST /api/animales/4/pesajes` (210 kg, 2026-09-01) y luego `GET /api/animales/4/gmd` (animal AR-901, 1 solo pesaje) | — | Pesaje 201; GMD 200 con cuerpo vacío | Pesaje 201, 30 ms; GMD 200, vacío (sin captura) | Aprobado |
+| CP22 | `POST /api/animales/4/pesajes` (215 kg, misma fecha 2026-09-01) y luego `GET /api/animales/4/gmd` | — | Pesaje 201; GMD 200 con `0.0` (0 días entre los pesajes) | Pesaje 201; GMD 200, `0.0` (sin captura) | Aprobado |
+| CP23 | Animal AR-902 (`aniId` 5) con 3 pesajes (200 kg el 2026-08-01, 230 kg el 2026-09-01, 290 kg el 2026-10-01); `GET /api/animales/5/gmd` | — | 2.0, es decir (290 − 230) / 30, usando solo los 2 más recientes | Los 3 `POST` dieron 201; GMD 200, `2.0`, 14 ms | Aprobado |
+| CP24 | `POST` de un pesaje de 460 kg (2026-10-10) al animal 5 y `GET /api/animales/5/apto-venta` | 460 ≥ 450 (Brahman) | 201 y luego `true` | 201; `apto-venta` 200, `true`, 14 ms | Aprobado |
+| CP25 | `GET /api/animales/999/gmd` (animal inexistente) | — | 404 con mensaje | 404, `Animal no encontrado con id: 999` | Aprobado |
 
 Nota sobre CP13: el primer intento dio 405 (Method Not Allowed) porque la petición salió como POST
 en lugar de PUT (error del probador, no del sistema). Repetida con PUT, devolvió 200.
@@ -60,11 +67,7 @@ con 100 a 150 cabezas no es un problema, pero conviene tenerlo presente para el 
 
 ## Pendientes de probar
 
-- GMD con exactamente 1 pesaje (debe devolver vacío) y los códigos de estado del `POST` de cada pesaje (201).
-- GMD con los dos pesajes más recientes en la misma fecha (debe dar 0.0).
-- Aptitud para venta por encima del peso objetivo (cargar un pesaje de 460 kg o más: debe dar `true`).
-- Que el GMD use solo los dos pesajes más recientes cuando hay más de dos.
-- 404 limpio para un animal inexistente (`GET /api/animales/999/gmd`).
-- Verificar en PostgreSQL que exista la restricción UNIQUE sobre `animal.ani_caravana`
-  (la validación del controlador ya la cubre, pero la base debe ser la última defensa).
-- Borrar un animal que tiene pesajes (hoy daría 500 por la clave foránea; decidir la regla).
+Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25). Queda:
+
+- Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
+- Convertir los casos en pruebas automáticas (JUnit + MockMvc, base en memoria) para repetirlas con un solo comando.

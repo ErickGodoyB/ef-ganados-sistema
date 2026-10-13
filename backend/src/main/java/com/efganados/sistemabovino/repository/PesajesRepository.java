@@ -11,5 +11,9 @@ import com.efganados.sistemabovino.model.Pesajes;
  */
 public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
 
+    /** Devuelve los dos pesajes más recientes del animal, del más nuevo al más viejo. */
     List<Pesajes> findTop2ByAnimal_AniIdOrderByPesaFechaDesc(Long aniId);
+
+    /** Indica si el animal tiene al menos un pesaje registrado. */
+    boolean existsByAnimal_AniId(Long aniId);
 }
