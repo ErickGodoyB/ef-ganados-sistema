@@ -70,4 +70,35 @@ con 100 a 150 cabezas no es un problema, pero conviene tenerlo presente para el 
 Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25). Queda:
 
 - Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
-- Convertir los casos en pruebas automáticas (JUnit + MockMvc, base en memoria) para repetirlas con un solo comando.
+
+## Pruebas automáticas (JUnit + MockMvc)
+
+Los casos de la API también se ejecutan de forma automática. Usan una base H2 en memoria
+(`jdbc:h2:mem:testdb`), por lo que nunca tocan la base PostgreSQL `efganados`. Cada prueba corre
+en su propia transacción, que se revierte al terminar.
+
+**Cómo ejecutarlas:** desde la carpeta `backend`, con `.\mvnw.cmd test` (en PowerShell hace falta el `.\` delante).
+
+**Primera ejecución (2026-10-13): 21 de 21 pruebas aprobadas, 0 fallos, 0 errores.**
+
+**Tras agregar la prueba del valor límite: 22 de 22 aprobadas.**
+
+| Clase (`src/test/java/.../controller`) | Pruebas | Casos manuales que cubre |
+|---|---|---|
+| `AnimalControllerTest` | 9 | CP12 a CP17, CP19, CP20, listado (CP10) |
+| `PesajeControllerTest` | 3 | CP18 y registro de pesajes (201 y 404) |
+| `IndicadoresControllerTest` | 9 | CP08, CP09, CP11, CP21 a CP25, y valor límite (peso igual al objetivo) |
+| `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
+
+Las pruebas manuales (CP01 a CP25) quedan como evidencia de la verificación con una herramienta
+externa; las automáticas permiten repetirlas con un solo comando después de cada cambio.
+
+### Verificación de la sensibilidad de las pruebas (mutación manual)
+
+Para comprobar que las pruebas detectan errores reales, se cambió a propósito `>=` por `>` en
+`AnimalService.estaAptoParaVenta`. Con las 21 pruebas iniciales **todas seguían pasando**, porque
+ninguna probaba el valor exacto del límite (peso igual al objetivo de la raza). Se agregó la prueba
+`aptoVentaConPesoExactamenteIgualAlObjetivoDevuelveTrue` (450 kg contra objetivo 450). Con el cambio
+roto, esa prueba falló (`expected:<true> but was:<false>`), y al restaurar `>=` pasaron las 22.
+Conclusión: las pruebas de valor límite son necesarias; la prueba nueva cubre el único borde
+de la regla de aptitud para venta.
