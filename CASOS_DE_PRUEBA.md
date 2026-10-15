@@ -43,6 +43,10 @@ Pruebas funcionales manuales con Thunder Client contra el backend local
 | CP23 | Animal AR-902 (`aniId` 5) con 3 pesajes (200 kg el 2026-08-01, 230 kg el 2026-09-01, 290 kg el 2026-10-01); `GET /api/animales/5/gmd` | — | 2.0, es decir (290 − 230) / 30, usando solo los 2 más recientes | Los 3 `POST` dieron 201; GMD 200, `2.0`, 14 ms | Aprobado |
 | CP24 | `POST` de un pesaje de 460 kg (2026-10-10) al animal 5 y `GET /api/animales/5/apto-venta` | 460 ≥ 450 (Brahman) | 201 y luego `true` | 201; `apto-venta` 200, `true`, 14 ms | Aprobado |
 | CP25 | `GET /api/animales/999/gmd` (animal inexistente) | — | 404 con mensaje | 404, `Animal no encontrado con id: 999` | Aprobado |
+| CP26 | `POST /api/auth/login` con `admin` y la contraseña de desarrollo | Credenciales correctas | 200 con `token`, `usuNombre` y `tipo` | 200 con token, `usuNombre` y `tipo` (`EMPLEADO`) | Aprobado |
+| CP27 | `POST /api/auth/login` con contraseña incorrecta | `clave-equivocada` | 401 con mensaje genérico | 401, `Usuario o contraseña incorrectos` | Aprobado |
+| CP28 | `GET /api/animales` sin token | — | 401 | 401 | Aprobado |
+| CP29 | `GET /api/animales` con el token del CP26 (Auth → Bearer) | Token válido | 200 con la lista | 200, 2.15 KB, 85 ms | Aprobado |
 
 Nota sobre CP13: el primer intento dio 405 (Method Not Allowed) porque la petición salió como POST
 en lugar de PUT (error del probador, no del sistema). Repetida con PUT, devolvió 200.
@@ -70,6 +74,8 @@ con 100 a 150 cabezas no es un problema, pero conviene tenerlo presente para el 
 Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25). Queda:
 
 - Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
+
+**Nota (autenticación):** desde CP26 la API exige un token JWT en todos los endpoints salvo el login. Los casos CP01 a CP25 se hicieron antes, cuando la seguridad estaba abierta; las pruebas automáticas deben actualizarse para autenticarse (ver abajo).
 
 ## Pruebas automáticas (JUnit + MockMvc)
 
