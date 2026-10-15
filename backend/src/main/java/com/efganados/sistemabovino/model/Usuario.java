@@ -1,5 +1,7 @@
 package com.efganados.sistemabovino.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,5 +33,11 @@ public class Usuario {
     @Column(unique = true)
     private String usuNombre;
 
+    /**
+     * Contraseña cifrada (BCrypt). Solo escritura en JSON: se acepta en el
+     * cuerpo de una petición (POST/PUT), pero nunca se serializa de vuelta
+     * en una respuesta, para no exponerla aunque esté cifrada (RNF006).
+     */
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String usuPassword;
 }
