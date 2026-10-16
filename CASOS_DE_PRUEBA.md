@@ -75,7 +75,7 @@ Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25). Q
 
 - Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
 
-**Nota (autenticación):** desde CP26 la API exige un token JWT en todos los endpoints salvo el login. Los casos CP01 a CP25 se hicieron antes, cuando la seguridad estaba abierta; las pruebas automáticas deben actualizarse para autenticarse (ver abajo).
+**Nota (autenticación):** desde CP26 la API exige un token JWT en todos los endpoints salvo el login. Los casos CP01 a CP25 se hicieron antes, cuando la seguridad estaba abierta; las pruebas automáticas deben actualizarse para autenticarse (ya actualizadas, ver abajo).
 
 ## Pruebas automáticas (JUnit + MockMvc)
 
@@ -89,11 +89,14 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras agregar la prueba del valor límite: 22 de 22 aprobadas.**
 
+**Tras agregar la autenticación (2026-10-15): 29 de 29 aprobadas, 0 fallos, 0 errores.** Las pruebas de animales, pesajes e indicadores ahora inician sesión con el administrador y envían el encabezado `Authorization: Bearer <token>`.
+
 | Clase (`src/test/java/.../controller`) | Pruebas | Casos manuales que cubre |
 |---|---|---|
 | `AnimalControllerTest` | 9 | CP12 a CP17, CP19, CP20, listado (CP10) |
 | `PesajeControllerTest` | 3 | CP18 y registro de pesajes (201 y 404) |
 | `IndicadoresControllerTest` | 9 | CP08, CP09, CP11, CP21 a CP25, y valor límite (peso igual al objetivo) |
+| `AuthControllerTest` | 7 | CP26 a CP29 y validaciones: login correcto (200), contraseña incorrecta (401), falta `usuNombre` (400), falta `usuPassword` (400), endpoint protegido sin token (401) y con token (200), y que `usuPassword` no aparezca en la respuesta de usuarios |
 | `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
 
 Las pruebas manuales (CP01 a CP25) quedan como evidencia de la verificación con una herramienta
