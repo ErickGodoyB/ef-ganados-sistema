@@ -10,13 +10,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.controller.AnimalController.AnimalRequest;
@@ -33,25 +33,19 @@ import com.efganados.sistemabovino.repository.PesajesRepository;
 import com.efganados.sistemabovino.repository.RazaRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
 
-import tools.jackson.databind.ObjectMapper;
-
 /**
  * Pruebas de integración de {@link AnimalController}: creación, actualización
  * y borrado de animales vía MockMvc contra la base H2 en memoria. Cada prueba
  * crea sus propios datos (raza, persona dueño, grupo y subgrupo) y la
  * transacción se revierte al finalizar, dejando la base limpia para la
- * siguiente prueba.
+ * siguiente prueba. Todas las peticiones llevan el token del administrador
+ * inicial (ver {@link AutenticacionTestSupport}), ya que la API ahora exige
+ * autenticación (RF009) salvo en el login.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class AnimalControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+class AnimalControllerTest extends AutenticacionTestSupport {
 
     @Autowired
     private PersonaRepository personaRepository;
@@ -70,6 +64,14 @@ class AnimalControllerTest {
 
     @Autowired
     private PesajesRepository pesajesRepository;
+
+    /** Token del administrador inicial, obtenido una vez por prueba vía login real. */
+    private String token;
+
+    @BeforeEach
+    void autenticarse() throws Exception {
+        token = encabezadoAutorizacionAdmin();
+    }
 
     /** Crea y persiste una persona de prueba (dueño o responsable). */
     private Persona crearPersona(String nombre) {
@@ -128,6 +130,7 @@ class AnimalControllerTest {
                 "CAR-001", LocalDate.of(2026, 1, 1), 200.0, null, "Observación inicial");
 
         mockMvc.perform(post("/api/animales")
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -148,6 +151,7 @@ class AnimalControllerTest {
                 "CAR-002", LocalDate.of(2026, 1, 1), 200.0, null, null);
 
         mockMvc.perform(post("/api/animales")
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -165,6 +169,7 @@ class AnimalControllerTest {
                 "", LocalDate.of(2026, 1, 1), 200.0, null, null);
 
         mockMvc.perform(post("/api/animales")
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -181,6 +186,7 @@ class AnimalControllerTest {
                 "CAR-004", LocalDate.of(2026, 1, 1), 200.0, null, null);
 
         mockMvc.perform(post("/api/animales")
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
@@ -199,6 +205,7 @@ class AnimalControllerTest {
                 "DUP-001", LocalDate.of(2026, 1, 1), 200.0, null, null);
 
         mockMvc.perform(post("/api/animales")
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -217,6 +224,7 @@ class AnimalControllerTest {
                 "CAR-006", LocalDate.of(2026, 1, 1), 200.0, null, "Observación actualizada");
 
         mockMvc.perform(put("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -231,7 +239,8 @@ class AnimalControllerTest {
         SubGrupo subGrupo = crearSubGrupo("SubGrupo-BorrarSinPesajes");
         Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-007", 200.0);
 
-        mockMvc.perform(delete("/api/animales/{id}", animal.getAniId()))
+        mockMvc.perform(delete("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isNoContent());
     }
 
@@ -251,7 +260,8 @@ class AnimalControllerTest {
         pesaje.setPesaPeso(210.0);
         pesajesRepository.save(pesaje);
 
-        mockMvc.perform(delete("/api/animales/{id}", animal.getAniId()))
+        mockMvc.perform(delete("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isConflict())
                 .andExpect(content().string("No se puede eliminar el animal: tiene pesajes registrados"));
     }
@@ -259,7 +269,8 @@ class AnimalControllerTest {
     @Test
     @DisplayName("Listar animales devuelve 200")
     void listarAnimalesDevuelve200() throws Exception {
-        mockMvc.perform(get("/api/animales"))
+        mockMvc.perform(get("/api/animales")
+                        .header("Authorization", token))
                 .andExpect(status().isOk());
     }
 }

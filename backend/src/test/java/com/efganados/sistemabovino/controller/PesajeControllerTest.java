@@ -7,13 +7,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.controller.AnimalController.NuevoPesajeRequest;
@@ -28,25 +28,18 @@ import com.efganados.sistemabovino.repository.PersonaRepository;
 import com.efganados.sistemabovino.repository.RazaRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
 
-import tools.jackson.databind.ObjectMapper;
-
 /**
  * Pruebas de integración del endpoint de registro de pesajes
  * ({@code POST /api/animales/{id}/pesajes} en {@link AnimalController}).
  * Cada prueba crea sus propios datos (raza, dueño, responsable, grupo,
  * subgrupo y animal) directamente por repositorio, y la transacción se
- * revierte al finalizar.
+ * revierte al finalizar. Todas las peticiones llevan el token del
+ * administrador inicial (ver {@link AutenticacionTestSupport}).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class PesajeControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+class PesajeControllerTest extends AutenticacionTestSupport {
 
     @Autowired
     private PersonaRepository personaRepository;
@@ -62,6 +55,14 @@ class PesajeControllerTest {
 
     @Autowired
     private AnimalRepository animalRepository;
+
+    /** Token del administrador inicial, obtenido una vez por prueba vía login real. */
+    private String token;
+
+    @BeforeEach
+    void autenticarse() throws Exception {
+        token = encabezadoAutorizacionAdmin();
+    }
 
     /** Crea y persiste una persona de prueba (dueño o responsable). */
     private Persona crearPersona(String nombre) {
@@ -113,6 +114,7 @@ class PesajeControllerTest {
         NuevoPesajeRequest request = new NuevoPesajeRequest(250.0, LocalDate.of(2026, 2, 1), responsable.getPerId());
 
         mockMvc.perform(post("/api/animales/{id}/pesajes", animal.getAniId())
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -130,6 +132,7 @@ class PesajeControllerTest {
         NuevoPesajeRequest request = new NuevoPesajeRequest(250.0, LocalDate.of(2026, 2, 1), null);
 
         mockMvc.perform(post("/api/animales/{id}/pesajes", animal.getAniId())
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -144,6 +147,7 @@ class PesajeControllerTest {
         NuevoPesajeRequest request = new NuevoPesajeRequest(250.0, LocalDate.of(2026, 2, 1), responsable.getPerId());
 
         mockMvc.perform(post("/api/animales/{id}/pesajes", 999L)
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())

@@ -6,12 +6,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.model.Animal;
@@ -33,15 +33,13 @@ import com.efganados.sistemabovino.repository.SubGrupoRepository;
  * ({@code GET /api/animales/{id}/gmd}) y aptitud para venta
  * ({@code GET /api/animales/{id}/apto-venta}). Cada prueba crea sus propios
  * datos (raza con un peso objetivo de venta de 450 kg, dueño, grupo y
- * subgrupo) y la transacción se revierte al finalizar.
+ * subgrupo) y la transacción se revierte al finalizar. Todas las peticiones
+ * llevan el token del administrador inicial (ver {@link AutenticacionTestSupport}).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class IndicadoresControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class IndicadoresControllerTest extends AutenticacionTestSupport {
 
     @Autowired
     private PersonaRepository personaRepository;
@@ -60,6 +58,14 @@ class IndicadoresControllerTest {
 
     @Autowired
     private PesajesRepository pesajesRepository;
+
+    /** Token del administrador inicial, obtenido una vez por prueba vía login real. */
+    private String token;
+
+    @BeforeEach
+    void autenticarse() throws Exception {
+        token = encabezadoAutorizacionAdmin();
+    }
 
     /** Crea y persiste una persona de prueba (dueño o responsable). */
     private Persona crearPersona(String nombre) {
@@ -119,7 +125,8 @@ class IndicadoresControllerTest {
     void gmdSinPesajesDevuelve200ConCuerpoVacio() throws Exception {
         Animal animal = crearAnimal("CAR-GMD-001", 200.0);
 
-        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
     }
@@ -130,7 +137,8 @@ class IndicadoresControllerTest {
         Animal animal = crearAnimal("CAR-GMD-002", 200.0);
         registrarPesaje(animal, 210.0, LocalDate.of(2026, 2, 1));
 
-        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
     }
@@ -142,7 +150,8 @@ class IndicadoresControllerTest {
         registrarPesaje(animal, 215.0, LocalDate.of(2026, 8, 15));
         registrarPesaje(animal, 245.0, LocalDate.of(2026, 9, 14));
 
-        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string("1.0"));
     }
@@ -155,7 +164,8 @@ class IndicadoresControllerTest {
         registrarPesaje(animal, 210.0, fecha);
         registrarPesaje(animal, 220.0, fecha);
 
-        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string("0.0"));
     }
@@ -168,7 +178,8 @@ class IndicadoresControllerTest {
         registrarPesaje(animal, 230.0, LocalDate.of(2026, 9, 1));
         registrarPesaje(animal, 290.0, LocalDate.of(2026, 10, 1));
 
-        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string("2.0"));
     }
@@ -176,7 +187,8 @@ class IndicadoresControllerTest {
     @Test
     @DisplayName("GMD de un animal inexistente devuelve 404")
     void gmdDeAnimalInexistenteDevuelve404() throws Exception {
-        mockMvc.perform(get("/api/animales/{id}/gmd", 999L))
+        mockMvc.perform(get("/api/animales/{id}/gmd", 999L)
+                        .header("Authorization", token))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Animal no encontrado con id: 999"));
     }
@@ -186,7 +198,8 @@ class IndicadoresControllerTest {
     void aptoVentaConPesoInicialMenorAlObjetivoDevuelveFalse() throws Exception {
         Animal animal = crearAnimal("CAR-APTO-001", 400.0);
 
-        mockMvc.perform(get("/api/animales/{id}/apto-venta", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/apto-venta", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string("false"));
     }
@@ -197,7 +210,8 @@ class IndicadoresControllerTest {
         Animal animal = crearAnimal("CAR-APTO-002", 400.0);
         registrarPesaje(animal, 460.0, LocalDate.of(2026, 3, 1));
 
-        mockMvc.perform(get("/api/animales/{id}/apto-venta", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/apto-venta", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
     }
@@ -212,7 +226,8 @@ class IndicadoresControllerTest {
         Animal animal = crearAnimal("CAR-APTO-003", 400.0);
         registrarPesaje(animal, 450.0, LocalDate.of(2026, 3, 1));
 
-        mockMvc.perform(get("/api/animales/{id}/apto-venta", animal.getAniId()))
+        mockMvc.perform(get("/api/animales/{id}/apto-venta", animal.getAniId())
+                        .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
     }
