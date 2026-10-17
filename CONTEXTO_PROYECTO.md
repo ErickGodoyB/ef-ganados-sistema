@@ -139,7 +139,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - **Repositorio**: GitHub privado `ef-ganados-sistema`, con carpeta `backend/` (proyecto Spring Boot: dependencias Web, Data JPA, PostgreSQL Driver, Security, Lombok)
 - **PostgreSQL**: instalado, base `efganados` creada. `application.properties` configurado (datasource + `ddl-auto=update`). Las 7 tablas ya existen en la base, generadas automáticamente por Hibernate a partir de las entidades, con FKs y constraints `unique`/`not null` correctas.
 - **Corrección de paquetes**: la clase principal `SistemaBovinoApplication` estaba en el paquete `com.efganados.sistema_bovino` (con guión bajo), mientras que las entidades estaban en `com.efganados.sistemabovino.model` (sin guión bajo) — dos paquetes distintos no anidados, por lo que Spring Boot no detectaba las entidades y no creaba las tablas. Se corrigió moviendo `SistemaBovinoApplication.java` dentro de `com.efganados.sistemabovino` (paquete base único = `com.efganados.sistemabovino`). Importante: todo código nuevo (repositorios, servicios, controladores) debe crearse como subpaquete de `com.efganados.sistemabovino` para que el auto-scan de Spring Boot lo detecte.
-- **Frontend (Vite + React)**: aún no generado
+- **Frontend (Vite + React)**: proyecto creado el 2026-10-16 en `frontend/` (Vite 8, React, ESLint; Node v24.21.0, npm 11.19.0). Se arranca con `npm run dev` desde `frontend` y abre en `http://localhost:5173` (el mismo origen que permite el CORS del backend). Verificado: se ve la página inicial de Vite y React y el contador funciona. Aún sin pantallas propias. Nota de Windows: en PowerShell hizo falta `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` para poder ejecutar `npm`.
 - **Entidades JPA**: las 7 clases revisadas y corregidas, todo commiteado y pusheado a GitHub:
   - `Animal`: sin `pesoActual` (corrección del tutor aplicada).
   - `Persona`: prefijo `per_` en todos los atributos escalares.
@@ -167,7 +167,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - **Pendientes de seguridad**: cambiar `app.jwt.secret` y `app.admin.password` antes de la versión final (idealmente leerlos de variables de entorno, no del repositorio); revisar que en la base `usu_password` quede cifrada (empieza con `$2a$`); el JWT no distingue roles todavía (RF009 solo pide inicio de sesión).
   - **Incidente**: tras recargar el proyecto en VS Code apareció `ClassFormatError: Invalid method Code length 0 in class file .../Animal` (clase compilada dañada en `target`). Se resolvió con `.\mvnw.cmd clean compile`. Si se repite, hacer lo mismo.
 - **Pruebas con autenticación (2026-10-15)**: `AutenticacionTestSupport` (clase base en `src/test`) hace login real con el administrador que crea `AdminUsuarioInitializer` al arrancar el contexto y devuelve `Bearer <token>`; las tres clases de prueba existentes lo envían en cada petición. 29 de 29 pruebas aprobadas sin tocar `src/main`.
-- **Siguiente en código**: frontend (Vite + React) con pantalla de login que use `POST /api/auth/login`.
+- **Siguiente en código**: pantalla de login en React que use `POST /api/auth/login` (guardar el token y enviarlo como `Authorization: Bearer ...`), luego listado de animales.
 - **Nota técnica de la herramienta**: la sesión de Claude puede leer la carpeta del repo en la PC (`C:\Users\Erick\Documents\GitHub\ef-ganados-sistema`) si se vincula desde la app de escritorio, pero los archivos Java quedan a 8 niveles de profundidad y el límite es 7; hay que conectar la carpeta `...\sistemabovino` directamente o pegar el archivo.
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
@@ -192,7 +192,8 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] Guardar una captura de la ejecución de `.\mvnw.cmd test` como evidencia para el informe
 - [ ] Convertir `CASOS_DE_PRUEBA.md` en una tabla LaTeX para el Cap. 4 del informe
 - [ ] Antes de la versión final, quitar de `application.properties` las líneas de desarrollo `server.error.include-message=always` y `server.error.include-binding-errors=always` (si se agregaron), y reemplazar la `SecurityConfig` temporal. — antes hay que instalar la extensión Thunder Client en VS Code y cargar algunos datos de prueba (raza, persona, animal) para poder probar `/gmd` y `/apto-venta`
-- [ ] Generar el proyecto frontend (Vite + React)
+- [x] Generar el proyecto frontend (Vite + React) en `frontend/`
+- [ ] Pantalla de login en React conectada a `POST /api/auth/login`
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
 - [ ] Insertar mockups de Pesajes en Overleaf
