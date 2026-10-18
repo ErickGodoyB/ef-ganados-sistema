@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ErrorHttp } from '../api/cliente'
 import { useAuth } from '../auth/useAuth'
+import { MARCA } from '../configuracion/marca'
 import BotonTema from '../tema/BotonTema'
 import './Login.css'
 
@@ -93,14 +94,14 @@ export default function Login() {
       <div className="login-tarjeta">
         <div className="login-encabezado">
           {!logoFallo ? (
-            <img src="/logo.png" alt="" className="login-logo" onError={() => setLogoFallo(true)} />
+            <img src={MARCA.rutaLogo} alt="" className="login-logo" onError={() => setLogoFallo(true)} />
           ) : (
             <div className="login-logo login-logo--provisional" aria-hidden="true">
-              EF
+              {MARCA.iniciales}
             </div>
           )}
-          <h1 className="login-titulo">EF Ganados</h1>
-          <p className="login-subtitulo">Sistema de gestión bovina</p>
+          <h1 className="login-titulo">{MARCA.nombre}</h1>
+          <p className="login-subtitulo">{MARCA.subtitulo}</p>
         </div>
 
         <form className="login-formulario" onSubmit={alEnviar} noValidate>

@@ -5,6 +5,7 @@
  */
 
 import { useAuth } from '../auth/useAuth'
+import { MARCA } from '../configuracion/marca'
 import BotonTema from '../tema/BotonTema'
 import './Inicio.css'
 
@@ -19,7 +20,7 @@ export default function Inicio() {
 
       <div className="inicio-contenido">
         <h1>Hola, {usuario?.usuNombre}</h1>
-        <p>Bienvenido/a al sistema de gestión bovina de EF Ganados.</p>
+        <p>Bienvenido/a al {MARCA.subtitulo.toLowerCase()} de {MARCA.nombre}.</p>
         <button type="button" className="inicio-boton-salir" onClick={cerrarSesion}>
           Cerrar sesión
         </button>
