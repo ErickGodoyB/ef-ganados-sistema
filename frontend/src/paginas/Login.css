@@ -1,0 +1,207 @@
+/**
+ * Estilos de la pantalla de login. Usa las variables de tema definidas en
+ * index.css, así que el modo oscuro cambia todo desde un solo lugar.
+ * Mobile-first: la base de acá abajo es la de celular; los @media (min-
+ * width) solo agregan ajustes para pantallas más grandes.
+ */
+
+.login-pantalla {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--fondo);
+}
+
+.login-boton-tema {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.login-tarjeta {
+  /* width: min(...) la mantiene fluida pero nunca más ancha que 24rem;
+     margin: auto la centra (horizontal y vertical) en el espacio que queda
+     debajo de la fila del botón de tema, sin superponerse con él ni
+     necesitar position: absolute. */
+  width: min(100%, 24rem);
+  margin: auto;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 24px 20px;
+}
+
+@media (min-width: 768px) {
+  .login-pantalla {
+    padding: 24px;
+  }
+
+  .login-tarjeta {
+    padding: 40px;
+  }
+}
+
+.login-encabezado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+
+.login-logo--provisional {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-primario-fondo);
+  color: var(--color-primario-texto);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.login-titulo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.login-subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+@media (min-width: 768px) {
+  .login-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .login-titulo {
+    font-size: 24px;
+  }
+}
+
+.login-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.campo input {
+  width: 100%;
+  /* Alto mínimo 44px: área táctil cómoda en celular. */
+  min-height: 44px;
+  padding: 10px 12px;
+  /* 16px como mínimo: con un tamaño menor, iOS hace zoom automático al
+     enfocar el campo. */
+  font-size: 16px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.campo input:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.campo input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.campo-password {
+  position: relative;
+  display: flex;
+}
+
+.campo-password input {
+  padding-right: 84px;
+}
+
+.boton-mostrar-password {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  min-width: 64px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--color-foco);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.boton-mostrar-password:hover {
+  background: var(--superficie-hover);
+}
+
+.boton-mostrar-password:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.login-error {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--color-error);
+  background: var(--color-error-fondo);
+  border: 1px solid var(--color-error);
+  border-radius: 8px;
+}
+
+.login-boton {
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.login-boton:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.login-boton:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.login-boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}

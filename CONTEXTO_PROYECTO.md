@@ -100,14 +100,14 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 
 | Módulo | Estado | Detalle |
 |---|---|---|
-| Login | ✅ Terminado | Usuario, contraseña, mensaje de error |
+| Login | ✅ Terminado y programado en React (2026-10-17) | Usuario, contraseña (con botón mostrar/ocultar), mensaje de error bajo los campos, modo claro/oscuro; probado en PC y en celular Android |
 | Animales — Listado | ✅ Terminado (estilo real en draw.io) | Caravana, Raza, Lote, Peso actual, Estado (badge "Apto para venta") |
 | Animales — Modal Nuevo animal | ✅ Terminado (estilo real) | Caravana, Raza (+ "nuevo"), Lote (+ "nuevo"), Fecha ingreso, Peso inicial |
 | Pesajes — Listado | ✅ Terminado (estilo real en draw.io) | Fecha, Lote, Cantidad, Promedio, Mínimo, Máximo — una fila por sesión |
 | Pesajes — Detalle de sesión | ⏳ Decidido, no construido | Vista de solo lectura al hacer clic en una fila |
 | Pesajes — Modal Nuevo pesaje | ⏳ Diseñado, falta construir en estilo real | Tabs "Por lote" / "Individual"; en "Por lote": selector Lote+Fecha, resumen en vivo (arriba), fila para agregar animal (selector + peso + botón "+ Agregar"), lista acumulada con opción de eliminar antes de guardar |
 | Reportes | ❌ No iniciado | RF006 (comparativo por lote), RF007 (gráfico evolución), RF008 (exportar PDF) |
-| Vista mobile | ❌ No iniciado | Solo mencionado como nota en el texto (responsive) |
+| Vista mobile | ✅ Login verificado en celular Android real (2026-10-18) | Regla fija: toda pantalla nueva se diseña mobile-first y se prueba en el celular (RNF001) |
 
 ## 8. Decisiones de diseño importantes (y por qué)
 
@@ -117,6 +117,9 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - Se descartaron (movidos a "futuras investigaciones", **no forman parte del alcance actual**): módulo de salud/farmacia, identificación por chip/RFID, calendario por colores.
 - RF010 y RF011 se agregaron durante el proceso de diseño (no estaban en el anteproyecto original) — están documentados como evolución natural de RF001/RF002, no como expansión de alcance.
 - **Corrección del tutor**: `Animal` no guarda `pesoActual` como campo propio — se calcula siempre a partir de `Pesajes` (el pesaje más reciente), evitando duplicar y desincronizar datos. Aplica a `Animal.java`, al diagrama ER, al diagrama de clases, y a la lógica de `calcularGMD()`/`estaAptoParaVenta()`.
+- **Modo claro y oscuro (regla de todo el proyecto)**: toda pantalla debe funcionar en ambos temas. El tema inicial sigue la preferencia del sistema operativo (`prefers-color-scheme`), se puede cambiar con el botón de tema y se recuerda en `localStorage`. Los colores salen de variables CSS en `index.css`; no se escriben colores fijos en cada pantalla.
+- **Mobile-first (regla de todo el proyecto, RNF001)**: estilos base para celular y `@media (min-width)` para pantallas grandes; sin scroll horizontal; `min-height: 100dvh`; inputs de al menos 16 px (evita el zoom de iOS); áreas táctiles de al menos 44x44 px.
+- **Marca configurable (decisión 2026-10-18)**: para el TFG el sistema es de EF Ganados. Nombre, subtítulo y logo deben estar definidos en un solo lugar del frontend (pendiente centralizarlos) para poder cambiarlos fácilmente. Una pantalla "Configuración de la empresa" (editar nombre y logo desde el sistema) queda como **mejora futura / trabajo futuro**, fuera del alcance actual.
 - **Convención de nombres en las entidades JPA**: todo atributo escalar propio de la tabla lleva el prefijo de la entidad (ej. `ani_...` en Animal, `per_...` en Persona). Las relaciones (`@ManyToOne`/`@OneToOne`, ej. `duenio`, `raza`, `subGrupo`) **no** llevan prefijo, porque no son columnas propias sino referencias a otra entidad.
 - **Código comentado**: de ahora en adelante, toda clase de entidad lleva un comentario Javadoc breve arriba (qué representa) y un comentario por atributo cuando su propósito no es obvio a simple vista (ej. por qué un campo es único, o qué significa un valor). Pendiente: agregar retroactivamente a `Animal`, `Persona`, `Usuario` y `Raza`, ya revisadas antes de tomar esta decisión.
 
@@ -139,7 +142,10 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - **Repositorio**: GitHub privado `ef-ganados-sistema`, con carpeta `backend/` (proyecto Spring Boot: dependencias Web, Data JPA, PostgreSQL Driver, Security, Lombok)
 - **PostgreSQL**: instalado, base `efganados` creada. `application.properties` configurado (datasource + `ddl-auto=update`). Las 7 tablas ya existen en la base, generadas automáticamente por Hibernate a partir de las entidades, con FKs y constraints `unique`/`not null` correctas.
 - **Corrección de paquetes**: la clase principal `SistemaBovinoApplication` estaba en el paquete `com.efganados.sistema_bovino` (con guión bajo), mientras que las entidades estaban en `com.efganados.sistemabovino.model` (sin guión bajo) — dos paquetes distintos no anidados, por lo que Spring Boot no detectaba las entidades y no creaba las tablas. Se corrigió moviendo `SistemaBovinoApplication.java` dentro de `com.efganados.sistemabovino` (paquete base único = `com.efganados.sistemabovino`). Importante: todo código nuevo (repositorios, servicios, controladores) debe crearse como subpaquete de `com.efganados.sistemabovino` para que el auto-scan de Spring Boot lo detecte.
-- **Frontend (Vite + React)**: proyecto creado el 2026-10-16 en `frontend/` (Vite 8, React, ESLint; Node v24.21.0, npm 11.19.0). Se arranca con `npm run dev` desde `frontend` y abre en `http://localhost:5173` (el mismo origen que permite el CORS del backend). Verificado: se ve la página inicial de Vite y React y el contador funciona. Aún sin pantallas propias. Nota de Windows: en PowerShell hizo falta `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` para poder ejecutar `npm`.
+- **Frontend (Vite + React)**: proyecto creado el 2026-10-16 en `frontend/` (Vite 8, React, ESLint; Node v24.21.0, npm 11.19.0). Se arranca con `npm run dev` desde `frontend` y abre en `http://localhost:5173` (el mismo origen que permite el CORS del backend). Verificado: se ve la página inicial de Vite y React y el contador funciona. **Pantalla de login hecha (2026-10-17)**, probada en navegador (9 de 9 puntos aprobados) y en celular Android. Estructura en `frontend/src/`: `api/cliente.js` (`fetch` con `peticionPublica` para el login y `peticionProtegida` con `Authorization: Bearer`; ante un 401 limpia la sesión y vuelve a `/login`; si `VITE_API_URL` no está definida usa `<protocolo>//<host de la página>:8080`), `auth/` (`sesionAlmacenada.js` en `localStorage`, `contextoAuth.js`, `AuthContext.jsx`, `useAuth.js`, `RutaProtegida.jsx`), `tema/` (`contextoTema.js`, `TemaContext.jsx`, `useTema.js`, `BotonTema.jsx`), `paginas/` (`Login.jsx`, `Inicio.jsx` provisional con "Cerrar sesión"). Rutas: `/login` pública, `/` protegida. Logo desde `public/logo.png` con respaldo "EF" (todavía no hay `logo.png`). Mensajes: 401 "Usuario o contraseña incorrectos"; sin conexión "No se pudo conectar con el servidor". Atajos: foco inicial en Usuario, Enter en Usuario pasa a Contraseña, Enter en Contraseña envía.
+  - **`.env`**: archivo local de configuración, NO se sube a Git (está en `.gitignore`); se sube `.env.example` como plantilla. En una máquina nueva, copiar `.env.example` como `.env`. `VITE_API_URL` es opcional (solo si el backend está en otra dirección).
+  - **Prueba desde el celular** (misma red wifi): iniciar el backend, ejecutar `npm run dev:red` en `frontend` (script `vite --host`) y abrir `http://<IP-de-la-PC>:5173` en el celular. Requisitos: IP fija en la PC y firewall de Windows con los puertos 5173 y 8080 abiertos. El CORS del backend acepta, con `allowedOriginPatterns`, `localhost`, `127.0.0.1`, `192.168.*.*` y `10.*.*.*` en el puerto 5173, configurable en `app.cors.origenes-permitidos` (en producción limitarlo al dominio real).
+  - Nota de Windows: en PowerShell hizo falta `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` para poder ejecutar `npm`.
 - **Entidades JPA**: las 7 clases revisadas y corregidas, todo commiteado y pusheado a GitHub:
   - `Animal`: sin `pesoActual` (corrección del tutor aplicada).
   - `Persona`: prefijo `per_` en todos los atributos escalares.
@@ -167,7 +173,7 @@ en ISO 9241-11 y los heurísticos de Nielsen.
   - **Pendientes de seguridad**: cambiar `app.jwt.secret` y `app.admin.password` antes de la versión final (idealmente leerlos de variables de entorno, no del repositorio); revisar que en la base `usu_password` quede cifrada (empieza con `$2a$`); el JWT no distingue roles todavía (RF009 solo pide inicio de sesión).
   - **Incidente**: tras recargar el proyecto en VS Code apareció `ClassFormatError: Invalid method Code length 0 in class file .../Animal` (clase compilada dañada en `target`). Se resolvió con `.\mvnw.cmd clean compile`. Si se repite, hacer lo mismo.
 - **Pruebas con autenticación (2026-10-15)**: `AutenticacionTestSupport` (clase base en `src/test`) hace login real con el administrador que crea `AdminUsuarioInitializer` al arrancar el contexto y devuelve `Bearer <token>`; las tres clases de prueba existentes lo envían en cada petición. 29 de 29 pruebas aprobadas sin tocar `src/main`.
-- **Siguiente en código**: pantalla de login en React que use `POST /api/auth/login` (guardar el token y enviarlo como `Authorization: Bearer ...`), luego listado de animales.
+- **Siguiente en código**: centralizar nombre, subtítulo y logo de la empresa en un solo archivo del frontend; crear `CLAUDE.md` con las reglas fijas del proyecto; luego listado de animales (RF010: búsqueda por caravana y filtro por lote), después registro de pesajes (RF011).
 - **Nota técnica de la herramienta**: la sesión de Claude puede leer la carpeta del repo en la PC (`C:\Users\Erick\Documents\GitHub\ef-ganados-sistema`) si se vincula desde la app de escritorio, pero los archivos Java quedan a 8 niveles de profundidad y el límite es 7; hay que conectar la carpeta `...\sistemabovino` directamente o pegar el archivo.
 - **Flujo de trabajo adoptado**: para código repetitivo/boilerplate (repositorios, CRUDs simples), se le da a Claude Code una instrucción precisa y cerrada, y se revisa el resultado acá. Para lógica de negocio con reglas específicas del dominio (servicios), se define la lógica exacta acá primero y luego se pide a Claude Code que la implemente tal cual, para evitar que improvise reglas de negocio.
 
@@ -193,7 +199,11 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] Convertir `CASOS_DE_PRUEBA.md` en una tabla LaTeX para el Cap. 4 del informe
 - [ ] Antes de la versión final, quitar de `application.properties` las líneas de desarrollo `server.error.include-message=always` y `server.error.include-binding-errors=always` (si se agregaron), y reemplazar la `SecurityConfig` temporal. — antes hay que instalar la extensión Thunder Client en VS Code y cargar algunos datos de prueba (raza, persona, animal) para poder probar `/gmd` y `/apto-venta`
 - [x] Generar el proyecto frontend (Vite + React) en `frontend/`
-- [ ] Pantalla de login en React conectada a `POST /api/auth/login`
+- [x] Pantalla de login en React conectada a `POST /api/auth/login` (modo claro/oscuro, responsiva, probada en PC y celular)
+- [ ] Centralizar nombre, subtítulo y logo de la empresa en un solo archivo; poner el logo real en `frontend/public/logo.png`
+- [ ] Crear `CLAUDE.md` en la raíz del repositorio con las reglas fijas (comentarios Javadoc/JSDoc en español, paquete base, prefijos, mobile-first, modo claro/oscuro, `.\mvnw.cmd test` antes de cada commit)
+- [ ] Pantalla de listado de animales (RF010)
+- [ ] (Mejora futura) Pantalla de configuración de la empresa (nombre y logo editables)
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
 - [ ] Insertar mockups de Pesajes en Overleaf

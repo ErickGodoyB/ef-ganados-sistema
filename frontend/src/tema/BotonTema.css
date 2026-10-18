@@ -1,0 +1,28 @@
+/**
+ * Estilos del botón de tema. Usa las variables de color definidas en
+ * index.css, así que se adapta solo al cambiar entre claro y oscuro.
+ * 44x44px: mínimo recomendado para un área táctil cómoda en celular.
+ */
+
+.boton-tema {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.boton-tema:hover {
+  background: var(--superficie-hover);
+}
+
+.boton-tema:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}

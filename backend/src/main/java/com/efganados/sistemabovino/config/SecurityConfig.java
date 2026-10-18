@@ -41,6 +41,18 @@ public class SecurityConfig {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
+    /**
+     * Orígenes del frontend permitidos por CORS, configurable con
+     * app.cors.origenes-permitidos (lista separada por comas). Los patrones
+     * de IP de LAN (192.168.*.*, 10.*.*.*) son para poder probar la app
+     * desde un celular en la misma red wifi durante el desarrollo; en
+     * producción esta lista debe acotarse al dominio real del frontend,
+     * nunca dejar patrones de IP de LAN ni localhost.
+     */
+    @Value("${app.cors.origenes-permitidos:http://localhost:5173,http://127.0.0.1:5173,"
+            + "http://192.168.*.*:5173,http://10.*.*.*:5173}")
+    private List<String> origenesPermitidos;
+
     /** Codificador de contraseñas (BCrypt): nunca se guardan ni se comparan en texto plano (RNF006). */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -65,11 +77,16 @@ public class SecurityConfig {
         return NimbusJwtDecoder.withSecretKey(jwtSecretKey).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
-    /** Política CORS: solo el frontend de desarrollo (Vite) puede llamar a la API desde el navegador. */
+    /**
+     * Política CORS: solo los orígenes de {@link #origenesPermitidos} pueden
+     * llamar a la API desde el navegador. Se usan patrones
+     * ({@code allowedOriginPatterns}, no {@code allowedOrigins}) para poder
+     * admitir los comodines de IP de LAN.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuracion = new CorsConfiguration();
-        configuracion.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuracion.setAllowedOriginPatterns(origenesPermitidos);
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuracion.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 

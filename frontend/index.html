@@ -1,10 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EF Ganados</title>
+    <script>
+      // Fija el tema (claro/oscuro) antes de que React se monte, para que
+      // no haya un parpadeo con el tema equivocado al cargar la página.
+      // Debe usar la misma clave y lógica que tema/TemaContext.jsx.
+      (function () {
+        try {
+          var guardado = localStorage.getItem('ef-ganados.tema')
+          var prefiereOscuro = window.matchMedia('(prefers-color-scheme: dark)').matches
+          var tema = guardado || (prefiereOscuro ? 'oscuro' : 'claro')
+          document.documentElement.setAttribute('data-tema', tema)
+        } catch {
+          document.documentElement.setAttribute('data-tema', 'claro')
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
