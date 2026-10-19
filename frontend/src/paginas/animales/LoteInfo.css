@@ -1,0 +1,18 @@
+/**
+ * Texto secundario para la descripción del grupo, debajo de la del
+ * subgrupo (ver LoteInfo.jsx).
+ */
+
+.lote-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lote-info-grupo {
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
+
+.lote-info-sin-lote {
+  color: var(--texto-secundario);
+}

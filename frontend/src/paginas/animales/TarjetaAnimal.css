@@ -1,0 +1,54 @@
+/**
+ * Tarjeta de un animal para pantallas chicas (ver Animales.css: solo se
+ * muestra por debajo de 768px).
+ */
+
+.tarjeta-animal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tarjeta-animal-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tarjeta-animal-caravana {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tarjeta-animal-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.tarjeta-animal-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarjeta-animal-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-animal-dato dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}

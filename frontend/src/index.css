@@ -29,6 +29,11 @@
      celular). No es un color "de pantalla": es un token de uso general,
      igual que --sombra. */
   --fondo-superpuesto: rgba(15, 23, 42, 0.5);
+  /* Badge "Apto para venta" (EstadoBadge). Contraste verificado ~7.5:1;
+     igual que --color-primario-*, no se redefine en modo oscuro a
+     propósito: es un color fijo del badge, no del fondo de la pantalla. */
+  --color-exito-fondo: #bbf7d0;
+  --color-exito-texto: #14532d;
   --sombra:
     0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
 }
@@ -74,4 +79,21 @@ body {
 
 button {
   font-family: inherit;
+}
+
+/**
+ * Oculta visualmente un elemento sin quitarlo del árbol de accesibilidad
+ * (lectores de pantalla lo siguen leyendo). Para <caption> visualmente
+ * ocultas y para anuncios aria-live que no necesitan verse.
+ */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

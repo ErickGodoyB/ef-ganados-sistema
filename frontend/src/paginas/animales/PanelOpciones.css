@@ -1,0 +1,122 @@
+/**
+ * Panel de opciones (columnas visibles, filas por página, restablecer).
+ * Ver PanelOpciones.jsx: es un disclosure simple, no un modal.
+ */
+
+.panel-opciones {
+  position: relative;
+}
+
+.panel-opciones-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.panel-opciones-boton:hover {
+  background: var(--superficie-hover);
+}
+
+.panel-opciones-boton:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.panel-opciones-contenido {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 15;
+  width: min(85vw, 18rem);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  box-shadow: var(--sombra);
+}
+
+.panel-opciones-columnas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.panel-opciones-columnas legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.panel-opciones-columna {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.panel-opciones-columna input {
+  width: 20px;
+  height: 20px;
+}
+
+.panel-opciones-filas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-opciones-filas label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.panel-opciones-filas select {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 16px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.panel-opciones-restablecer {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.panel-opciones-restablecer:hover {
+  background: var(--superficie);
+}
+
+.panel-opciones-restablecer:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}

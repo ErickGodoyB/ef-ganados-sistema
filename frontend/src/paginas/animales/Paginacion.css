@@ -1,0 +1,55 @@
+/**
+ * Controles de paginación (ver Paginacion.jsx).
+ */
+
+.paginacion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+  .paginacion {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paginacion-texto {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.paginacion-botones {
+  display: flex;
+  gap: 8px;
+}
+
+.paginacion-botones button {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.paginacion-botones button:hover:not(:disabled) {
+  background: var(--superficie-hover);
+}
+
+.paginacion-botones button:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.paginacion-botones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

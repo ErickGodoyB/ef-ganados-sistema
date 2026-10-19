@@ -1,0 +1,67 @@
+/**
+ * Tabla del listado de animales (>= 768px, ver Animales.css). Si las
+ * columnas visibles no entran en el ancho disponible, el scroll horizontal
+ * queda contenido en "tabla-animales-contenedor", nunca en la página
+ * entera (ver el cinturón de seguridad overflow-x en index.css).
+ */
+
+.tabla-animales-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tabla-animales {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-animales th,
+.tabla-animales td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.tabla-animales thead th {
+  background: var(--superficie-hover);
+}
+
+.tabla-animales tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-animales-orden {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--texto);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tabla-animales-orden:hover {
+  color: var(--color-foco);
+}
+
+.tabla-animales-orden:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* La flecha de orden sale del propio aria-sort del <th>: así nunca puede
+   desincronizarse del estado accesible real. */
+th[aria-sort='ascending'] .tabla-animales-orden::after {
+  content: ' \2191';
+}
+
+th[aria-sort='descending'] .tabla-animales-orden::after {
+  content: ' \2193';
+}
