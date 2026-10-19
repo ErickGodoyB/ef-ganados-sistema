@@ -25,6 +25,10 @@
   --color-primario-texto: #1e3a8a;
   --color-error: #b91c1c;
   --color-error-fondo: #fef2f2;
+  /* Fondo oscurecido detrás de un panel deslizable (ej. la barra lateral en
+     celular). No es un color "de pantalla": es un token de uso general,
+     igual que --sombra. */
+  --fondo-superpuesto: rgba(15, 23, 42, 0.5);
   --sombra:
     0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
 }
@@ -39,6 +43,7 @@
   --color-foco: #60a5fa;
   --color-error: #fca5a5;
   --color-error-fondo: rgba(248, 113, 113, 0.12);
+  --fondo-superpuesto: rgba(0, 0, 0, 0.6);
   --sombra:
     0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
 }

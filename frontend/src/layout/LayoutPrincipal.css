@@ -1,0 +1,84 @@
+/**
+ * Layout de las rutas protegidas. Mobile-first: por defecto (< 1024px) hay
+ * una barra superior con botón de menú, y la barra lateral (BarraLateral)
+ * es un panel deslizable con un fondo oscurecido detrás; desde 1024px la
+ * barra superior se oculta y la barra lateral queda fija a la izquierda
+ * (ver la convención mobile-first en index.css).
+ */
+
+.layout {
+  min-height: 100dvh;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.layout-barra-superior {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 12px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.layout-boton-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--superficie);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.layout-boton-menu:hover {
+  background: var(--superficie-hover);
+}
+
+.layout-boton-menu:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.layout-marca-movil {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--texto);
+}
+
+.layout-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: var(--fondo-superpuesto);
+}
+
+.layout-contenido {
+  padding: 20px 16px 40px;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    display: flex;
+  }
+
+  .layout-barra-superior,
+  .layout-fondo {
+    display: none;
+  }
+
+  .layout-contenido {
+    flex: 1;
+    min-width: 0;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 32px 40px;
+  }
+}
