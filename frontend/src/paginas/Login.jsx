@@ -2,7 +2,10 @@
  * Pantalla de login. Valida los campos antes de llamar al backend, maneja
  * el foco por teclado (foco inicial en "Usuario", Enter en "Usuario" pasa
  * el foco a "Contraseña", Enter en "Contraseña" envía el formulario) y
- * traduce los errores del backend a mensajes en español.
+ * traduce los errores del backend a mensajes en español. La casilla
+ * "Recordarme" decide si la sesión se guarda en localStorage (persiste
+ * entre reinicios del navegador) o en sessionStorage (se pierde al cerrar
+ * la pestaña); ver sesionAlmacenada.js.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -20,6 +23,7 @@ export default function Login() {
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [recordarme, setRecordarme] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [campoConError, setCampoConError] = useState(null) // 'usuario' | 'password' | null
@@ -70,7 +74,7 @@ export default function Login() {
 
     setEnviando(true)
     try {
-      await iniciarSesion(usuario.trim(), password)
+      await iniciarSesion(usuario.trim(), password, recordarme)
       navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ErrorHttp && err.estado === 401) {
@@ -146,6 +150,17 @@ export default function Login() {
               </button>
             </div>
           </div>
+
+          <label className="campo-recordarme" htmlFor="recordarme">
+            <input
+              id="recordarme"
+              type="checkbox"
+              checked={recordarme}
+              onChange={(evento) => setRecordarme(evento.target.checked)}
+              disabled={enviando}
+            />
+            Recordarme en este dispositivo
+          </label>
 
           {error && (
             <p className="login-error" role="alert">

@@ -1,8 +1,8 @@
 /**
  * Proveedor de autenticación: guarda la sesión actual (usuario + token) en
- * memoria y en localStorage (para no perderla al recargar la página), y
- * expone iniciarSesion/cerrarSesion a través del contexto (ver useAuth.js
- * para el hook de acceso).
+ * memoria y en localStorage o sessionStorage (según "Recordarme", ver
+ * sesionAlmacenada.js), y expone iniciarSesion/cerrarSesion a través del
+ * contexto (ver useAuth.js para el hook de acceso).
  */
 
 import { useCallback, useMemo, useState } from 'react'
@@ -21,13 +21,15 @@ export function AuthProvider({ children }) {
   /**
    * Inicia sesión contra el backend (POST /api/auth/login). Si las
    * credenciales son correctas, guarda la sesión (token, usuNombre, tipo)
-   * en memoria y en localStorage. Si falla, propaga el error para que la
-   * pantalla de login decida qué mensaje mostrar.
+   * en memoria y, según "recordarme", en localStorage (persiste entre
+   * reinicios del navegador) o en sessionStorage (se pierde al cerrar la
+   * pestaña). Si falla, propaga el error para que la pantalla de login
+   * decida qué mensaje mostrar.
    */
-  const iniciarSesion = useCallback(async (usuNombre, usuPassword) => {
+  const iniciarSesion = useCallback(async (usuNombre, usuPassword, recordarme) => {
     const datos = await iniciarSesionEnBackend(usuNombre, usuPassword)
     setSesion(datos)
-    guardarSesion(datos)
+    guardarSesion(datos, recordarme)
     return datos
   }, [])
 

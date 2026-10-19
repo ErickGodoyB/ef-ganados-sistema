@@ -168,6 +168,28 @@
   outline-offset: 1px;
 }
 
+.campo-recordarme {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.campo-recordarme input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.campo-recordarme input:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
 .login-error {
   margin: 0;
   padding: 10px 12px;
