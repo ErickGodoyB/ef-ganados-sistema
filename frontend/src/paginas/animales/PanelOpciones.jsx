@@ -2,10 +2,17 @@
  * Botón de "Opciones" (solo el ícono, 44x44px, con aria-label y title
  * porque no tiene texto visible) que abre un panel con las columnas
  * opcionales de la tabla, el selector de filas por página y
- * "Restablecer". Se cierra con Escape o al hacer clic fuera. No es un
- * modal (no atrapa el foco): es un panel de opciones común, como un menú
- * desplegable, a diferencia del panel de navegación de celular (ese sí es
- * un modal, ver LayoutPrincipal).
+ * "Restablecer". Se cierra con Escape o al hacer clic fuera (o tocando el
+ * fondo oscurecido, en celular). No es un modal (no atrapa el foco): es un
+ * panel de opciones común, como un menú desplegable, a diferencia del
+ * panel de navegación de celular (ese sí es un modal, ver LayoutPrincipal).
+ *
+ * Por debajo de 768px el panel se muestra como hoja inferior fija (ver
+ * PanelOpciones.css): como el botón ya no está anclado al borde derecho de
+ * la pantalla (vive junto al buscador, ver Animales.css), un desplegable
+ * con position: absolute podía quedar fuera de la pantalla según dónde
+ * cayera el botón. Desde 768px sigue siendo el desplegable anclado al
+ * botón de siempre.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -76,44 +83,49 @@ export default function PanelOpciones({
       </button>
 
       {abierto && (
-        <div className="panel-opciones-contenido" role="group" aria-label="Opciones del listado">
-          <fieldset className="panel-opciones-columnas">
-            <legend>Columnas visibles</legend>
-            <label className="panel-opciones-columna">
-              <input type="checkbox" checked disabled />
-              Caravana
-            </label>
-            {COLUMNAS_OPCIONALES.map((columna) => (
-              <label key={columna.clave} className="panel-opciones-columna">
-                <input
-                  type="checkbox"
-                  checked={columnasVisibles[columna.clave]}
-                  onChange={(evento) => onCambiarColumnaVisible(columna.clave, evento.target.checked)}
-                />
-                {columna.etiqueta}
+        <>
+          {/* Solo se ve en celular (ver @media en PanelOpciones.css); en
+              escritorio queda oculto y no bloquea nada. */}
+          <div className="panel-opciones-fondo" aria-hidden="true" onClick={() => setAbierto(false)} />
+          <div className="panel-opciones-contenido" role="group" aria-label="Opciones del listado">
+            <fieldset className="panel-opciones-columnas">
+              <legend>Columnas visibles</legend>
+              <label className="panel-opciones-columna">
+                <input type="checkbox" checked disabled />
+                Caravana
               </label>
-            ))}
-          </fieldset>
-
-          <div className="panel-opciones-filas">
-            <label htmlFor="panel-opciones-filas-por-pagina">Filas por página</label>
-            <select
-              id="panel-opciones-filas-por-pagina"
-              value={filasPorPagina}
-              onChange={(evento) => onCambiarFilasPorPagina(Number(evento.target.value))}
-            >
-              {OPCIONES_FILAS_POR_PAGINA.map((opcion) => (
-                <option key={opcion} value={opcion}>
-                  {opcion}
-                </option>
+              {COLUMNAS_OPCIONALES.map((columna) => (
+                <label key={columna.clave} className="panel-opciones-columna">
+                  <input
+                    type="checkbox"
+                    checked={columnasVisibles[columna.clave]}
+                    onChange={(evento) => onCambiarColumnaVisible(columna.clave, evento.target.checked)}
+                  />
+                  {columna.etiqueta}
+                </label>
               ))}
-            </select>
-          </div>
+            </fieldset>
 
-          <button type="button" className="panel-opciones-restablecer" onClick={onRestablecer}>
-            Restablecer
-          </button>
-        </div>
+            <div className="panel-opciones-filas">
+              <label htmlFor="panel-opciones-filas-por-pagina">Filas por página</label>
+              <select
+                id="panel-opciones-filas-por-pagina"
+                value={filasPorPagina}
+                onChange={(evento) => onCambiarFilasPorPagina(Number(evento.target.value))}
+              >
+                {OPCIONES_FILAS_POR_PAGINA.map((opcion) => (
+                  <option key={opcion} value={opcion}>
+                    {opcion}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button type="button" className="panel-opciones-restablecer" onClick={onRestablecer}>
+              Restablecer
+            </button>
+          </div>
+        </>
       )}
     </div>
   )

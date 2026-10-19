@@ -1,6 +1,20 @@
 /**
  * Panel de opciones (columnas visibles, filas por página, restablecer).
- * Ver PanelOpciones.jsx: es un disclosure simple, no un modal.
+ * Ver PanelOpciones.jsx: es un disclosure simple, no un modal (no atrapa
+ * el foco).
+ *
+ * Mobile-first (< 768px): el botón "Opciones" ya no está anclado al borde
+ * derecho de la pantalla (ahora vive junto al buscador, ver Animales.css),
+ * así que un panel "anclado al botón" con position: absolute podía quedar
+ * fuera de la pantalla según dónde cayera el botón en esa fila. Por eso en
+ * celular el panel usa position: fixed, centrado horizontalmente como
+ * hoja inferior, con un fondo oscurecido detrás que lo cierra al tocarlo,
+ * y max-height en dvh con scroll propio para que nunca se corte.
+ *
+ * Desde 768px vuelve a ser el desplegable anclado al botón, pero centrado
+ * bajo él (no pegado a un borde) y con un ancho máximo relativo al
+ * viewport, para no salirse de la pantalla sin importar dónde quede el
+ * botón en esa fila.
  */
 
 .panel-opciones {
@@ -30,20 +44,60 @@
   outline-offset: 2px;
 }
 
+/* Fondo oscurecido: solo existe visualmente en celular (ver @media de
+   abajo). Mismo token --fondo-superpuesto que usan LayoutPrincipal y
+   Modal para este mismo propósito. */
+.panel-opciones-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: var(--fondo-superpuesto);
+}
+
 .panel-opciones-contenido {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  z-index: 15;
-  width: min(85vw, 18rem);
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 45;
+  width: calc(100vw - 2rem);
+  max-width: 22rem;
+  /* 100dvh menos los 16px de margen de arriba y de abajo: nunca más alto
+     que el espacio real disponible, sin importar el navegador ni si está
+     en horizontal. */
+  max-height: calc(100dvh - 2 * 16px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 16px;
   background: var(--superficie);
   border: 1px solid var(--borde);
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: var(--sombra);
+}
+
+@media (min-width: 768px) {
+  .panel-opciones-fondo {
+    display: none;
+  }
+
+  .panel-opciones-contenido {
+    position: absolute;
+    left: 50%;
+    bottom: auto;
+    top: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 20rem;
+    /* Centrado bajo el botón en vez de anclado a un borde: el botón ya no
+       está pegado al borde derecho de la pantalla (vive junto al
+       buscador), así que no hay un lado "seguro" fijo para anclarlo. Esto
+       reparte el riesgo de desborde entre los dos lados en vez de
+       concentrarlo en uno. */
+    max-width: calc(100vw - 2rem);
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .panel-opciones-columnas {
