@@ -1,0 +1,46 @@
+/**
+ * Modal genérico (ver Modal.jsx). Mobile-first: por defecto ocupa casi
+ * toda la pantalla, como una hoja que sube desde abajo; desde 768px queda
+ * centrado con un ancho máximo fijo, como un diálogo de escritorio común.
+ */
+
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--fondo-superpuesto);
+}
+
+.modal-panel {
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--superficie);
+  border-radius: 16px 16px 0 0;
+  box-shadow: var(--sombra);
+  padding: 20px 16px;
+}
+
+@media (min-width: 768px) {
+  .modal-fondo {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .modal-panel {
+    width: min(100%, 32rem);
+    max-height: 85dvh;
+    border-radius: 16px;
+    padding: 28px;
+  }
+}
+
+.modal-titulo {
+  margin: 0 0 16px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--texto);
+}

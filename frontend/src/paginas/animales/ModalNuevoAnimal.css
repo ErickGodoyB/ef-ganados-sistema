@@ -1,0 +1,144 @@
+/**
+ * Formulario de "Nuevo animal" (ver ModalNuevoAnimal.jsx), dentro del
+ * Modal genérico. Mismas variables de color que el resto de la app; los
+ * estilos de campo se redeclaran acá (no se importan de Login.css) para
+ * que este componente no dependa de otra pantalla.
+ */
+
+.modal-nuevo-animal-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-nuevo-animal-formulario .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-nuevo-animal-formulario .campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.modal-nuevo-animal-formulario .campo input,
+.modal-nuevo-animal-formulario .campo select {
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 16px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.modal-nuevo-animal-formulario .campo input:focus-visible,
+.modal-nuevo-animal-formulario .campo select:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.modal-nuevo-animal-formulario .campo input[aria-invalid='true'],
+.modal-nuevo-animal-formulario .campo select[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.campo-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
+.modal-nuevo-animal-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.modal-nuevo-animal-estado button {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-nuevo-animal-estado button:hover {
+  background: var(--superficie-hover);
+}
+
+.modal-nuevo-animal-estado button:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.modal-nuevo-animal-error-general {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--color-error);
+  background: var(--color-error-fondo);
+  border: 1px solid var(--color-error);
+  border-radius: 8px;
+}
+
+.modal-nuevo-animal-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (min-width: 480px) {
+  .modal-nuevo-animal-acciones {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+.modal-nuevo-animal-acciones button {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.boton-primario {
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  border: none;
+}
+
+.boton-primario:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.boton-secundario {
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+}
+
+.boton-secundario:hover:not(:disabled) {
+  background: var(--superficie-hover);
+}
+
+.modal-nuevo-animal-acciones button:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.modal-nuevo-animal-acciones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}

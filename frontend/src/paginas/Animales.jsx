@@ -3,13 +3,16 @@
  * (GET /api/animales/resumen) y permite buscar por caravana, filtrar por
  * lote y por estado, ordenar por cualquier columna, paginar en el cliente,
  * y elegir qué columnas opcionales mostrar (preferencia que se recuerda en
- * localStorage, ver usePreferenciasListadoAnimales). Todavía no incluye el
- * alta de animales ("+ Nuevo animal").
+ * localStorage, ver usePreferenciasListadoAnimales). El botón "+ Nuevo
+ * animal" (RF001) abre ModalNuevoAnimal; al guardar, se recarga el listado
+ * sin perder búsqueda, filtros, orden ni opciones (son estados propios de
+ * esta pantalla, ajenos a la recarga) y se muestra un aviso breve.
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { OPCIONES_ORDEN_MOVIL } from './animales/columnas'
 import { filtrarYOrdenarAnimales, obtenerLotesDisponibles } from './animales/listadoAnimales'
+import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
 import Paginacion from './animales/Paginacion'
 import PanelOpciones from './animales/PanelOpciones'
 import TablaAnimales from './animales/TablaAnimales'
@@ -34,6 +37,11 @@ export default function Animales() {
   const [estado, setEstado] = useState('todos')
   const [orden, setOrden] = useState({ campo: 'aniCaravana', direccion: 'asc' })
   const [pagina, setPagina] = useState(1)
+
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [aviso, setAviso] = useState('')
+  const refBotonNuevoAnimal = useRef(null)
+  const refTemporizadorAviso = useRef(null)
 
   // Volver a la página 1 cuando cambia la búsqueda, un filtro o el orden
   // (una página 5 con el filtro anterior puede no existir más). Se ajusta
@@ -82,6 +90,19 @@ export default function Animales() {
   function alCambiarOrdenMovil(valor) {
     const [campo, direccion] = valor.split(':')
     setOrden({ campo, direccion })
+  }
+
+  /** Muestra un aviso breve (ej. tras guardar un animal) y lo retira solo a los pocos segundos. */
+  function mostrarAviso(mensaje) {
+    setAviso(mensaje)
+    window.clearTimeout(refTemporizadorAviso.current)
+    refTemporizadorAviso.current = window.setTimeout(() => setAviso(''), 4000)
+  }
+
+  /** Tras guardar un animal nuevo: recarga el listado (los demás estados de la pantalla no se tocan) y avisa. */
+  function alGuardarAnimal(animalCreado) {
+    recargar()
+    mostrarAviso(`Animal ${animalCreado.aniCaravana} registrado`)
   }
 
   const sinAnimales = !cargando && !error && animales.length === 0
@@ -136,6 +157,15 @@ export default function Animales() {
           onCambiarFilasPorPagina={cambiarFilasPorPagina}
           onRestablecer={restablecer}
         />
+
+        <button
+          type="button"
+          ref={refBotonNuevoAnimal}
+          className="animales-boton-nuevo"
+          onClick={() => setModalAbierto(true)}
+        >
+          + Nuevo animal
+        </button>
       </div>
 
       <div className="campo-filtro animales-orden-movil">
@@ -156,6 +186,12 @@ export default function Animales() {
       {!cargando && !error && (
         <p className="visualmente-oculto" aria-live="polite">
           {resultado.length === 1 ? '1 animal encontrado' : `${resultado.length} animales encontrados`}
+        </p>
+      )}
+
+      {aviso && (
+        <p className="animales-aviso" role="status" aria-live="polite">
+          {aviso}
         </p>
       )}
 
@@ -210,6 +246,14 @@ export default function Animales() {
             onCambiarPagina={setPagina}
           />
         </>
+      )}
+
+      {modalAbierto && (
+        <ModalNuevoAnimal
+          onCerrar={() => setModalAbierto(false)}
+          onGuardado={alGuardarAnimal}
+          refDisparador={refBotonNuevoAnimal}
+        />
       )}
     </div>
   )

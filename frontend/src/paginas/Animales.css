@@ -75,6 +75,44 @@
   }
 }
 
+.animales-boton-nuevo {
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .animales-boton-nuevo {
+    margin-left: auto;
+  }
+}
+
+.animales-boton-nuevo:hover {
+  filter: brightness(0.96);
+}
+
+.animales-boton-nuevo:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.animales-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: 8px;
+}
+
 .animales-orden-movil {
   display: flex;
 }
