@@ -1,5 +1,6 @@
 package com.efganados.sistemabovino.controller;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -117,6 +118,16 @@ class AnimalControllerTest extends AutenticacionTestSupport {
         animal.setAniFechaIngreso(LocalDate.of(2026, 1, 1));
         animal.setAniPesoInicial(pesoInicial);
         return animalRepository.save(animal);
+    }
+
+    /** Registra un pesaje de prueba para el animal, directamente por repositorio. */
+    private void registrarPesaje(Animal animal, Persona responsable, double peso, LocalDate fecha) {
+        Pesajes pesaje = new Pesajes();
+        pesaje.setAnimal(animal);
+        pesaje.setResponsable(responsable);
+        pesaje.setPesaFecha(fecha);
+        pesaje.setPesaPeso(peso);
+        pesajesRepository.save(pesaje);
     }
 
     @Test
@@ -272,5 +283,100 @@ class AnimalControllerTest extends AutenticacionTestSupport {
         mockMvc.perform(get("/api/animales")
                         .header("Authorization", token))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("El resumen de animales sin token devuelve 401")
+    void resumenSinTokenDevuelve401() throws Exception {
+        mockMvc.perform(get("/api/animales/resumen"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("El resumen de un animal sin pesajes usa el peso inicial, con GMD nula y no apto para venta")
+    void resumenDeAnimalSinPesajesUsaPesoInicialYGmdNula() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen1");
+        Raza raza = crearRaza("Raza-Resumen-SinPesajes", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-SinPesajes");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-001", 200.0);
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].aniId").value(animal.getAniId()))
+                .andExpect(jsonPath("$[0].aniCaravana").value("CAR-RES-001"))
+                .andExpect(jsonPath("$[0].razaDescripcion").value("Raza-Resumen-SinPesajes"))
+                .andExpect(jsonPath("$[0].subGrupoDescripcion").value("SubGrupo-Resumen-SinPesajes"))
+                .andExpect(jsonPath("$[0].pesoActual").value(200.0))
+                .andExpect(jsonPath("$[0].gmd").value(nullValue()))
+                .andExpect(jsonPath("$[0].aptoVenta").value(false));
+    }
+
+    @Test
+    @DisplayName("El resumen de un animal con dos pesajes usa el más reciente como peso actual y calcula la GMD")
+    void resumenDeAnimalConDosPesajesUsaElMasRecienteYCalculaGmd() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen2");
+        Persona responsable = crearPersona("Responsable-Resumen2");
+        Raza raza = crearRaza("Raza-Resumen-DosPesajes", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-DosPesajes");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-002", 200.0);
+        registrarPesaje(animal, responsable, 215.0, LocalDate.of(2026, 8, 15));
+        registrarPesaje(animal, responsable, 245.0, LocalDate.of(2026, 9, 14));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoActual").value(245.0))
+                .andExpect(jsonPath("$[0].gmd").value(1.0));
+    }
+
+    @Test
+    @DisplayName("El resumen marca apto para venta cuando el peso es exactamente igual al objetivo de la raza")
+    void resumenConPesoExactamenteIgualAlObjetivoEsAptoVenta() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen3");
+        Persona responsable = crearPersona("Responsable-Resumen3");
+        Raza raza = crearRaza("Raza-Resumen-PesoIgual", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-PesoIgual");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-003", 400.0);
+        registrarPesaje(animal, responsable, 450.0, LocalDate.of(2026, 3, 1));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoActual").value(450.0))
+                .andExpect(jsonPath("$[0].aptoVenta").value(true));
+    }
+
+    @Test
+    @DisplayName("El resumen marca apto para venta cuando el pesaje está por encima del objetivo de la raza")
+    void resumenConPesajePorEncimaDelObjetivoEsAptoVenta() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen4");
+        Persona responsable = crearPersona("Responsable-Resumen4");
+        Raza raza = crearRaza("Raza-Resumen-PorEncima", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-PorEncima");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-004", 400.0);
+        registrarPesaje(animal, responsable, 460.0, LocalDate.of(2026, 3, 1));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoActual").value(460.0))
+                .andExpect(jsonPath("$[0].aptoVenta").value(true));
+    }
+
+    @Test
+    @DisplayName("El resumen de un animal sin subgrupo no rompe y deja subGrupoDescripcion y grupoDescripcion en null")
+    void resumenDeAnimalSinSubGrupoDejaDescripcionesEnNull() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen5");
+        Raza raza = crearRaza("Raza-Resumen-SinSubGrupo", 450.0);
+        Animal animal = crearAnimal(duenio, raza, null, "CAR-RES-005", 200.0);
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].aniId").value(animal.getAniId()))
+                .andExpect(jsonPath("$[0].subGrupoDescripcion").value(nullValue()))
+                .andExpect(jsonPath("$[0].grupoDescripcion").value(nullValue()))
+                .andExpect(jsonPath("$[0].pesoActual").value(200.0));
     }
 }

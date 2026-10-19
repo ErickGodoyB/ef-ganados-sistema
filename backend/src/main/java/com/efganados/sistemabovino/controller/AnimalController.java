@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.efganados.sistemabovino.model.Animal;
+import com.efganados.sistemabovino.model.Grupo;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
 import com.efganados.sistemabovino.model.Raza;
@@ -57,6 +58,20 @@ public class AnimalController {
     @GetMapping
     public List<Animal> listar() {
         return animalRepository.findAll();
+    }
+
+    /**
+     * Devuelve el resumen de cada animal para el listado (RF010): identifi-
+     * cación, raza, lote, los indicadores derivados de los pesajes (peso
+     * actual, GMD, aptitud para venta) y las fechas de ingreso/egreso. La
+     * ruta "/resumen" no choca con "/{id}" porque Spring prioriza los
+     * segmentos literales sobre las variables de ruta al resolver el path.
+     */
+    @GetMapping("/resumen")
+    public List<AnimalResumen> resumen() {
+        return animalRepository.findAll().stream()
+                .map(this::aResumen)
+                .toList();
     }
 
     /** Busca un animal por su ID; 404 si no existe. */
@@ -164,6 +179,29 @@ public class AnimalController {
     }
 
     /**
+     * Arma el resumen de un animal usando los métodos ya existentes de
+     * {@code AnimalService} (pesoActual, calcularGMD, estaAptoParaVenta):
+     * no reimplementa ninguna regla de negocio, solo junta sus resultados
+     * con los datos del animal, su raza y su lote (si tiene subgrupo).
+     */
+    private AnimalResumen aResumen(Animal animal) {
+        SubGrupo subGrupo = animal.getSubGrupo();
+        Grupo grupo = subGrupo != null ? subGrupo.getGrupo() : null;
+
+        return new AnimalResumen(
+                animal.getAniId(),
+                animal.getAniCaravana(),
+                animal.getRaza().getRzDescripcion(),
+                subGrupo != null ? subGrupo.getSbDescripcion() : null,
+                grupo != null ? grupo.getGrpDescripcion() : null,
+                animalService.pesoActual(animal),
+                animalService.calcularGMD(animal),
+                animalService.estaAptoParaVenta(animal),
+                animal.getAniFechaIngreso(),
+                animal.getAniFechaEgreso());
+    }
+
+    /**
      * Elimina un animal por su ID. 404 si no existe; 409 si tiene pesajes
      * registrados (no se puede eliminar un animal con historial de pesajes).
      */
@@ -223,5 +261,14 @@ public class AnimalController {
      */
     public record AnimalRequest(Long duenioId, Long razaId, Long subGrupoId, String aniCaravana,
             LocalDate aniFechaIngreso, Double aniPesoInicial, LocalDate aniFechaEgreso, String aniObservacion) {
+    }
+
+    /**
+     * Resumen de un animal para el listado (RF010). Si el animal no tiene
+     * subgrupo asignado, subGrupoDescripcion y grupoDescripcion van en null.
+     */
+    public record AnimalResumen(Long aniId, String aniCaravana, String razaDescripcion, String subGrupoDescripcion,
+            String grupoDescripcion, double pesoActual, Double gmd, boolean aptoVenta, LocalDate aniFechaIngreso,
+            LocalDate aniFechaEgreso) {
     }
 }
