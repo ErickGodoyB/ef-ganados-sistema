@@ -1,30 +1,30 @@
 /**
- * Formulario de "Nuevo animal" (ver ModalNuevoAnimal.jsx), dentro del
- * Modal genérico. Mismas variables de color que el resto de la app; los
- * estilos de campo se redeclaran acá (no se importan de Login.css) para
- * que este componente no dependa de otra pantalla.
+ * Formulario de animal (ver FormularioAnimal.jsx). Mismas variables de
+ * color que el resto de la app; los estilos de campo se redeclaran acá (no
+ * se importan de Login.css ni de Animales.css) para que este componente
+ * sea independiente de la pantalla que lo use.
  */
 
-.modal-nuevo-animal-formulario {
+.formulario-animal {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.modal-nuevo-animal-formulario .campo {
+.formulario-animal .campo {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.modal-nuevo-animal-formulario .campo label {
+.formulario-animal .campo label {
   font-size: 14px;
   font-weight: 600;
   color: var(--texto);
 }
 
-.modal-nuevo-animal-formulario .campo input,
-.modal-nuevo-animal-formulario .campo select {
+.formulario-animal .campo input,
+.formulario-animal .campo select {
   min-height: 44px;
   padding: 10px 12px;
   font-size: 16px;
@@ -34,15 +34,31 @@
   border-radius: 8px;
 }
 
-.modal-nuevo-animal-formulario .campo input:focus-visible,
-.modal-nuevo-animal-formulario .campo select:focus-visible {
+.formulario-animal .campo input:focus-visible,
+.formulario-animal .campo select:focus-visible {
   outline: 2px solid var(--color-foco);
   outline-offset: 1px;
 }
 
-.modal-nuevo-animal-formulario .campo input[aria-invalid='true'],
-.modal-nuevo-animal-formulario .campo select[aria-invalid='true'] {
+.formulario-animal .campo input[aria-invalid='true'],
+.formulario-animal .campo select[aria-invalid='true'] {
   border-color: var(--color-error);
+}
+
+/* Fila select + botón "+" de alta rápida (ver AltaRapidaRaza/AltaRapidaLote).
+   flex-wrap: cuando el mini formulario se abre, se fuerza a su propia
+   línea con flex: 1 1 100% (en AltaRapida.css) en vez de angostarse junto
+   al select. */
+.campo-con-alta-rapida {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campo-con-alta-rapida select {
+  flex: 1;
+  min-width: 0;
 }
 
 .campo-error {
@@ -51,14 +67,14 @@
   color: var(--color-error);
 }
 
-.modal-nuevo-animal-estado {
+.formulario-animal-estado {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
 }
 
-.modal-nuevo-animal-estado button {
+.formulario-animal-estado button {
   min-height: 44px;
   padding: 0 16px;
   font-size: 14px;
@@ -70,16 +86,16 @@
   cursor: pointer;
 }
 
-.modal-nuevo-animal-estado button:hover {
+.formulario-animal-estado button:hover {
   background: var(--superficie-hover);
 }
 
-.modal-nuevo-animal-estado button:focus-visible {
+.formulario-animal-estado button:focus-visible {
   outline: 2px solid var(--color-foco);
   outline-offset: 2px;
 }
 
-.modal-nuevo-animal-error-general {
+.formulario-animal-error-general {
   margin: 0;
   padding: 10px 12px;
   font-size: 14px;
@@ -89,7 +105,7 @@
   border-radius: 8px;
 }
 
-.modal-nuevo-animal-acciones {
+.formulario-animal-acciones {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -97,14 +113,14 @@
 }
 
 @media (min-width: 480px) {
-  .modal-nuevo-animal-acciones {
+  .formulario-animal-acciones {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
 }
 
-.modal-nuevo-animal-acciones button {
+.formulario-animal-acciones button {
   min-height: 44px;
   padding: 0 16px;
   font-size: 14px;
@@ -133,12 +149,12 @@
   background: var(--superficie-hover);
 }
 
-.modal-nuevo-animal-acciones button:focus-visible {
+.formulario-animal-acciones button:focus-visible {
   outline: 2px solid var(--color-foco);
   outline-offset: 2px;
 }
 
-.modal-nuevo-animal-acciones button:disabled {
+.formulario-animal-acciones button:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }

@@ -1,0 +1,89 @@
+/**
+ * Estilos compartidos entre AltaRapidaRaza y AltaRapidaLote: el botón "+"
+ * junto al select, y el mini formulario que despliegan dentro del mismo
+ * formulario (nunca en un modal aparte). Reutilizan .campo y .campo-error
+ * de FormularioAnimal.css, que es quien siempre los contiene.
+ */
+
+.alta-rapida-boton {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.alta-rapida-boton:hover {
+  filter: brightness(0.96);
+}
+
+.alta-rapida-boton:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.alta-rapida-mini-formulario {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 12px;
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.alta-rapida-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.alta-rapida-acciones button {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.alta-rapida-boton-guardar {
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  border: none;
+}
+
+.alta-rapida-boton-guardar:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.alta-rapida-boton-cancelar {
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+}
+
+.alta-rapida-boton-cancelar:hover:not(:disabled) {
+  background: var(--superficie-hover);
+}
+
+.alta-rapida-acciones button:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.alta-rapida-acciones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}

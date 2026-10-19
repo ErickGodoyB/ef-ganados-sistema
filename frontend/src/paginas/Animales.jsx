@@ -116,14 +116,33 @@ export default function Animales() {
       </div>
 
       <div className="animales-controles">
-        <div className="campo-busqueda">
-          <label htmlFor="animales-busqueda">Buscar por caravana</label>
-          <input
-            id="animales-busqueda"
-            type="search"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Ej. CAR-001"
+        <div className="animales-busqueda-fila">
+          <div className="campo-busqueda">
+            <label htmlFor="animales-busqueda">Buscar por caravana</label>
+            <input
+              id="animales-busqueda"
+              type="search"
+              value={busqueda}
+              onChange={(evento) => setBusqueda(evento.target.value)}
+              placeholder="Ej. CAR-001"
+            />
+          </div>
+
+          <button
+            type="button"
+            ref={refBotonNuevoAnimal}
+            className="animales-boton-nuevo"
+            onClick={() => setModalAbierto(true)}
+          >
+            + Nuevo animal
+          </button>
+
+          <PanelOpciones
+            columnasVisibles={columnasVisibles}
+            onCambiarColumnaVisible={cambiarColumnaVisible}
+            filasPorPagina={filasPorPagina}
+            onCambiarFilasPorPagina={cambiarFilasPorPagina}
+            onRestablecer={restablecer}
           />
         </div>
 
@@ -149,23 +168,6 @@ export default function Animales() {
             ))}
           </select>
         </div>
-
-        <PanelOpciones
-          columnasVisibles={columnasVisibles}
-          onCambiarColumnaVisible={cambiarColumnaVisible}
-          filasPorPagina={filasPorPagina}
-          onCambiarFilasPorPagina={cambiarFilasPorPagina}
-          onRestablecer={restablecer}
-        />
-
-        <button
-          type="button"
-          ref={refBotonNuevoAnimal}
-          className="animales-boton-nuevo"
-          onClick={() => setModalAbierto(true)}
-        >
-          + Nuevo animal
-        </button>
       </div>
 
       <div className="campo-filtro animales-orden-movil">

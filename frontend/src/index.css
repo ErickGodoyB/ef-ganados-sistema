@@ -34,6 +34,14 @@
      propósito: es un color fijo del badge, no del fondo de la pantalla. */
   --color-exito-fondo: #bbf7d0;
   --color-exito-texto: #14532d;
+  /* Botón "+ Nuevo animal": verde claro con texto verde oscuro, mismo par
+     que --color-exito-* (contraste verificado ~7.5:1), bajo su propio
+     nombre porque semánticamente es un botón de acción, no un badge de
+     éxito. Se declara también en el tema oscuro (abajo) aunque el valor
+     sea igual, a propósito: es un color fijo del botón, no del fondo de
+     la pantalla. */
+  --color-boton-nuevo-fondo: #bbf7d0;
+  --color-boton-nuevo-texto: #14532d;
   --sombra:
     0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
 }
@@ -49,6 +57,8 @@
   --color-error: #fca5a5;
   --color-error-fondo: rgba(248, 113, 113, 0.12);
   --fondo-superpuesto: rgba(0, 0, 0, 0.6);
+  --color-boton-nuevo-fondo: #bbf7d0;
+  --color-boton-nuevo-texto: #14532d;
   --sombra:
     0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
 }

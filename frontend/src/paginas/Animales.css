@@ -75,23 +75,39 @@
   }
 }
 
+/* Buscador + "+ Nuevo animal" + Opciones van juntos, en la misma fila
+   lógica. flex-wrap: en celular, si no entran uno al lado del otro, el
+   botón (y luego Opciones) bajan de línea solos en vez de angostar
+   demasiado el campo de búsqueda. */
+.animales-busqueda-fila {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.animales-busqueda-fila .campo-busqueda {
+  flex: 1 1 200px;
+}
+
+@media (min-width: 768px) {
+  .animales-busqueda-fila {
+    flex: 1 1 auto;
+  }
+}
+
 .animales-boton-nuevo {
+  flex-shrink: 0;
   min-height: 44px;
   padding: 0 18px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-primario-texto);
-  background: var(--color-primario-fondo);
+  color: var(--color-boton-nuevo-texto);
+  background: var(--color-boton-nuevo-fondo);
   border: none;
   border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  .animales-boton-nuevo {
-    margin-left: auto;
-  }
 }
 
 .animales-boton-nuevo:hover {

@@ -8,13 +8,12 @@
 }
 
 .panel-opciones-boton {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0 14px;
-  font-size: 14px;
-  font-weight: 600;
+  justify-content: center;
   color: var(--texto);
   background: var(--superficie);
   border: 1px solid var(--borde);

@@ -1,9 +1,11 @@
 /**
- * Botón "Opciones" que abre un panel con las columnas opcionales de la
- * tabla, el selector de filas por página y "Restablecer". Se cierra con
- * Escape o al hacer clic fuera. No es un modal (no atrapa el foco): es un
- * panel de opciones común, como un menú desplegable, a diferencia del
- * panel de navegación de celular (ese sí es un modal, ver LayoutPrincipal).
+ * Botón de "Opciones" (solo el ícono, 44x44px, con aria-label y title
+ * porque no tiene texto visible) que abre un panel con las columnas
+ * opcionales de la tabla, el selector de filas por página y
+ * "Restablecer". Se cierra con Escape o al hacer clic fuera. No es un
+ * modal (no atrapa el foco): es un panel de opciones común, como un menú
+ * desplegable, a diferencia del panel de navegación de celular (ese sí es
+ * un modal, ver LayoutPrincipal).
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -54,6 +56,8 @@ export default function PanelOpciones({
         className="panel-opciones-boton"
         aria-haspopup="true"
         aria-expanded={abierto}
+        aria-label="Opciones del listado"
+        title="Opciones"
         onClick={() => setAbierto((valor) => !valor)}
       >
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
@@ -69,7 +73,6 @@ export default function PanelOpciones({
             <line x1="17" y1="7" x2="19.1" y2="4.9" />
           </g>
         </svg>
-        Opciones
       </button>
 
       {abierto && (
