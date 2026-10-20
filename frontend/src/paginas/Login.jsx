@@ -92,29 +92,24 @@ export default function Login() {
 
   return (
     <div className="login-pantalla">
-      <div className="login-panel-marca">
-        <div className="login-panel-marca-contenido">
-          {!logoFallo ? (
-            <img src={MARCA.rutaLogo} alt="" className="login-panel-logo" onError={() => setLogoFallo(true)} />
-          ) : (
-            <div className="login-panel-logo login-panel-logo--provisional" aria-hidden="true">
-              {MARCA.iniciales}
-            </div>
-          )}
-          <div className="login-panel-marca-texto">
-            <h1 className="login-panel-titulo">{MARCA.nombre}</h1>
-            <p className="login-panel-subtitulo">{MARCA.subtitulo}</p>
-            <p className="login-panel-frase">Controlá el peso y la evolución de tu rodeo, todo en un solo lugar.</p>
-          </div>
-        </div>
+      <div className="login-boton-tema">
+        <BotonTema />
       </div>
 
-      <div className="login-panel-formulario">
-        <div className="login-boton-tema">
-          <BotonTema />
-        </div>
-
+      <div className="login-marco">
         <div className="login-tarjeta">
+          <div className="login-encabezado">
+            {!logoFallo ? (
+              <img src={MARCA.rutaLogo} alt="" className="login-logo" onError={() => setLogoFallo(true)} />
+            ) : (
+              <div className="login-logo login-logo--provisional" aria-hidden="true">
+                {MARCA.iniciales}
+              </div>
+            )}
+            <h1 className="login-titulo">{MARCA.nombre}</h1>
+            <p className="login-subtitulo">{MARCA.subtitulo}</p>
+          </div>
+
           <form className="login-formulario" onSubmit={alEnviar} noValidate>
             <div className="campo">
               <label htmlFor="usuario">Usuario</label>

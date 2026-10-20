@@ -3,92 +3,20 @@
  * index.css, así que el modo oscuro cambia todo desde un solo lugar. Los
  * botones e inputs del formulario salen de src/estilos/base.css (.boton-
  * primario, .campo input); acá solo queda lo propio de esta pantalla: el
- * panel de marca y el layout de dos columnas.
+ * marco con la ilustración y la tarjeta centrada encima.
  *
- * Mobile-first: la base de acá abajo es la de celular, con el panel de
- * marca como una franja superior compacta. Desde 768px, "login-pantalla"
- * pasa a fila y el panel de marca ocupa una columna completa a la
- * izquierda (ver el @media al final de cada bloque).
+ * Mobile-first: la base de acá abajo es la de celular (margen de 0.75rem);
+ * el único @media ajusta el margen y los tamaños de logo/título para
+ * pantallas más grandes.
  */
 
 .login-pantalla {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  padding: 0.75rem;
   background: var(--fondo);
-}
-
-/* Panel de marca: siempre verde oscuro fijo (como la barra lateral), sin
-   importar el tema claro/oscuro de la página. Si existe /fondo-login.jpg
-   se usa de fondo con una capa verde semitransparente encima (mismo color
-   que --color-sidebar-fondo) para que el texto crema tenga contraste
-   aunque la foto tenga zonas claras; si el archivo no existe, el
-   background-color de abajo queda como respaldo y se ve igual. */
-.login-panel-marca {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 20px 16px;
-  background-color: var(--color-sidebar-fondo);
-  background-image: linear-gradient(rgba(24, 61, 9, 0.85), rgba(24, 61, 9, 0.85)), url('/fondo-login.jpg');
-  background-size: cover;
-  background-position: center;
-}
-
-.login-panel-marca-contenido {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.login-panel-logo {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  object-fit: cover;
-  border-radius: 50%;
-  background: var(--fondo);
-}
-
-.login-panel-logo--provisional {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-primario-texto);
-  background: var(--color-primario-fondo);
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.login-panel-marca-texto {
-  min-width: 0;
-}
-
-.login-panel-titulo {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-sidebar-texto);
-}
-
-.login-panel-subtitulo {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--color-sidebar-texto-secundario);
-}
-
-/* Oculta la frase de bienvenida en la franja compacta de celular: no hay
-   lugar para ella sin que la franja deje de ser compacta. */
-.login-panel-frase {
-  display: none;
-}
-
-.login-panel-formulario {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
 }
 
 .login-boton-tema {
@@ -96,11 +24,38 @@
   justify-content: flex-end;
 }
 
+/* Marco: siempre verde oscuro fijo de marca (como la barra lateral), sin
+   importar el tema claro/oscuro de la página. Si existe /fondo-login.jpg
+   se usa de fondo con una capa verde semitransparente encima (mismo color
+   que --color-sidebar-fondo, más liviana que un overlay sólido para que
+   se note la ilustración) para que la tarjeta crema siga contrastando
+   aunque la foto tenga zonas claras; si el archivo no existe, el
+   background-color de abajo queda como respaldo y se ve igual.
+   min-height: 0 + overflow-y: auto es lo que permite que, si el alto
+   disponible no alcanza para la tarjeta completa (celular en horizontal),
+   el marco scrollee en vez de cortarla. */
+.login-marco {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px 16px;
+  border-radius: var(--radio-lg);
+  background-color: var(--color-sidebar-fondo);
+  background-image: linear-gradient(rgba(24, 61, 9, 0.72), rgba(24, 61, 9, 0.72)), url('/fondo-login.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
 .login-tarjeta {
-  /* width: min(...) la mantiene fluida pero nunca más ancha que 24rem;
-     margin: auto la centra (horizontal y vertical) en el espacio que queda
-     debajo de la fila del botón de tema, sin superponerse con él ni
-     necesitar position: absolute. */
+  /* width: min(...) la mantiene fluida pero nunca más ancha que 24rem.
+     margin: auto, dentro de un contenedor flex en columna, centra la
+     tarjeta (horizontal y vertical) cuando sobra espacio; cuando no
+     alcanza, los márgenes automáticos simplemente no se vuelven
+     negativos y la tarjeta arranca arriba, dejando que el overflow-y del
+     marco se encargue del resto en vez de cortarla por arriba (lo que
+     pasaría con un align-items: center común). */
   width: min(100%, 24rem);
   margin: auto;
   background: var(--superficie);
@@ -112,58 +67,63 @@
 
 @media (min-width: 768px) {
   .login-pantalla {
-    flex-direction: row;
-  }
-
-  .login-panel-marca {
-    flex: 0 0 42%;
-    min-height: 100dvh;
-    padding: 48px;
-  }
-
-  .login-panel-marca-contenido {
-    flex-direction: column;
-    text-align: center;
-    max-width: 320px;
-    margin: 0 auto;
-  }
-
-  .login-panel-logo {
-    width: 96px;
-    height: 96px;
-  }
-
-  .login-panel-logo--provisional {
-    font-size: 32px;
-  }
-
-  .login-panel-marca-texto {
-    width: 100%;
-  }
-
-  .login-panel-titulo {
-    font-size: 26px;
-  }
-
-  .login-panel-subtitulo {
-    font-size: 15px;
-  }
-
-  .login-panel-frase {
-    display: block;
-    margin: 20px 0 0;
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--color-sidebar-texto);
-  }
-
-  .login-panel-formulario {
-    flex: 1;
-    padding: 24px;
+    gap: 16px;
+    padding: 1.5rem;
   }
 
   .login-tarjeta {
     padding: 40px;
+  }
+}
+
+.login-encabezado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--fondo);
+  margin-bottom: 12px;
+}
+
+.login-logo--provisional {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.login-titulo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.login-subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+@media (min-width: 768px) {
+  .login-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .login-titulo {
+    font-size: 24px;
   }
 }
 

@@ -220,7 +220,14 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] Sección "Configuración" (catálogos de razas con peso objetivo, grupos y lotes; usuarios; datos de la empresa; preferencias)
 - [ ] Borrar los animales TEST-xx de la base cuando ya no hagan falta
 - [ ] Acordar el modo de dar las pruebas de Thunder Client: siempre método + URL completa + Auth + cuerpo (pedido del usuario)
-- [ ] Rediseño visual con la paleta de marca: tokens de color, tipografía, íconos, barra lateral, tarjetas, tablas, botones y login (sesión 1); pantalla de Inicio con resumen y alertas de animales aptos (sesión 2)
+- [x] Rediseño visual con la paleta de marca (sesión 1, 2026-10-19): tokens de color, Inter, íconos de lucide-react, `estilos/base.css`, barra lateral, tarjetas, tablas, botones y login; contrastes verificados con script WCAG
+- [ ] Ajuste del login: tarjeta centrada sobre la ilustración dentro de un marco crema (en lugar de los dos paneles)
+- [ ] Pantalla de Inicio con resumen y alertas de animales aptos (sesión 2 del rediseño; cubre el módulo de Alertas, RF005)
+- [ ] Clave de desarrollo del admin pasa a `admin` (cambiarla vía `PUT /api/usuarios/{id}` porque `app.admin.password` solo aplica con la tabla vacía; actualizar `application.properties`, `scripts/cargar_animales_prueba.ps1` y CASOS). Solo para desarrollo: antes de instalar para el cliente real, poner una clave fuerte.
+- [ ] Pantalla "Mi cuenta" (cambiar la contraseña del usuario actual: `PUT` protegido que pida la clave actual y la nueva)
+- [ ] Menú lateral con secciones desplegables (propuesta): Principal (Inicio, Animales, Pesajes, Reportes); Catálogos (Razas, Grupos y lotes, Personas); Administración (Usuarios, Empresa, Mi cuenta)
+- [ ] Pantalla de Razas (primer catálogo): crear, editar y borrar con peso objetivo de venta. Reglas: descripción única; peso > 0 y <= 2000; al cambiar el peso objetivo avisar "afecta a N animales" (cambia el estado de apto para venta de todos los animales de esa raza); borrar una raza con animales devuelve 409. Requiere ajustar `RazaController` y pruebas.
+- [ ] Hora de registro: campo automático `aniFechaRegistro` (LocalDateTime, lo completa el servidor) en Animal, mostrado en el detalle; evaluar lo mismo para pesajes más el usuario que registró. La fecha de ingreso sigue siendo solo fecha.
 - [ ] (Mejora futura, después de pesajes y reportes) Datos de la empresa editables desde el sistema: entidad `Empresa` de una sola fila (`emp_nombre`, `emp_ruc`, `emp_direccion`, `emp_telefono`, `emp_correo`, `emp_logo`), `GET /api/empresa` público (el login necesita nombre y logo antes de autenticarse), `PUT` protegido y subida del logo con validación de tipo y tamaño. Requiere actualizar el diagrama ER. Mientras tanto, la identidad vive solo en `frontend/src/configuracion/marca.js`.
 - [ ] Construir en draw.io (estilo real): modal Nuevo pesaje, detalle de sesión de pesaje
 - [ ] Diseñar el módulo de Reportes completo (RF006, RF007, RF008)
