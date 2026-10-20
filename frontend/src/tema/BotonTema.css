@@ -2,6 +2,8 @@
  * Estilos del botón de tema. Usa las variables de color definidas en
  * index.css, así que se adapta solo al cambiar entre claro y oscuro.
  * 44x44px: mínimo recomendado para un área táctil cómoda en celular.
+ * variante="sidebar" (ver BotonTema.jsx) usa las variables fijas de la
+ * barra lateral en vez de las del tema de la página.
  */
 
 .boton-tema {
@@ -13,9 +15,9 @@
   border-radius: 50%;
   border: 1px solid var(--borde);
   background: var(--superficie);
-  font-size: 18px;
-  line-height: 1;
+  color: var(--texto);
   cursor: pointer;
+  transition: background-color var(--transicion-rapida);
 }
 
 .boton-tema:hover {
@@ -25,4 +27,18 @@
 .boton-tema:focus-visible {
   outline: 2px solid var(--color-foco);
   outline-offset: 2px;
+}
+
+.boton-tema--sidebar {
+  background: transparent;
+  border-color: var(--color-sidebar-borde);
+  color: var(--color-sidebar-texto);
+}
+
+.boton-tema--sidebar:hover {
+  background: var(--color-sidebar-hover);
+}
+
+.boton-tema--sidebar:focus-visible {
+  outline-color: var(--color-sidebar-foco);
 }

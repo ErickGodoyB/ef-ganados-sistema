@@ -1,25 +1,23 @@
 /**
- * Badge de estado de venta. El contraste del par fondo/texto de "apto"
- * (verificado >= 4.5:1) es el mismo en ambos temas a propósito: es un color
- * fijo del badge en sí, no del fondo de la pantalla, igual que el botón
- * primario de Login (ver --color-exito-fondo/--color-exito-texto en
- * index.css, definidos una sola vez).
+ * Badge de estado de venta. "En engorde" usa la variante celeste
+ * (--color-acento-*, ~7.9:1) y "Apto para venta" la oliva
+ * (--color-exito-*, ~7.7:1). Ambos pares son fijos (no cambian con el
+ * tema): son colores del chip en sí, no del fondo de la pantalla.
  */
 
 .estado-badge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
-  color: var(--texto);
-  background: var(--superficie-hover);
-  border: 1px solid var(--borde);
+  color: var(--color-acento-texto);
+  background: var(--color-acento-fondo);
 }
 
 .estado-badge--apto {
   color: var(--color-exito-texto);
   background: var(--color-exito-fondo);
-  border-color: transparent;
 }

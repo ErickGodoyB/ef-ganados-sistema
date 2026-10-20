@@ -10,6 +10,7 @@
  * Shift+Tab no se escapa del panel) y al cerrarse vuelve al botón de menú.
  */
 
+import { Menu } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { MARCA } from '../configuracion/marca'
@@ -78,15 +79,7 @@ export default function LayoutPrincipal() {
           aria-controls="barra-lateral"
           onClick={() => setMenuAbierto((valor) => !valor)}
         >
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-            <path
-              d="M3 6h18M3 12h18M3 18h18"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
+          <Menu aria-hidden="true" size={22} />
         </button>
         <span className="layout-marca-movil">{MARCA.nombre}</span>
       </header>

@@ -18,7 +18,7 @@ export default function TarjetaAnimal({ animal, columnasVisibles }) {
   const campos = CAMPOS_TARJETA.filter((campo) => columnasVisibles[campo.clave])
 
   return (
-    <article className="tarjeta-animal">
+    <article className="tarjeta-animal tarjeta">
       <div className="tarjeta-animal-encabezado">
         <span className="tarjeta-animal-caravana">{animal.aniCaravana}</span>
         {columnasVisibles.estado && <EstadoBadge apto={animal.aptoVenta} />}

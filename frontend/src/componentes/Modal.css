@@ -38,9 +38,43 @@
   }
 }
 
+.modal-encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .modal-titulo {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 19px;
   font-weight: 700;
   color: var(--texto);
+}
+
+.modal-boton-cerrar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px 0 0;
+  color: var(--texto-secundario);
+  background: transparent;
+  border: none;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+}
+
+.modal-boton-cerrar:hover {
+  background: var(--superficie-hover);
+  color: var(--texto);
+}
+
+.modal-boton-cerrar:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
 }

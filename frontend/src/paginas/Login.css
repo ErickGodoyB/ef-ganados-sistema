@@ -1,16 +1,94 @@
 /**
  * Estilos de la pantalla de login. Usa las variables de tema definidas en
- * index.css, así que el modo oscuro cambia todo desde un solo lugar.
- * Mobile-first: la base de acá abajo es la de celular; los @media (min-
- * width) solo agregan ajustes para pantallas más grandes.
+ * index.css, así que el modo oscuro cambia todo desde un solo lugar. Los
+ * botones e inputs del formulario salen de src/estilos/base.css (.boton-
+ * primario, .campo input); acá solo queda lo propio de esta pantalla: el
+ * panel de marca y el layout de dos columnas.
+ *
+ * Mobile-first: la base de acá abajo es la de celular, con el panel de
+ * marca como una franja superior compacta. Desde 768px, "login-pantalla"
+ * pasa a fila y el panel de marca ocupa una columna completa a la
+ * izquierda (ver el @media al final de cada bloque).
  */
 
 .login-pantalla {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 16px;
   background: var(--fondo);
+}
+
+/* Panel de marca: siempre verde oscuro fijo (como la barra lateral), sin
+   importar el tema claro/oscuro de la página. Si existe /fondo-login.jpg
+   se usa de fondo con una capa verde semitransparente encima (mismo color
+   que --color-sidebar-fondo) para que el texto crema tenga contraste
+   aunque la foto tenga zonas claras; si el archivo no existe, el
+   background-color de abajo queda como respaldo y se ve igual. */
+.login-panel-marca {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 20px 16px;
+  background-color: var(--color-sidebar-fondo);
+  background-image: linear-gradient(rgba(24, 61, 9, 0.85), rgba(24, 61, 9, 0.85)), url('/fondo-login.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.login-panel-marca-contenido {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.login-panel-logo {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--fondo);
+}
+
+.login-panel-logo--provisional {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.login-panel-marca-texto {
+  min-width: 0;
+}
+
+.login-panel-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-sidebar-texto);
+}
+
+.login-panel-subtitulo {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-sidebar-texto-secundario);
+}
+
+/* Oculta la frase de bienvenida en la franja compacta de celular: no hay
+   lugar para ella sin que la franja deje de ser compacta. */
+.login-panel-frase {
+  display: none;
+}
+
+.login-panel-formulario {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
 }
 
 .login-boton-tema {
@@ -27,68 +105,65 @@
   margin: auto;
   background: var(--superficie);
   border: 1px solid var(--borde);
-  border-radius: 12px;
+  border-radius: var(--radio-lg);
   box-shadow: var(--sombra);
   padding: 24px 20px;
 }
 
 @media (min-width: 768px) {
   .login-pantalla {
+    flex-direction: row;
+  }
+
+  .login-panel-marca {
+    flex: 0 0 42%;
+    min-height: 100dvh;
+    padding: 48px;
+  }
+
+  .login-panel-marca-contenido {
+    flex-direction: column;
+    text-align: center;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .login-panel-logo {
+    width: 96px;
+    height: 96px;
+  }
+
+  .login-panel-logo--provisional {
+    font-size: 32px;
+  }
+
+  .login-panel-marca-texto {
+    width: 100%;
+  }
+
+  .login-panel-titulo {
+    font-size: 26px;
+  }
+
+  .login-panel-subtitulo {
+    font-size: 15px;
+  }
+
+  .login-panel-frase {
+    display: block;
+    margin: 20px 0 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--color-sidebar-texto);
+  }
+
+  .login-panel-formulario {
+    flex: 1;
     padding: 24px;
   }
 
   .login-tarjeta {
     padding: 40px;
-  }
-}
-
-.login-encabezado {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.login-logo {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-  margin-bottom: 12px;
-}
-
-.login-logo--provisional {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--color-primario-fondo);
-  color: var(--color-primario-texto);
-  font-weight: 700;
-  font-size: 20px;
-}
-
-.login-titulo {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--texto);
-}
-
-.login-subtitulo {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: var(--texto-secundario);
-}
-
-@media (min-width: 768px) {
-  .login-logo {
-    width: 64px;
-    height: 64px;
-  }
-
-  .login-titulo {
-    font-size: 24px;
   }
 }
 
@@ -98,39 +173,16 @@
   gap: 18px;
 }
 
-.campo {
+.login-formulario .campo {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.campo label {
+.login-formulario .campo label {
   font-size: 14px;
   font-weight: 600;
   color: var(--texto);
-}
-
-.campo input {
-  width: 100%;
-  /* Alto mínimo 44px: área táctil cómoda en celular. */
-  min-height: 44px;
-  padding: 10px 12px;
-  /* 16px como mínimo: con un tamaño menor, iOS hace zoom automático al
-     enfocar el campo. */
-  font-size: 16px;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-}
-
-.campo input:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 1px;
-}
-
-.campo input[aria-invalid='true'] {
-  border-color: var(--color-error);
 }
 
 .campo-password {
@@ -139,28 +191,31 @@
 }
 
 .campo-password input {
-  padding-right: 84px;
+  padding-right: 44px;
 }
 
 .boton-mostrar-password {
   position: absolute;
   top: 50%;
-  right: 4px;
+  right: 0;
   transform: translateY(-50%);
-  min-width: 64px;
-  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px: área táctil mínima, aunque visualmente el ícono ocupe menos. */
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
-  color: var(--color-foco);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 6px;
+  color: var(--texto-secundario);
+  border-radius: var(--radio-sm);
   cursor: pointer;
+  transition: background-color var(--transicion-rapida), color var(--transicion-rapida);
 }
 
 .boton-mostrar-password:hover {
   background: var(--superficie-hover);
+  color: var(--texto);
 }
 
 .boton-mostrar-password:focus-visible {
@@ -197,33 +252,9 @@
   color: var(--color-error);
   background: var(--color-error-fondo);
   border: 1px solid var(--color-error);
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
 }
 
 .login-boton {
   width: 100%;
-  min-height: 44px;
-  padding: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-primario-texto);
-  background: var(--color-primario-fondo);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: filter 0.15s ease;
-}
-
-.login-boton:hover:not(:disabled) {
-  filter: brightness(0.96);
-}
-
-.login-boton:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
-}
-
-.login-boton:disabled {
-  cursor: not-allowed;
-  opacity: 0.75;
 }

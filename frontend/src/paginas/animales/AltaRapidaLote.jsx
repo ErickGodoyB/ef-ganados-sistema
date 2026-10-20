@@ -14,6 +14,7 @@
  * AltaRapidaRaza).
  */
 
+import { Plus } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import './AltaRapida.css'
@@ -129,7 +130,7 @@ export default function AltaRapidaLote({ subGrupos, onCreado }) {
         aria-label="Agregar lote nuevo"
         onClick={abrir}
       >
-        +
+        <Plus aria-hidden="true" size={20} />
       </button>
     )
   }
@@ -186,10 +187,10 @@ export default function AltaRapidaLote({ subGrupos, onCreado }) {
       )}
 
       <div className="alta-rapida-acciones">
-        <button type="button" className="alta-rapida-boton-cancelar" onClick={cerrar} disabled={guardando}>
+        <button type="button" className="boton-secundario" onClick={cerrar} disabled={guardando}>
           Cancelar
         </button>
-        <button type="button" className="alta-rapida-boton-guardar" onClick={manejarGuardar} disabled={guardando}>
+        <button type="button" className="boton-primario" onClick={manejarGuardar} disabled={guardando}>
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>
       </div>

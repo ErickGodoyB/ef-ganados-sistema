@@ -1,8 +1,10 @@
 /**
- * Formulario de animal (ver FormularioAnimal.jsx). Mismas variables de
- * color que el resto de la app; los estilos de campo se redeclaran acá (no
- * se importan de Login.css ni de Animales.css) para que este componente
- * sea independiente de la pantalla que lo use.
+ * Formulario de animal (ver FormularioAnimal.jsx). Los botones
+ * (.boton-primario/.boton-secundario), los estados vacíos/de error
+ * (.estado-mensaje/.tarjeta) y los inputs/selects salen de
+ * src/estilos/base.css; acá solo queda el layout propio de este
+ * formulario (no se importa Login.css ni Animales.css, para que este
+ * componente siga siendo independiente de la pantalla que lo use).
  */
 
 .formulario-animal {
@@ -21,28 +23,6 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--texto);
-}
-
-.formulario-animal .campo input,
-.formulario-animal .campo select {
-  min-height: 44px;
-  padding: 10px 12px;
-  font-size: 16px;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-}
-
-.formulario-animal .campo input:focus-visible,
-.formulario-animal .campo select:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 1px;
-}
-
-.formulario-animal .campo input[aria-invalid='true'],
-.formulario-animal .campo select[aria-invalid='true'] {
-  border-color: var(--color-error);
 }
 
 /* Fila select + botón "+" de alta rápida (ver AltaRapidaRaza/AltaRapidaLote).
@@ -67,34 +47,6 @@
   color: var(--color-error);
 }
 
-.formulario-animal-estado {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.formulario-animal-estado button {
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.formulario-animal-estado button:hover {
-  background: var(--superficie-hover);
-}
-
-.formulario-animal-estado button:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
-}
-
 .formulario-animal-error-general {
   margin: 0;
   padding: 10px 12px;
@@ -102,7 +54,7 @@
   color: var(--color-error);
   background: var(--color-error-fondo);
   border: 1px solid var(--color-error);
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
 }
 
 .formulario-animal-acciones {
@@ -118,43 +70,4 @@
     flex-wrap: wrap;
     justify-content: flex-end;
   }
-}
-
-.formulario-animal-acciones button {
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 700;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.boton-primario {
-  color: var(--color-primario-texto);
-  background: var(--color-primario-fondo);
-  border: none;
-}
-
-.boton-primario:hover:not(:disabled) {
-  filter: brightness(0.96);
-}
-
-.boton-secundario {
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-}
-
-.boton-secundario:hover:not(:disabled) {
-  background: var(--superficie-hover);
-}
-
-.formulario-animal-acciones button:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
-}
-
-.formulario-animal-acciones button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
 }

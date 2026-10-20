@@ -10,6 +10,7 @@
  * un ancho máximo de ~32rem (ver Modal.css).
  */
 
+import { X } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import './Modal.css'
 
@@ -100,9 +101,16 @@ export default function Modal({ titulo, onCerrar, refDisparador, children }) {
         aria-labelledby={idTitulo}
         onClick={(evento) => evento.stopPropagation()}
       >
-        <h2 id={idTitulo} className="modal-titulo">
-          {titulo}
-        </h2>
+        <div className="modal-encabezado">
+          <h2 id={idTitulo} className="modal-titulo">
+            {titulo}
+          </h2>
+          {/* Mismo cierre que Escape/el fondo (refOnCerrar.current), nada
+              nuevo: solo una forma visible más de disparar lo mismo. */}
+          <button type="button" className="modal-boton-cerrar" aria-label="Cerrar" onClick={() => refOnCerrar.current()}>
+            <X aria-hidden="true" size={20} />
+          </button>
+        </div>
         {children}
       </div>
     </div>

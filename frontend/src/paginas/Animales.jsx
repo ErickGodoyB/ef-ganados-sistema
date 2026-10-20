@@ -9,7 +9,9 @@
  * esta pantalla, ajenos a la recarga) y se muestra un aviso breve.
  */
 
+import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import { OPCIONES_ORDEN_MOVIL } from './animales/columnas'
 import { filtrarYOrdenarAnimales, obtenerLotesDisponibles } from './animales/listadoAnimales'
 import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
@@ -111,21 +113,22 @@ export default function Animales() {
 
   return (
     <div className="animales-pagina">
-      <div className="animales-encabezado">
-        <h1>Animales</h1>
-      </div>
+      <EncabezadoPagina titulo="Animales" />
 
       <div className="animales-controles">
         <div className="animales-busqueda-fila">
-          <div className="campo-busqueda">
+          <div className="campo-busqueda campo-busqueda--con-icono">
             <label htmlFor="animales-busqueda">Buscar por caravana</label>
-            <input
-              id="animales-busqueda"
-              type="search"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Ej. CAR-001"
-            />
+            <div className="campo-busqueda-entrada">
+              <Search aria-hidden="true" size={18} className="campo-busqueda-icono" />
+              <input
+                id="animales-busqueda"
+                type="search"
+                value={busqueda}
+                onChange={(evento) => setBusqueda(evento.target.value)}
+                placeholder="Ej. CAR-001"
+              />
+            </div>
           </div>
 
           <button
@@ -134,7 +137,8 @@ export default function Animales() {
             className="animales-boton-nuevo"
             onClick={() => setModalAbierto(true)}
           >
-            + Nuevo animal
+            <Plus aria-hidden="true" size={18} />
+            Nuevo animal
           </button>
 
           <PanelOpciones
@@ -200,24 +204,29 @@ export default function Animales() {
       {cargando && <p role="status">Cargando animales…</p>}
 
       {!cargando && error && (
-        <div className="animales-estado-mensaje">
+        <div className="estado-mensaje tarjeta">
+          <TriangleAlert aria-hidden="true" size={40} className="estado-mensaje-icono" />
           <p>{error}</p>
-          <button type="button" onClick={recargar}>
+          <button type="button" className="boton boton-secundario" onClick={recargar}>
+            <RefreshCw aria-hidden="true" size={16} />
             Reintentar
           </button>
         </div>
       )}
 
       {sinAnimales && (
-        <div className="animales-estado-mensaje">
+        <div className="estado-mensaje tarjeta">
+          <Inbox aria-hidden="true" size={40} className="estado-mensaje-icono" />
           <p>Todavía no hay animales registrados</p>
         </div>
       )}
 
       {sinCoincidencias && (
-        <div className="animales-estado-mensaje">
+        <div className="estado-mensaje tarjeta">
+          <SearchX aria-hidden="true" size={40} className="estado-mensaje-icono" />
           <p>No hay animales que coincidan</p>
-          <button type="button" onClick={limpiarFiltros}>
+          <button type="button" className="boton boton-secundario" onClick={limpiarFiltros}>
+            <FilterX aria-hidden="true" size={16} />
             Limpiar filtros
           </button>
         </div>

@@ -3,6 +3,8 @@
  * confirma que la ruta y el layout funcionan.
  */
 
+import EncabezadoPagina from '../componentes/EncabezadoPagina'
+
 export default function Pesajes() {
-  return <h1>Pesajes — próximamente</h1>
+  return <EncabezadoPagina titulo="Pesajes" subtitulo="Próximamente" />
 }

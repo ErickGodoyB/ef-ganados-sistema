@@ -33,6 +33,20 @@
   border-bottom: none;
 }
 
+.tabla-animales tbody tr {
+  transition: background-color var(--transicion-rapida);
+}
+
+.tabla-animales tbody tr:hover {
+  background: var(--superficie-hover);
+}
+
+/* La caravana es siempre la primera columna (ver TablaAnimales.jsx): se
+   destaca en negrita porque es el identificador principal del animal. */
+.tabla-animales tbody td:first-child {
+  font-weight: 700;
+}
+
 .tabla-animales-orden {
   display: inline-flex;
   align-items: center;

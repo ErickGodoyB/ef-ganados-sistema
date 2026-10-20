@@ -15,6 +15,7 @@
  * capa.
  */
 
+import { RefreshCw } from 'lucide-react'
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import AltaRapidaLote from './AltaRapidaLote'
@@ -269,9 +270,10 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
 
   if (error) {
     return (
-      <div className="formulario-animal-estado">
+      <div className="estado-mensaje tarjeta">
         <p>{error}</p>
-        <button type="button" onClick={recargar}>
+        <button type="button" className="boton-secundario" onClick={recargar}>
+          <RefreshCw aria-hidden="true" size={16} />
           Reintentar
         </button>
       </div>

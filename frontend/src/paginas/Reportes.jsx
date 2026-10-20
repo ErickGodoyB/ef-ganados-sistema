@@ -3,6 +3,8 @@
  * (RF006/RF007/RF008), solo confirma que la ruta y el layout funcionan.
  */
 
+import EncabezadoPagina from '../componentes/EncabezadoPagina'
+
 export default function Reportes() {
-  return <h1>Reportes — próximamente</h1>
+  return <EncabezadoPagina titulo="Reportes" subtitulo="Próximamente" />
 }

@@ -9,6 +9,7 @@
  * envuelve (ver Modal.jsx, que escucha Escape en el document).
  */
 
+import { Plus } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import './AltaRapida.css'
@@ -93,7 +94,7 @@ export default function AltaRapidaRaza({ razas, onCreada }) {
         aria-label="Agregar raza nueva"
         onClick={abrir}
       >
-        +
+        <Plus aria-hidden="true" size={20} />
       </button>
     )
   }
@@ -131,10 +132,10 @@ export default function AltaRapidaRaza({ razas, onCreada }) {
       )}
 
       <div className="alta-rapida-acciones">
-        <button type="button" className="alta-rapida-boton-cancelar" onClick={cerrar} disabled={guardando}>
+        <button type="button" className="boton-secundario" onClick={cerrar} disabled={guardando}>
           Cancelar
         </button>
-        <button type="button" className="alta-rapida-boton-guardar" onClick={manejarGuardar} disabled={guardando}>
+        <button type="button" className="boton-primario" onClick={manejarGuardar} disabled={guardando}>
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>
       </div>

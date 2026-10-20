@@ -56,11 +56,30 @@ TFG "Sistema de gestión bovina" para EF Ganados (Curuguaty, Paraguay).
   16px (evita el zoom automático de iOS).
 - Sin scroll horizontal en ningún ancho.
 - Accesibilidad: labels asociadas a los campos, atributos `aria-*`
-  correspondientes, buen contraste de color.
+  correspondientes, buen contraste de color (mínimo 4.5:1 para texto, 3:1
+  para bordes/íconos/elementos de interfaz).
 - La identidad de la empresa (nombre, subtítulo, logo) sale únicamente de
   `src/configuracion/marca.js` — no escribir "EF Ganados" ni similares
   directamente en una pantalla.
 - Toda llamada a la API pasa por `src/api/cliente.js`.
+- No agregar dependencias nuevas sin autorización explícita. Las únicas
+  autorizadas hasta ahora, fuera de lo que trae el proyecto base de Vite,
+  son `lucide-react` (íconos) y `@fontsource-variable/inter` (tipografía
+  Inter autoalojada).
+
+### Paleta de marca
+
+Verde oscuro `#183D09`, oliva `#738839`, crema `#EFE7D4`, verde azulado
+`#497372`, celeste `#7BB3C4`. El crema reemplaza al blanco como fondo de
+la app (tarjetas/modales usan un crema más claro derivado). El oliva y el
+celeste no se usan nunca como color de texto sobre crema (no alcanzan
+4.5:1): para eso se derivan variantes oscuras. Todos los colores viven
+como variables en `index.css` (una copia para modo claro en `:root`, otra
+para modo oscuro en `:root[data-tema='oscuro']`); ninguna pantalla define
+un color de marca fijo por su cuenta. La barra lateral y el panel de
+marca del login son siempre verde oscuro, sin importar el tema
+claro/oscuro de la página (variables `--color-sidebar-*`, separadas de
+las del resto de la app).
 
 ## Pruebas
 

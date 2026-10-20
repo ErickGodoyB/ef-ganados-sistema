@@ -12,6 +12,8 @@
   color: var(--texto);
 }
 
+/* Mismos colores que la barra lateral (--color-sidebar-*): es su
+   contraparte en celular, no una superficie común de la página. */
 .layout-barra-superior {
   position: sticky;
   top: 0;
@@ -21,8 +23,8 @@
   gap: 12px;
   min-height: 56px;
   padding: 0 12px;
-  background: var(--superficie);
-  border-bottom: 1px solid var(--borde);
+  background: var(--color-sidebar-fondo);
+  border-bottom: 1px solid var(--color-sidebar-borde);
 }
 
 .layout-boton-menu {
@@ -31,26 +33,27 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  background: var(--superficie);
-  color: var(--texto);
+  border: 1px solid var(--color-sidebar-borde);
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: var(--color-sidebar-texto);
   cursor: pointer;
+  transition: background-color var(--transicion-rapida);
 }
 
 .layout-boton-menu:hover {
-  background: var(--superficie-hover);
+  background: var(--color-sidebar-hover);
 }
 
 .layout-boton-menu:focus-visible {
-  outline: 2px solid var(--color-foco);
+  outline: 2px solid var(--color-sidebar-foco);
   outline-offset: 2px;
 }
 
 .layout-marca-movil {
   font-weight: 700;
   font-size: 16px;
-  color: var(--texto);
+  color: var(--color-sidebar-texto);
 }
 
 .layout-fondo {

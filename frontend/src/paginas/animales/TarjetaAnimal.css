@@ -1,6 +1,8 @@
 /**
  * Tarjeta de un animal para pantallas chicas (ver Animales.css: solo se
- * muestra por debajo de 768px).
+ * muestra por debajo de 768px). El fondo/borde/radio/sombra salen de la
+ * clase compartida ".tarjeta" (src/estilos/base.css); acá solo queda el
+ * layout propio de esta tarjeta.
  */
 
 .tarjeta-animal {
@@ -8,9 +10,6 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
 }
 
 .tarjeta-animal-encabezado {

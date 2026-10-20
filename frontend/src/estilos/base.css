@@ -1,0 +1,215 @@
+/**
+ * Estilos base compartidos por toda la app: botones, inputs/selects,
+ * tarjetas, badges y el encabezado de página (ver componentes/
+ * EncabezadoPagina.jsx). Un solo lugar para esto, para que las pantallas
+ * no repitan (ni desincronicen) el mismo look. Todo sale de las variables
+ * de index.css: nada de colores sueltos acá tampoco.
+ *
+ * Nomenclatura de botones: .boton es la base (tamaño, tipografía, radio,
+ * área táctil >= 44px); .boton-primario/.boton-secundario/.boton-fantasma/
+ * .boton-peligro agregan el color. Varias pantallas ya usaban
+ * ".boton-primario"/".boton-secundario" con este mismo look antes de este
+ * archivo (ver FormularioAnimal.jsx, AltaRapidaRaza.jsx): se mantuvo ese
+ * nombre a propósito, para no tener que renombrar className en todos lados.
+ */
+
+/* .boton y .boton-primario/.boton-secundario/.boton-fantasma/.boton-peligro
+   son independientes entre sí a propósito (no hace falta combinar
+   className="boton boton-secundario"): varias pantallas ya usaban
+   ".boton-primario"/".boton-secundario" SOLOS antes de que existiera este
+   archivo (ver FormularioAnimal.jsx), así que cada variante repite el
+   tamaño/tipografía/radio en vez de depender de una clase ".boton" base
+   que esas pantallas no tienen. */
+.boton,
+.boton-primario,
+.boton-secundario,
+.boton-fantasma,
+.boton-peligro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: var(--radio-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida), border-color var(--transicion-rapida),
+    filter var(--transicion-rapida), opacity var(--transicion-rapida);
+}
+
+.boton:focus-visible,
+.boton-primario:focus-visible,
+.boton-secundario:focus-visible,
+.boton-fantasma:focus-visible,
+.boton-peligro:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.boton:disabled,
+.boton-primario:disabled,
+.boton-secundario:disabled,
+.boton-fantasma:disabled,
+.boton-peligro:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.boton,
+.boton-secundario {
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+}
+
+.boton:hover:not(:disabled),
+.boton-secundario:hover:not(:disabled) {
+  background: var(--superficie-hover);
+}
+
+.boton-primario {
+  color: var(--color-primario-texto);
+  background: var(--color-primario-fondo);
+}
+
+.boton-primario:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* Fantasma: sin relleno ni borde propio, para acciones de menor jerarquía
+   (ej. un "Cancelar" al lado de un "Guardar"). */
+.boton-fantasma {
+  color: var(--texto);
+  background: transparent;
+}
+
+.boton-fantasma:hover:not(:disabled) {
+  background: var(--superficie-hover);
+}
+
+/* Peligro: para acciones destructivas (ej. eliminar). Ninguna pantalla la
+   usa todavía (el alcance actual no tiene borrado desde la UI), pero queda
+   lista para cuando haga falta. */
+.boton-peligro {
+  color: #ffffff;
+  background: var(--color-error);
+}
+
+.boton-peligro:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* Inputs y selects: mismo look en todas las pantallas (campo, Modal,
+   formularios de alta rápida, filtros del listado). */
+.entrada,
+.campo input,
+.campo select,
+.campo-filtro select,
+.campo-busqueda input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  transition: border-color var(--transicion-rapida), box-shadow var(--transicion-rapida);
+}
+
+.entrada:focus-visible,
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo-filtro select:focus-visible,
+.campo-busqueda input:focus-visible {
+  outline: none;
+  border-color: var(--color-foco);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-foco) 35%, transparent);
+}
+
+.entrada[aria-invalid='true'],
+.campo input[aria-invalid='true'],
+.campo select[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+/* Tarjeta: superficie elevada genérica (listas, estados vacíos, paneles). */
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  box-shadow: var(--sombra);
+}
+
+/* Badge genérico; los estados puntuales (éxito/acento) agregan color
+   encima con --color-exito y --color-acento (ver EstadoBadge.css). */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+}
+
+/* Encabezado de página (ver EncabezadoPagina.jsx): título + subtítulo
+   opcional a la izquierda, acciones (ej. "+ Nuevo animal") a la derecha. */
+.encabezado-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .encabezado-pagina {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.encabezado-pagina-titulos h1 {
+  margin: 0;
+}
+
+.encabezado-pagina-subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.encabezado-pagina-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Estados vacíos/de error con ícono grande (ver Animales.jsx y
+   FormularioAnimal.jsx): mismo lenguaje visual en toda la app. */
+.estado-mensaje {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 32px 20px;
+}
+
+.estado-mensaje-icono {
+  color: var(--texto-secundario);
+}
+
+.estado-mensaje p {
+  margin: 0;
+  color: var(--texto-secundario);
+}

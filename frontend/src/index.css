@@ -1,11 +1,27 @@
 /**
- * Variables de tema (colores) y estilos base compartidos por toda la app.
+ * Variables de tema (colores, radios, transición) y estilos base
+ * compartidos por toda la app.
+ *
+ * Paleta de marca de EF Ganados: verde oscuro #183D09, oliva #738839,
+ * crema #EFE7D4, verde azulado #497372, celeste #7BB3C4. El oliva y el
+ * celeste no se usan nunca como color de TEXTO sobre crema (no alcanzan
+ * 4.5:1): --color-boton-nuevo, --color-exito y --color-acento (sufijos
+ * -fondo/-texto) son variantes oscuras derivadas, pensadas para texto sobre un chip claro de
+ * ese color, no para texto sobre --fondo. Todos los pares fondo/texto de
+ * acá están verificados con un script WCAG (ver CONTEXTO_PROYECTO.md o el
+ * resumen del cambio); ratios mínimos: 4.5:1 texto, 3:1 bordes/foco/íconos.
  *
  * El tema se controla con el atributo data-tema en <html> (ver
  * tema/TemaContext.jsx): ":root" define los valores de "claro" (el modo por
  * defecto) y ":root[data-tema='oscuro']" los sobreescribe. index.html fija
  * ese atributo apenas carga la página, antes de que React se monte, para
  * que no haya un parpadeo con el tema equivocado.
+ *
+ * Las variables --color-sidebar, --color-boton-nuevo, --color-exito y
+ * --color-acento (sus sufijos -fondo/-texto/etc.) se declaran una sola vez
+ * (no se redefinen en el tema oscuro) a propósito: son colores fijos de
+ * marca o de chip autocontenido, que no dependen del fondo de la pantalla
+ * que los rodea.
  *
  * Convención de diseño: toda pantalla nueva se diseña mobile-first. Los
  * estilos "base" (sin @media) son los que rigen en celular; las reglas
@@ -14,51 +30,68 @@
  */
 
 :root {
-  --fondo: #ffffff;
-  --superficie: #ffffff;
-  --superficie-hover: #f1f5f9;
-  --texto: #1f2937;
-  --texto-secundario: #6b7280;
-  --borde: #d1d5db;
-  --color-foco: #2563eb;
-  --color-primario-fondo: #93c5fd;
-  --color-primario-texto: #1e3a8a;
+  --fondo: #efe7d4;
+  --superficie: #f8f4e8;
+  --superficie-hover: #e8dfc6;
+  --texto: #183d09;
+  --texto-secundario: #51604a;
+  --borde: #8a7a4e;
+  --color-foco: #355e5c;
+  --color-primario-fondo: #183d09;
+  --color-primario-texto: #efe7d4;
   --color-error: #b91c1c;
   --color-error-fondo: #fef2f2;
-  /* Fondo oscurecido detrás de un panel deslizable (ej. la barra lateral en
-     celular). No es un color "de pantalla": es un token de uso general,
-     igual que --sombra. */
-  --fondo-superpuesto: rgba(15, 23, 42, 0.5);
-  /* Badge "Apto para venta" (EstadoBadge). Contraste verificado ~7.5:1;
-     igual que --color-primario-*, no se redefine en modo oscuro a
-     propósito: es un color fijo del badge, no del fondo de la pantalla. */
-  --color-exito-fondo: #bbf7d0;
-  --color-exito-texto: #14532d;
-  /* Botón "+ Nuevo animal": verde claro con texto verde oscuro, mismo par
-     que --color-exito-* (contraste verificado ~7.5:1), bajo su propio
-     nombre porque semánticamente es un botón de acción, no un badge de
-     éxito. Se declara también en el tema oscuro (abajo) aunque el valor
-     sea igual, a propósito: es un color fijo del botón, no del fondo de
-     la pantalla. */
-  --color-boton-nuevo-fondo: #bbf7d0;
-  --color-boton-nuevo-texto: #14532d;
+  --fondo-superpuesto: rgba(24, 61, 9, 0.55);
+
+  /* Botón "+ Nuevo animal": oliva claro con texto verde muy oscuro
+     (~6.3:1). Mismo color para el acceso activo de la barra lateral. */
+  --color-boton-nuevo-fondo: #9cb05b;
+  --color-boton-nuevo-texto: #1b2b10;
+
+  /* Badge "Apto para venta": variante oliva (~7.7:1). */
+  --color-exito-fondo: #b9c68c;
+  --color-exito-texto: #1f3010;
+
+  /* Badge "En engorde" y acentos de información: variante celeste (~7.9:1). */
+  --color-acento-fondo: #cfe6ec;
+  --color-acento-texto: #1c4650;
+
+  /* Barra lateral: siempre verde oscuro de marca con texto/íconos crema,
+     sin importar el tema (ver el comentario de arriba). El foco propio
+     (celeste claro) existe porque --color-foco cambia con el tema de la
+     página, pero la barra lateral no: necesita un color de foco que
+     funcione siempre sobre su propio fondo oscuro fijo. */
+  --color-sidebar-fondo: #183d09;
+  --color-sidebar-texto: #efe7d4;
+  --color-sidebar-texto-secundario: rgba(239, 231, 212, 0.72);
+  --color-sidebar-borde: rgba(239, 231, 212, 0.18);
+  --color-sidebar-hover: rgba(239, 231, 212, 0.1);
+  --color-sidebar-foco: #8fc6d6;
+
   --sombra:
-    0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+    0 10px 25px -5px rgba(24, 61, 9, 0.18), 0 8px 10px -6px rgba(24, 61, 9, 0.12);
+
+  --radio-sm: 8px;
+  --radio-md: 10px;
+  --radio-lg: 16px;
+  --transicion-rapida: 160ms ease;
 }
 
 :root[data-tema='oscuro'] {
-  --fondo: #0f172a;
-  --superficie: #1e293b;
-  --superficie-hover: #27344a;
-  --texto: #e2e8f0;
-  --texto-secundario: #94a3b8;
-  --borde: #334155;
-  --color-foco: #60a5fa;
+  --fondo: #0d1f06;
+  --superficie: #16300c;
+  --superficie-hover: #1e3d12;
+  --texto: #efe7d4;
+  --texto-secundario: #b9c2a8;
+  --borde: #5f8249;
+  --color-foco: #8fc6d6;
+  /* Más claro que en modo claro: contra una página ya muy oscura, el
+     verde de marca original (#183d09) casi no se distinguía del fondo. */
+  --color-primario-fondo: #3a751d;
+  --color-primario-texto: #efe7d4;
   --color-error: #fca5a5;
   --color-error-fondo: rgba(248, 113, 113, 0.12);
-  --fondo-superpuesto: rgba(0, 0, 0, 0.6);
-  --color-boton-nuevo-fondo: #bbf7d0;
-  --color-boton-nuevo-texto: #14532d;
+  --fondo-superpuesto: rgba(13, 31, 6, 0.65);
   --sombra:
     0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
 }
@@ -81,14 +114,49 @@ body {
 
 body {
   margin: 0;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   background: var(--fondo);
   color: var(--texto);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color var(--transicion-rapida), color var(--transicion-rapida);
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--texto);
+}
+
+h1 {
+  font-size: 24px;
+}
+
+h2 {
+  font-size: 19px;
+}
+
+h3 {
+  font-size: 16px;
 }
 
 button {
   font-family: inherit;
+}
+
+/* Respeta la preferencia de movimiento reducido del sistema operativo:
+   apaga animaciones/transiciones en vez de solo acortarlas. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /**

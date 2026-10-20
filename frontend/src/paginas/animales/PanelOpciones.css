@@ -31,8 +31,9 @@
   color: var(--texto);
   background: var(--superficie);
   border: 1px solid var(--borde);
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
   cursor: pointer;
+  transition: background-color var(--transicion-rapida);
 }
 
 .panel-opciones-boton:hover {
@@ -150,26 +151,5 @@
   color: var(--texto);
   background: var(--superficie);
   border: 1px solid var(--borde);
-  border-radius: 8px;
-}
-
-.panel-opciones-restablecer {
-  min-height: 44px;
-  padding: 0 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--texto);
-  background: var(--superficie-hover);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.panel-opciones-restablecer:hover {
-  background: var(--superficie);
-}
-
-.panel-opciones-restablecer:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
+  border-radius: var(--radio-sm);
 }

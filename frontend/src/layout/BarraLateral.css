@@ -4,6 +4,9 @@
  * clase "barra-lateral--abierta"; desde 1024px queda fija a la izquierda,
  * siempre visible, sin importar esa clase (ver la convención mobile-first
  * en index.css).
+ *
+ * Usa las variables --color-sidebar-* (ver index.css), no las genéricas de
+ * tema: la barra es siempre verde oscuro de marca, en modo claro y oscuro.
  */
 
 .barra-lateral {
@@ -15,11 +18,11 @@
   flex-direction: column;
   width: min(85%, 20rem);
   height: 100dvh;
-  background: var(--superficie);
-  border-right: 1px solid var(--borde);
+  background: var(--color-sidebar-fondo);
+  border-right: 1px solid var(--color-sidebar-borde);
   padding: 20px 16px;
   transform: translateX(-100%);
-  transition: transform 0.2s ease;
+  transition: transform var(--transicion-rapida);
   overflow-y: auto;
 }
 
@@ -40,33 +43,52 @@
 .barra-lateral-marca {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding-bottom: 20px;
   margin-bottom: 12px;
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid var(--color-sidebar-borde);
+}
+
+/* El logo trae su propio fondo crema; este marco lo redondea para que se
+   vea como una insignia, no como un rectángulo pegado sobre el verde. */
+.barra-lateral-logo-marco {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fondo);
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 .barra-lateral-logo {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .barra-lateral-logo--provisional {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primario-fondo);
-  color: var(--color-primario-texto);
+  color: var(--color-sidebar-fondo);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .barra-lateral-nombre {
+  margin: 0;
   font-weight: 700;
-  font-size: 17px;
-  color: var(--texto);
+  font-size: 16px;
+  color: var(--color-sidebar-texto);
+}
+
+.barra-lateral-subtitulo {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-sidebar-texto-secundario);
 }
 
 .barra-lateral-nav ul {
@@ -81,45 +103,78 @@
 .barra-lateral-enlace {
   display: flex;
   align-items: center;
+  gap: 12px;
   min-height: 44px;
   padding: 0 12px;
-  border-radius: 8px;
-  color: var(--texto);
+  border-radius: var(--radio-md);
+  color: var(--color-sidebar-texto);
   text-decoration: none;
   font-weight: 600;
   font-size: 15px;
+  transition: background-color var(--transicion-rapida);
+}
+
+.barra-lateral-enlace svg {
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .barra-lateral-enlace:hover {
-  background: var(--superficie-hover);
+  background: var(--color-sidebar-hover);
 }
 
 .barra-lateral-enlace:focus-visible {
-  outline: 2px solid var(--color-foco);
+  outline: 2px solid var(--color-sidebar-foco);
   outline-offset: 2px;
 }
 
 .barra-lateral-enlace--activo {
-  /* Mismo par de colores que el botón de login: ya tiene contraste
-     verificado (~5.75:1) para texto sobre fondo. */
-  background: var(--color-primario-fondo);
-  color: var(--color-primario-texto);
+  /* Mismas variables que el botón "+ Nuevo animal" (par oliva/verde muy
+     oscuro, contraste verificado ~5.1:1 sobre el chip): un acceso activo
+     es, en espíritu, la misma idea de "algo importante resaltado". */
+  background: var(--color-boton-nuevo-fondo);
+  color: var(--color-boton-nuevo-texto);
+}
+
+.barra-lateral-enlace--activo svg {
+  opacity: 1;
 }
 
 .barra-lateral-pie {
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--color-sidebar-borde);
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.barra-lateral-tarjeta-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.barra-lateral-avatar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-texto);
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .barra-lateral-usuario {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--texto);
+  color: var(--color-sidebar-texto);
   overflow-wrap: anywhere;
 }
 
@@ -131,22 +186,27 @@
 
 .barra-lateral-salir {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 44px;
   padding: 0 14px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
+  color: var(--color-sidebar-texto);
+  background: transparent;
+  border: 1px solid var(--color-sidebar-borde);
+  border-radius: var(--radio-md);
   cursor: pointer;
+  transition: background-color var(--transicion-rapida);
 }
 
 .barra-lateral-salir:hover {
-  background: var(--superficie-hover);
+  background: var(--color-sidebar-hover);
 }
 
 .barra-lateral-salir:focus-visible {
-  outline: 2px solid var(--color-foco);
+  outline: 2px solid var(--color-sidebar-foco);
   outline-offset: 2px;
 }

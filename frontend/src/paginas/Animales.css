@@ -5,19 +5,17 @@
  * tarjetas (TarjetaAnimal) conviven en el DOM, pero solo una se ve a la vez
  * según el ancho (animales-tabla-solo-escritorio /
  * animales-tarjetas-solo-movil), sin necesitar JS para decidir cuál mostrar.
+ *
+ * Los inputs/selects y los estados vacíos/de error ya no redeclaran su
+ * aspecto acá: salen de .campo-filtro/.campo-busqueda, .estado-mensaje y
+ * .tarjeta de src/estilos/base.css, para que todas las pantallas compartan
+ * el mismo look.
  */
 
 .animales-pagina {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.animales-encabezado h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--texto);
 }
 
 .animales-controles {
@@ -48,23 +46,6 @@
   color: var(--texto);
 }
 
-.campo-busqueda input,
-.campo-filtro select {
-  min-height: 44px;
-  padding: 10px 12px;
-  font-size: 16px;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-}
-
-.campo-busqueda input:focus-visible,
-.campo-filtro select:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 1px;
-}
-
 @media (min-width: 768px) {
   .campo-busqueda {
     flex: 1 1 220px;
@@ -75,7 +56,25 @@
   }
 }
 
-/* Buscador + "+ Nuevo animal" + Opciones van juntos, en la misma fila
+/* Ícono de lupa dentro del campo de búsqueda. */
+.campo-busqueda-entrada {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.campo-busqueda-icono {
+  position: absolute;
+  left: 12px;
+  color: var(--texto-secundario);
+  pointer-events: none;
+}
+
+.campo-busqueda--con-icono input {
+  padding-left: 38px;
+}
+
+/* Buscador + "Nuevo animal" + Opciones van juntos, en la misma fila
    lógica. flex-wrap: en celular, si no entran uno al lado del otro, el
    botón (y luego Opciones) bajan de línea solos en vez de angostar
    demasiado el campo de búsqueda. */
@@ -98,20 +97,27 @@
 
 .animales-boton-nuevo {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 44px;
   padding: 0 18px;
   font-size: 14px;
   font-weight: 700;
   color: var(--color-boton-nuevo-texto);
   background: var(--color-boton-nuevo-fondo);
-  border: none;
-  border-radius: 8px;
+  /* El oliva de fondo por sí solo no llega a 3:1 contra --fondo (es un
+     color claro sobre un fondo también claro); el borde en el mismo tono
+     oscuro del texto le da un límite nítido que sí cumple ese mínimo. */
+  border: 1px solid var(--color-boton-nuevo-texto);
+  border-radius: var(--radio-md);
   cursor: pointer;
   white-space: nowrap;
+  transition: filter var(--transicion-rapida);
 }
 
 .animales-boton-nuevo:hover {
-  filter: brightness(0.96);
+  filter: brightness(1.05);
 }
 
 .animales-boton-nuevo:focus-visible {
@@ -126,7 +132,7 @@
   font-weight: 600;
   color: var(--color-exito-texto);
   background: var(--color-exito-fondo);
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
 }
 
 .animales-orden-movil {
@@ -137,38 +143,6 @@
   .animales-orden-movil {
     display: none;
   }
-}
-
-.animales-estado-mensaje {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 24px 16px;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-}
-
-.animales-estado-mensaje button {
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.animales-estado-mensaje button:hover {
-  background: var(--superficie-hover);
-}
-
-.animales-estado-mensaje button:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
 }
 
 .animales-tabla-solo-escritorio {

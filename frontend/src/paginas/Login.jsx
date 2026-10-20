@@ -8,6 +8,7 @@
  * la pestaña); ver sesionAlmacenada.js.
  */
 
+import { Eye, EyeOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ErrorHttp } from '../api/cliente'
@@ -91,87 +92,94 @@ export default function Login() {
 
   return (
     <div className="login-pantalla">
-      <div className="login-boton-tema">
-        <BotonTema />
-      </div>
-
-      <div className="login-tarjeta">
-        <div className="login-encabezado">
+      <div className="login-panel-marca">
+        <div className="login-panel-marca-contenido">
           {!logoFallo ? (
-            <img src={MARCA.rutaLogo} alt="" className="login-logo" onError={() => setLogoFallo(true)} />
+            <img src={MARCA.rutaLogo} alt="" className="login-panel-logo" onError={() => setLogoFallo(true)} />
           ) : (
-            <div className="login-logo login-logo--provisional" aria-hidden="true">
+            <div className="login-panel-logo login-panel-logo--provisional" aria-hidden="true">
               {MARCA.iniciales}
             </div>
           )}
-          <h1 className="login-titulo">{MARCA.nombre}</h1>
-          <p className="login-subtitulo">{MARCA.subtitulo}</p>
+          <div className="login-panel-marca-texto">
+            <h1 className="login-panel-titulo">{MARCA.nombre}</h1>
+            <p className="login-panel-subtitulo">{MARCA.subtitulo}</p>
+            <p className="login-panel-frase">Controlá el peso y la evolución de tu rodeo, todo en un solo lugar.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="login-panel-formulario">
+        <div className="login-boton-tema">
+          <BotonTema />
         </div>
 
-        <form className="login-formulario" onSubmit={alEnviar} noValidate>
-          <div className="campo">
-            <label htmlFor="usuario">Usuario</label>
-            <input
-              id="usuario"
-              name="usuario"
-              type="text"
-              autoComplete="username"
-              ref={refUsuario}
-              value={usuario}
-              onChange={(evento) => setUsuario(evento.target.value)}
-              onKeyDown={alPresionarTeclaEnUsuario}
-              aria-invalid={campoConError === 'usuario'}
-              disabled={enviando}
-            />
-          </div>
-
-          <div className="campo">
-            <label htmlFor="password">Contraseña</label>
-            <div className="campo-password">
+        <div className="login-tarjeta">
+          <form className="login-formulario" onSubmit={alEnviar} noValidate>
+            <div className="campo">
+              <label htmlFor="usuario">Usuario</label>
               <input
-                id="password"
-                name="password"
-                type={mostrarPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                ref={refPassword}
-                value={password}
-                onChange={(evento) => setPassword(evento.target.value)}
-                aria-invalid={campoConError === 'password'}
+                id="usuario"
+                name="usuario"
+                type="text"
+                autoComplete="username"
+                ref={refUsuario}
+                value={usuario}
+                onChange={(evento) => setUsuario(evento.target.value)}
+                onKeyDown={alPresionarTeclaEnUsuario}
+                aria-invalid={campoConError === 'usuario'}
                 disabled={enviando}
               />
-              <button
-                type="button"
-                className="boton-mostrar-password"
-                onClick={() => setMostrarPassword((valor) => !valor)}
-                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                disabled={enviando}
-              >
-                {mostrarPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
             </div>
-          </div>
 
-          <label className="campo-recordarme" htmlFor="recordarme">
-            <input
-              id="recordarme"
-              type="checkbox"
-              checked={recordarme}
-              onChange={(evento) => setRecordarme(evento.target.checked)}
-              disabled={enviando}
-            />
-            Recordarme en este dispositivo
-          </label>
+            <div className="campo">
+              <label htmlFor="password">Contraseña</label>
+              <div className="campo-password">
+                <input
+                  id="password"
+                  name="password"
+                  type={mostrarPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  ref={refPassword}
+                  value={password}
+                  onChange={(evento) => setPassword(evento.target.value)}
+                  aria-invalid={campoConError === 'password'}
+                  disabled={enviando}
+                />
+                <button
+                  type="button"
+                  className="boton-mostrar-password"
+                  onClick={() => setMostrarPassword((valor) => !valor)}
+                  aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  disabled={enviando}
+                >
+                  {mostrarPassword ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
+                </button>
+              </div>
+            </div>
 
-          {error && (
-            <p className="login-error" role="alert">
-              {error}
-            </p>
-          )}
+            <label className="campo-recordarme" htmlFor="recordarme">
+              <input
+                id="recordarme"
+                type="checkbox"
+                checked={recordarme}
+                onChange={(evento) => setRecordarme(evento.target.checked)}
+                disabled={enviando}
+              />
+              Recordarme en este dispositivo
+            </label>
 
-          <button type="submit" className="login-boton" disabled={enviando}>
-            {enviando ? 'Ingresando...' : 'Iniciar sesión'}
-          </button>
-        </form>
+            {error && (
+              <p className="login-error" role="alert">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" className="boton-primario login-boton" disabled={enviando}>
+              {enviando ? 'Ingresando...' : 'Iniciar sesión'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
