@@ -48,6 +48,7 @@ Pruebas funcionales manuales con Thunder Client contra el backend local
 | CP28 | `GET /api/animales` sin token | — | 401 | 401 | Aprobado |
 | CP29 | `GET /api/animales` con el token del CP26 (Auth → Bearer) | Token válido | 200 con la lista | 200, 2.15 KB, 85 ms | Aprobado |
 | CP30 | `GET /api/animales/resumen` con token (listado para la pantalla de animales, RF010) | Datos de prueba: AR-001, AR-002, AR-901, AR-902 | 200 con una fila por animal: raza, lote, grupo, `pesoActual`, `gmd`, `aptoVenta` | 200. AR-001: 245.0, GMD 1.0, no apto. AR-002: 200.0 (peso inicial), GMD `null`, no apto. AR-901: 210.0, GMD 0.0, no apto. AR-902: 460.0, GMD 18.888…, apto | Aprobado |
+| CP31 | `GET /api/animales/resumen` con token, campos ampliados para el detalle del animal | AR-001 (2 pesajes) | 200 con `duenioId`, `duenioNombre`, `razaId`, `subGrupoId`, `aniPesoInicial`, `aniObservacion` y `cantidadPesajes`, sin cambiar los campos anteriores | 200. AR-001: dueño 1 "Juan Pérez", raza 1, lote 1, peso inicial 210.0, observación `null`, 2 pesajes; `pesoActual` 245.0, GMD 1.0, no apto | Aprobado |
 
 Nota sobre CP30: en AR-901 los dos pesajes tienen la misma fecha, así que cuál es "el más reciente" es arbitrario (devolvió 210.0); no afecta el uso real.
 
@@ -74,7 +75,7 @@ con 100 a 150 cabezas no es un problema, pero conviene tenerlo presente para el 
 
 ## Pendientes de probar
 
-Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25 y CP30). Queda:
+Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25, CP30 y CP31). Queda:
 
 - Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
 
@@ -96,9 +97,11 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras agregar el endpoint `/resumen` (2026-10-18): 35 de 35 aprobadas, 0 fallos, 0 errores.** Las 6 pruebas nuevas cubren: sin token (401), animal sin pesajes (peso inicial, GMD nula, no apto), dos pesajes (peso más reciente y GMD correcta), peso exactamente igual al objetivo (apto), peso por encima del objetivo (apto) y animal sin subgrupo (descripciones en `null`, sin error).
 
+**Tras ampliar el resumen del animal (2026-10-27): 38 de 38 aprobadas, 0 fallos, 0 errores.** Las 3 pruebas nuevas cubren: `cantidadPesajes` en 0 y en 2, los campos nuevos correctos (dueño, raza, lote, peso inicial, observación) y `subGrupoId` en `null` cuando no hay lote.
+
 | Clase (`src/test/java/.../controller`) | Pruebas | Casos manuales que cubre |
 |---|---|---|
-| `AnimalControllerTest` | 15 | CP12 a CP17, CP19, CP20, listado (CP10) y resumen (CP30) |
+| `AnimalControllerTest` | 18 | CP12 a CP17, CP19, CP20, listado (CP10), resumen (CP30) y resumen ampliado (CP31) |
 | `PesajeControllerTest` | 3 | CP18 y registro de pesajes (201 y 404) |
 | `IndicadoresControllerTest` | 9 | CP08, CP09, CP11, CP21 a CP25, y valor límite (peso igual al objetivo) |
 | `AuthControllerTest` | 7 | CP26 a CP29 y validaciones: login correcto (200), contraseña incorrecta (401), falta `usuNombre` (400), falta `usuPassword` (400), endpoint protegido sin token (401) y con token (200), y que `usuPassword` no aparezca en la respuesta de usuarios |
