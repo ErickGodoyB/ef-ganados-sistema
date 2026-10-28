@@ -4,15 +4,27 @@
  * (y, si hace falta más adelante, testearla) sin depender de React.
  */
 
-/** Lotes distintos presentes en los datos (para las opciones del filtro), ordenados alfabéticamente. */
+/**
+ * Lotes distintos presentes en los datos (para las opciones del filtro),
+ * identificados por subGrupoId (no por el nombre: puede haber lotes con el
+ * mismo nombre en grupos distintos). La etiqueta de cada uno es
+ * "Lote — Grupo" para poder distinguirlos; se devuelven ordenados
+ * alfabéticamente por esa etiqueta. Los animales sin lote (subGrupoId
+ * null) no entran acá: el filtro "Sin lote" es una opción fija, no
+ * depende de los datos (ver Animales.jsx).
+ */
 export function obtenerLotesDisponibles(animales) {
-  const lotes = new Set()
+  const vistos = new Map()
   for (const animal of animales) {
-    if (animal.subGrupoDescripcion) {
-      lotes.add(animal.subGrupoDescripcion)
+    if (animal.subGrupoId == null || vistos.has(animal.subGrupoId)) {
+      continue
     }
+    const etiqueta = animal.grupoDescripcion
+      ? `${animal.subGrupoDescripcion} — ${animal.grupoDescripcion}`
+      : animal.subGrupoDescripcion
+    vistos.set(animal.subGrupoId, { valor: String(animal.subGrupoId), etiqueta })
   }
-  return [...lotes].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }))
+  return [...vistos.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
 }
 
 function valorDeOrden(animal, campo) {
@@ -69,8 +81,9 @@ function compararAnimales(a, b, campo, direccion) {
 
 /**
  * Aplica, en orden, la búsqueda por caravana (sin distinguir mayúsculas,
- * ignorando espacios en los extremos), los filtros de lote y estado, y
- * finalmente el orden elegido. Devuelve un array nuevo; no modifica
+ * ignorando espacios en los extremos), los filtros de lote (por
+ * subGrupoId; "sin-lote" filtra los que tienen subGrupoId null) y estado,
+ * y finalmente el orden elegido. Devuelve un array nuevo; no modifica
  * "animales".
  */
 export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, orden }) {
@@ -80,7 +93,10 @@ export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, orde
     if (termino && !animal.aniCaravana?.toLowerCase().includes(termino)) {
       return false
     }
-    if (lote !== 'todos' && animal.subGrupoDescripcion !== lote) {
+    if (lote === 'sin-lote' && animal.subGrupoId != null) {
+      return false
+    }
+    if (lote !== 'todos' && lote !== 'sin-lote' && String(animal.subGrupoId) !== lote) {
       return false
     }
     if (estado === 'aptos' && !animal.aptoVenta) {

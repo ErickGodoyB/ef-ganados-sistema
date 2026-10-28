@@ -1,0 +1,63 @@
+/**
+ * Estilos del modal de detalle de animal (ver ModalDetalleAnimal.jsx). Los
+ * botones salen de src/estilos/base.css (.boton-secundario, .boton-
+ * peligro); acá solo queda la lista de datos y los ajustes propios de la
+ * confirmación de borrado.
+ */
+
+.detalle-animal-datos {
+  margin: 0 0 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px 16px;
+}
+
+@media (min-width: 480px) {
+  .detalle-animal-datos {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.detalle-animal-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.detalle-animal-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.detalle-animal-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.detalle-animal-dato dd {
+  margin: 0;
+  font-size: 15px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.detalle-animal-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.detalle-animal-aviso-pesajes {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+  text-align: right;
+}
+
+.detalle-animal-confirmar p {
+  margin: 0 0 16px;
+  color: var(--texto);
+}

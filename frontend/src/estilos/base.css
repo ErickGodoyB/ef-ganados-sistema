@@ -103,11 +103,12 @@
   filter: brightness(1.08);
 }
 
-/* Inputs y selects: mismo look en todas las pantallas (campo, Modal,
-   formularios de alta rápida, filtros del listado). */
+/* Inputs, selects y textareas: mismo look en todas las pantallas (campo,
+   Modal, formularios de alta rápida, filtros del listado). */
 .entrada,
 .campo input,
 .campo select,
+.campo textarea,
 .campo-filtro select,
 .campo-busqueda input {
   width: 100%;
@@ -122,9 +123,18 @@
   transition: border-color var(--transicion-rapida), box-shadow var(--transicion-rapida);
 }
 
+/* Las textareas son de varias líneas por naturaleza: el alto mínimo
+   genérico de arriba (pensado para un input de una sola línea) se queda
+   corto, y se dejan crecer solo verticalmente para no romper el layout. */
+.campo textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
 .entrada:focus-visible,
 .campo input:focus-visible,
 .campo select:focus-visible,
+.campo textarea:focus-visible,
 .campo-filtro select:focus-visible,
 .campo-busqueda input:focus-visible {
   outline: none;

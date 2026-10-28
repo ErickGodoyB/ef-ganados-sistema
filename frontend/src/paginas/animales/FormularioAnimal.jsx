@@ -1,12 +1,14 @@
 /**
- * Formulario para crear (o, más adelante, editar) un animal: campos,
- * validación en el cliente, altas rápidas de Raza y Lote sin salir del
- * formulario, y los botones Guardar / Guardar y agregar otro / Cancelar.
- * Independiente del Modal que lo envuelve (ver ModalNuevoAnimal.jsx), para
- * poder reutilizarse en el registro de pesajes (cuando el animal todavía
- * no está cargado) y, más adelante, en la edición. Hoy solo está
- * implementado modo="crear"; valoresIniciales permite precargar algunos
- * campos (ej. un lote o una fecha ya elegidos en otra pantalla).
+ * Formulario para crear o editar un animal: campos, validación en el
+ * cliente, altas rápidas de Raza y Lote sin salir del formulario, y los
+ * botones Guardar / Cancelar (más "Guardar y agregar otro", solo en modo
+ * "crear"). Independiente del Modal que lo envuelve (ver
+ * ModalNuevoAnimal.jsx y ModalDetalleAnimal.jsx), para poder reutilizarse
+ * en el registro de pesajes (cuando el animal todavía no está cargado).
+ * En modo "editar", valoresIniciales trae los datos actuales del animal
+ * (se le puede pasar directamente el objeto del resumen: sus claves ya
+ * coinciden con las que este formulario espera) y animalId identifica el
+ * PUT a hacer.
  *
  * Expone, vía ref, solicitarCierre(): lo usa quien envuelve este
  * formulario (ej. un Modal) para que Escape o un clic afuera respeten la
@@ -39,7 +41,7 @@ function parsearPeso(texto) {
 }
 
 const FormularioAnimal = forwardRef(function FormularioAnimal(
-  { valoresIniciales = {}, alGuardar, alCancelar, modo = 'crear' },
+  { valoresIniciales = {}, alGuardar, alCancelar, modo = 'crear', animalId },
   ref,
 ) {
   const {
@@ -78,6 +80,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
   const [pesoInicial, setPesoInicial] = useState(
     valoresIniciales.aniPesoInicial != null ? String(valoresIniciales.aniPesoInicial) : '',
   )
+  const [observacion, setObservacion] = useState(valoresIniciales.aniObservacion ?? '')
   const [errores, setErrores] = useState({})
   const [errorGeneral, setErrorGeneral] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -88,6 +91,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
   const refDuenio = useRef(null)
   const refFecha = useRef(null)
   const refPeso = useRef(null)
+  const refObservacion = useRef(null)
 
   // El formulario puede montarse antes de que lleguen sus datos (todavía
   // no hay nada enfocable, solo el texto de "cargando"). En cuanto
@@ -157,7 +161,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
     primero?.[1].current?.focus()
   }
 
-  /** Valida y, si está todo bien, crea el animal. Devuelve el animal creado, o null si no se guardó. */
+  /** Valida y, si está todo bien, crea o actualiza el animal (según "modo"). Devuelve el animal guardado, o null si no se guardó. */
   async function guardar() {
     const encontrados = validar()
     if (Object.keys(encontrados).length > 0) {
@@ -166,26 +170,31 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
       return null
     }
 
-    if (modo !== 'crear') {
-      // El modo "editar" todavía no está implementado: solo existe el
-      // alta (ver el JSDoc de arriba sobre los usos futuros de este
-      // componente).
-      return null
+    const cuerpo = {
+      duenioId: Number(duenioId),
+      razaId: Number(razaId),
+      subGrupoId: Number(subGrupoId),
+      aniCaravana: caravana.trim(),
+      aniFechaIngreso: fechaIngreso,
+      aniPesoInicial: parsearPeso(pesoInicial),
+      aniObservacion: observacion.trim() || null,
     }
 
     setGuardando(true)
     setErrorGeneral('')
     try {
+      if (modo === 'editar') {
+        return await peticionProtegida(`/api/animales/${animalId}`, {
+          method: 'PUT',
+          // aniFechaEgreso no tiene campo en este formulario (está fuera de
+          // alcance, ver CLAUDE.md): se reenvía tal cual vino en el
+          // resumen, para no perderlo al guardar otros cambios.
+          body: JSON.stringify({ ...cuerpo, aniFechaEgreso: valoresIniciales.aniFechaEgreso ?? null }),
+        })
+      }
       return await peticionProtegida('/api/animales', {
         method: 'POST',
-        body: JSON.stringify({
-          duenioId: Number(duenioId),
-          razaId: Number(razaId),
-          subGrupoId: Number(subGrupoId),
-          aniCaravana: caravana.trim(),
-          aniFechaIngreso: fechaIngreso,
-          aniPesoInicial: parsearPeso(pesoInicial),
-        }),
+        body: JSON.stringify(cuerpo),
       })
     } catch (err) {
       if (err instanceof ErrorHttp && err.estado === 409) {
@@ -216,23 +225,38 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
 
   /**
    * "Guardar y agregar otro": mantiene raza, lote, dueño, fecha (y lo
-   * creado por alta rápida); limpia caravana y peso; foco en Caravana.
-   * Avisa que se guardó pero que hay que seguir (continuar: true).
+   * creado por alta rápida); limpia caravana, peso y observación; foco en
+   * Caravana. Avisa que se guardó pero que hay que seguir (continuar: true).
    */
   async function manejarGuardarYAgregarOtro() {
     const creado = await guardar()
     if (creado) {
       setCaravana('')
       setPesoInicial('')
+      setObservacion('')
       setErrores({})
       refCaravana.current?.focus()
       alGuardar(creado, { continuar: true })
     }
   }
 
-  /** Hay algo que se perdería al cerrar sin guardar: caravana o peso ya escritos (ver manejarSolicitudDeCierre). */
+  /**
+   * Hay algo que se perdería al cerrar sin guardar: caravana, peso u
+   * observación distintos de su valor inicial (ver manejarSolicitudDeCierre).
+   * En modo "crear" el valor inicial de los tres es "", así que esto se
+   * reduce exactamente al chequeo de antes ("¿hay algo escrito?"); en modo
+   * "editar" los campos ya vienen precargados, así que hace falta comparar
+   * contra lo que trajo valoresIniciales en vez de contra "".
+   */
   function hayDatosSinGuardar() {
-    return caravana.trim() !== '' || pesoInicial.trim() !== ''
+    const caravanaInicial = (valoresIniciales.aniCaravana ?? '').trim()
+    const pesoInicialDeOrigen = valoresIniciales.aniPesoInicial != null ? String(valoresIniciales.aniPesoInicial) : ''
+    const observacionInicial = valoresIniciales.aniObservacion ?? ''
+    return (
+      caravana.trim() !== caravanaInicial ||
+      pesoInicial.trim() !== pesoInicialDeOrigen ||
+      observacion !== observacionInicial
+    )
   }
 
   // "Cancelar" (y, vía solicitarCierre, Escape/clic en el fondo del Modal
@@ -412,6 +436,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
           inputMode="decimal"
           value={pesoInicial}
           onChange={(evento) => setPesoInicial(evento.target.value)}
+          onKeyDown={alPresionarEnterIrA(refObservacion)}
           aria-invalid={Boolean(errores.pesoInicial)}
           disabled={guardando}
         />
@@ -420,6 +445,18 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
             {errores.pesoInicial}
           </p>
         )}
+      </div>
+
+      <div className="campo">
+        <label htmlFor="nuevo-animal-observacion">Observación (opcional)</label>
+        <textarea
+          id="nuevo-animal-observacion"
+          ref={refObservacion}
+          rows={3}
+          value={observacion}
+          onChange={(evento) => setObservacion(evento.target.value)}
+          disabled={guardando}
+        />
       </div>
 
       {errorGeneral && (
@@ -432,9 +469,11 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
         <button type="button" className="boton-secundario" onClick={manejarSolicitudDeCierre} disabled={guardando}>
           Cancelar
         </button>
-        <button type="button" className="boton-secundario" onClick={manejarGuardarYAgregarOtro} disabled={guardando}>
-          {guardando ? 'Guardando...' : 'Guardar y agregar otro'}
-        </button>
+        {modo === 'crear' && (
+          <button type="button" className="boton-secundario" onClick={manejarGuardarYAgregarOtro} disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Guardar y agregar otro'}
+          </button>
+        )}
         <button type="submit" className="boton-primario" disabled={guardando}>
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>

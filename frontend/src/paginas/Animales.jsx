@@ -1,12 +1,16 @@
 /**
  * Listado de animales (RF010): trae el resumen desde el backend
  * (GET /api/animales/resumen) y permite buscar por caravana, filtrar por
- * lote y por estado, ordenar por cualquier columna, paginar en el cliente,
- * y elegir qué columnas opcionales mostrar (preferencia que se recuerda en
- * localStorage, ver usePreferenciasListadoAnimales). El botón "+ Nuevo
- * animal" (RF001) abre ModalNuevoAnimal; al guardar, se recarga el listado
- * sin perder búsqueda, filtros, orden ni opciones (son estados propios de
- * esta pantalla, ajenos a la recarga) y se muestra un aviso breve.
+ * lote (por subGrupoId; ver listadoAnimales.js) y por estado, ordenar por
+ * cualquier columna, paginar en el cliente, y elegir qué columnas
+ * opcionales mostrar (preferencia que se recuerda en localStorage, ver
+ * usePreferenciasListadoAnimales). El botón "+ Nuevo animal" (RF001) abre
+ * ModalNuevoAnimal; tocar una fila/tarjeta abre ModalDetalleAnimal (ver
+ * ese archivo), desde donde se puede editar o eliminar. En los tres casos,
+ * al guardar/editar/eliminar se recarga el listado sin perder búsqueda,
+ * filtros, orden ni página (son estados propios de esta pantalla, ajenos a
+ * la recarga; si la página actual queda vacía, paginaActual ya se recorta
+ * sola más abajo) y se muestra un aviso breve.
  */
 
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
@@ -14,6 +18,7 @@ import { useMemo, useRef, useState } from 'react'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import { OPCIONES_ORDEN_MOVIL } from './animales/columnas'
 import { filtrarYOrdenarAnimales, obtenerLotesDisponibles } from './animales/listadoAnimales'
+import ModalDetalleAnimal from './animales/ModalDetalleAnimal'
 import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
 import Paginacion from './animales/Paginacion'
 import PanelOpciones from './animales/PanelOpciones'
@@ -41,8 +46,10 @@ export default function Animales() {
   const [pagina, setPagina] = useState(1)
 
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [animalSeleccionado, setAnimalSeleccionado] = useState(null)
   const [aviso, setAviso] = useState('')
   const refBotonNuevoAnimal = useRef(null)
+  const refDisparadorDetalle = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
   // Volver a la página 1 cuando cambia la búsqueda, un filtro o el orden
@@ -107,6 +114,33 @@ export default function Animales() {
     mostrarAviso(`Animal ${animalCreado.aniCaravana} registrado`)
   }
 
+  /** Abre el detalle del animal tocado (fila de tabla o tarjeta móvil); guarda qué elemento lo disparó para devolverle el foco al cerrar. */
+  function alAbrirDetalle(animal, evento) {
+    refDisparadorDetalle.current = evento.currentTarget.querySelector('button') ?? evento.currentTarget
+    setAnimalSeleccionado(animal)
+  }
+
+  /** Tras editar un animal desde el detalle: cierra los modales, recarga el listado y avisa. */
+  function alActualizarAnimal(animalActualizado) {
+    setAnimalSeleccionado(null)
+    recargar()
+    mostrarAviso(`Animal ${animalActualizado.aniCaravana} actualizado`)
+  }
+
+  /** Tras eliminar un animal desde el detalle: cierra los modales, recarga el listado y avisa. */
+  function alEliminarAnimal(caravanaEliminada) {
+    setAnimalSeleccionado(null)
+    recargar()
+    mostrarAviso(`Animal ${caravanaEliminada} eliminado`)
+  }
+
+  /** El animal que se quiso eliminar ya no existía (lo borraron en otra sesión): cierra, recarga y avisa. */
+  function alAnimalYaNoExiste() {
+    setAnimalSeleccionado(null)
+    recargar()
+    mostrarAviso('Ese animal ya no existía: se actualizó el listado')
+  }
+
   const sinAnimales = !cargando && !error && animales.length === 0
   const sinCoincidencias = !cargando && !error && animales.length > 0 && resultado.length === 0
   const hayResultados = !cargando && !error && resultado.length > 0
@@ -154,9 +188,10 @@ export default function Animales() {
           <label htmlFor="animales-filtro-lote">Lote</label>
           <select id="animales-filtro-lote" value={lote} onChange={(evento) => setLote(evento.target.value)}>
             <option value="todos">Todos los lotes</option>
-            {lotesDisponibles.map((nombreLote) => (
-              <option key={nombreLote} value={nombreLote}>
-                {nombreLote}
+            <option value="sin-lote">Sin lote</option>
+            {lotesDisponibles.map((opcion) => (
+              <option key={opcion.valor} value={opcion.valor}>
+                {opcion.etiqueta}
               </option>
             ))}
           </select>
@@ -240,12 +275,18 @@ export default function Animales() {
               columnasVisibles={columnasVisibles}
               orden={orden}
               onOrdenar={alOrdenar}
+              onAbrirDetalle={alAbrirDetalle}
             />
           </div>
 
           <div className="animales-tarjetas-solo-movil">
             {animalesDeLaPagina.map((animal) => (
-              <TarjetaAnimal key={animal.aniId} animal={animal} columnasVisibles={columnasVisibles} />
+              <TarjetaAnimal
+                key={animal.aniId}
+                animal={animal}
+                columnasVisibles={columnasVisibles}
+                onAbrirDetalle={alAbrirDetalle}
+              />
             ))}
           </div>
 
@@ -264,6 +305,17 @@ export default function Animales() {
           onCerrar={() => setModalAbierto(false)}
           onGuardado={alGuardarAnimal}
           refDisparador={refBotonNuevoAnimal}
+        />
+      )}
+
+      {animalSeleccionado && (
+        <ModalDetalleAnimal
+          animal={animalSeleccionado}
+          onCerrar={() => setAnimalSeleccionado(null)}
+          onActualizado={alActualizarAnimal}
+          onEliminado={alEliminarAnimal}
+          onYaNoExiste={alAnimalYaNoExiste}
+          refDisparador={refDisparadorDetalle}
         />
       )}
     </div>

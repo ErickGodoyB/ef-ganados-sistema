@@ -34,6 +34,7 @@
 }
 
 .tabla-animales tbody tr {
+  cursor: pointer;
   transition: background-color var(--transicion-rapida);
 }
 
@@ -45,6 +46,29 @@
    destaca en negrita porque es el identificador principal del animal. */
 .tabla-animales tbody td:first-child {
   font-weight: 700;
+}
+
+/* Botón que abre el detalle del animal (ver TablaAnimales.jsx): sin fondo
+   ni borde propio, hereda la negrita de la celda; el clic en cualquier
+   otro punto de la fila hace lo mismo (burbujea hasta el onClick de <tr>). */
+.tabla-animales-boton-caravana {
+  font: inherit;
+  font-weight: inherit;
+  color: var(--texto);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tabla-animales-boton-caravana:hover {
+  color: var(--color-foco);
+  text-decoration: underline;
+}
+
+.tabla-animales-boton-caravana:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
 }
 
 .tabla-animales-orden {

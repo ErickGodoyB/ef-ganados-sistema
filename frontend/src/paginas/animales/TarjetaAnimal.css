@@ -10,6 +10,12 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px;
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+}
+
+.tarjeta-animal:hover {
+  background: var(--superficie-hover);
 }
 
 .tarjeta-animal-encabezado {
@@ -23,6 +29,20 @@
   font-size: 17px;
   font-weight: 700;
   color: var(--texto);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tarjeta-animal-caravana:hover {
+  color: var(--color-foco);
+  text-decoration: underline;
+}
+
+.tarjeta-animal-caravana:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
 }
 
 .tarjeta-animal-datos {
