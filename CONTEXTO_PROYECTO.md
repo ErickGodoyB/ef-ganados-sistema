@@ -210,7 +210,9 @@ en ISO 9241-11 y los heurísticos de Nielsen.
 - [ ] Centralizar nombre, subtítulo y logo de la empresa en un solo archivo; poner el logo real en `frontend/public/logo.png`
 - [x] `CLAUDE.md` creado en la raíz del repositorio con las reglas fijas; marca centralizada en `frontend/src/configuracion/marca.js` (el `<title>` de `index.html` queda escrito a mano)
 - [x] Endpoint `GET /api/animales/resumen` para el listado (CP30) y ampliado para el detalle del animal (2026-10-27): suma `duenioId`, `duenioNombre`, `razaId`, `subGrupoId`, `aniPesoInicial`, `aniObservacion` y `cantidadPesajes` (38/38 pruebas, CP31)
-- [ ] Detalle del animal con edición y eliminación (modal; Eliminar solo sin pesajes) y filtro de lote por `subGrupoId`: orden de frontend entregada el 2026-10-27
+- [x] Detalle del animal con edición y eliminación (2026-10-27): modal único con vistas detalle/editar/eliminar (`ModalDetalleAnimal.jsx`), `FormularioAnimal` con `modo="editar"` (PUT) y campo Observación, Eliminar deshabilitado si tiene pesajes (aviso visible), confirmación y manejo de 409/404, filtro de lote por `subGrupoId` con etiqueta "Lote — Grupo" y "Sin lote". Probado en PC y celular.
+- [ ] Salida del animal (fecha y motivo Venta/Otro, sin pesajes posteriores, filtro de activos/salidos, "Reactivar") junto con la hora de registro (`aniFechaRegistro`)
+- [ ] Casos de prueba manuales del detalle (editar, caravana repetida, eliminar con y sin pesajes) en `CASOS_DE_PRUEBA.md` si se quieren como evidencia del informe
 - [x] Pantalla de listado de animales en React (RF010): búsqueda, filtros, orden, paginación y opciones de columnas (probada)
 - [ ] Casilla "Recordarme" en el login (localStorage si está marcada, sessionStorage si no)
 - [x] "+ Nuevo animal" (modal de registro, RF001): guarda, valida (fecha no futura, caravana repetida 409) y permite "Guardar y agregar otro" (probado 2026-10-19)
