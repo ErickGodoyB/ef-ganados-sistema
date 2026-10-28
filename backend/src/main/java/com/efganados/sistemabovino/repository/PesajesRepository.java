@@ -16,4 +16,7 @@ public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
 
     /** Indica si el animal tiene al menos un pesaje registrado. */
     boolean existsByAnimal_AniId(Long aniId);
+
+    /** Cuenta los pesajes registrados del animal. */
+    long countByAnimal_AniId(Long aniId);
 }

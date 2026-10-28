@@ -182,23 +182,50 @@ public class AnimalController {
      * Arma el resumen de un animal usando los métodos ya existentes de
      * {@code AnimalService} (pesoActual, calcularGMD, estaAptoParaVenta):
      * no reimplementa ninguna regla de negocio, solo junta sus resultados
-     * con los datos del animal, su raza y su lote (si tiene subgrupo).
+     * con los datos del animal, su dueño, su raza y su lote (si tiene
+     * subgrupo).
      */
     private AnimalResumen aResumen(Animal animal) {
         SubGrupo subGrupo = animal.getSubGrupo();
         Grupo grupo = subGrupo != null ? subGrupo.getGrupo() : null;
+        Persona duenio = animal.getDuenio();
+        Raza raza = animal.getRaza();
 
         return new AnimalResumen(
                 animal.getAniId(),
                 animal.getAniCaravana(),
-                animal.getRaza().getRzDescripcion(),
+                duenio.getPerId(),
+                nombreCompleto(duenio),
+                raza.getRzId(),
+                raza.getRzDescripcion(),
+                subGrupo != null ? subGrupo.getSbId() : null,
                 subGrupo != null ? subGrupo.getSbDescripcion() : null,
                 grupo != null ? grupo.getGrpDescripcion() : null,
+                animal.getAniPesoInicial(),
+                animal.getAniObservacion(),
+                pesajesRepository.countByAnimal_AniId(animal.getAniId()),
                 animalService.pesoActual(animal),
                 animalService.calcularGMD(animal),
                 animalService.estaAptoParaVenta(animal),
                 animal.getAniFechaIngreso(),
                 animal.getAniFechaEgreso());
+    }
+
+    /**
+     * Junta nombre y apellido de la persona separados por un espacio. Si
+     * alguno de los dos es null, devuelve el otro solo (o null si ambos lo
+     * son), para no mostrar "null" pegado al nombre.
+     */
+    private String nombreCompleto(Persona persona) {
+        String nombre = persona.getPerNombre();
+        String apellido = persona.getPerApellido();
+        if (nombre == null) {
+            return apellido;
+        }
+        if (apellido == null) {
+            return nombre;
+        }
+        return nombre + " " + apellido;
     }
 
     /**
@@ -265,10 +292,12 @@ public class AnimalController {
 
     /**
      * Resumen de un animal para el listado (RF010). Si el animal no tiene
-     * subgrupo asignado, subGrupoDescripcion y grupoDescripcion van en null.
+     * subgrupo asignado, subGrupoId, subGrupoDescripcion y grupoDescripcion
+     * van en null.
      */
-    public record AnimalResumen(Long aniId, String aniCaravana, String razaDescripcion, String subGrupoDescripcion,
-            String grupoDescripcion, double pesoActual, Double gmd, boolean aptoVenta, LocalDate aniFechaIngreso,
-            LocalDate aniFechaEgreso) {
+    public record AnimalResumen(Long aniId, String aniCaravana, Long duenioId, String duenioNombre, Long razaId,
+            String razaDescripcion, Long subGrupoId, String subGrupoDescripcion, String grupoDescripcion,
+            double aniPesoInicial, String aniObservacion, long cantidadPesajes, double pesoActual, Double gmd,
+            boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso) {
     }
 }

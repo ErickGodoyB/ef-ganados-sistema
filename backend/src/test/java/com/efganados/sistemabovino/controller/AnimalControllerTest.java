@@ -293,7 +293,7 @@ class AnimalControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
-    @DisplayName("El resumen de un animal sin pesajes usa el peso inicial, con GMD nula y no apto para venta")
+    @DisplayName("El resumen de un animal sin pesajes usa el peso inicial, con GMD nula, no apto para venta y cantidadPesajes 0")
     void resumenDeAnimalSinPesajesUsaPesoInicialYGmdNula() throws Exception {
         Persona duenio = crearPersona("Dueño-Resumen1");
         Raza raza = crearRaza("Raza-Resumen-SinPesajes", 450.0);
@@ -309,7 +309,59 @@ class AnimalControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$[0].subGrupoDescripcion").value("SubGrupo-Resumen-SinPesajes"))
                 .andExpect(jsonPath("$[0].pesoActual").value(200.0))
                 .andExpect(jsonPath("$[0].gmd").value(nullValue()))
-                .andExpect(jsonPath("$[0].aptoVenta").value(false));
+                .andExpect(jsonPath("$[0].aptoVenta").value(false))
+                .andExpect(jsonPath("$[0].cantidadPesajes").value(0));
+    }
+
+    @Test
+    @DisplayName("El resumen de un animal con dos pesajes trae cantidadPesajes 2")
+    void resumenDeAnimalConDosPesajesTraeCantidadPesajesDos() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen6");
+        Persona responsable = crearPersona("Responsable-Resumen6");
+        Raza raza = crearRaza("Raza-Resumen-CantidadPesajes", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-CantidadPesajes");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-006", 200.0);
+        registrarPesaje(animal, responsable, 215.0, LocalDate.of(2026, 8, 15));
+        registrarPesaje(animal, responsable, 245.0, LocalDate.of(2026, 9, 14));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].cantidadPesajes").value(2));
+    }
+
+    @Test
+    @DisplayName("El resumen de un animal trae los datos de dueño, raza, lote, peso inicial y observación")
+    void resumenDeAnimalTraeDatosDeDuenioRazaLotePesoInicialYObservacion() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen7");
+        Raza raza = crearRaza("Raza-Resumen-DatosCompletos", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-DatosCompletos");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-007", 180.5);
+        animal.setAniObservacion("Observación de prueba");
+        animalRepository.save(animal);
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].duenioId").value(duenio.getPerId()))
+                .andExpect(jsonPath("$[0].duenioNombre").value(duenio.getPerNombre() + " " + duenio.getPerApellido()))
+                .andExpect(jsonPath("$[0].razaId").value(raza.getRzId()))
+                .andExpect(jsonPath("$[0].subGrupoId").value(subGrupo.getSbId()))
+                .andExpect(jsonPath("$[0].aniPesoInicial").value(180.5))
+                .andExpect(jsonPath("$[0].aniObservacion").value("Observación de prueba"));
+    }
+
+    @Test
+    @DisplayName("El resumen de un animal sin subgrupo deja subGrupoId en null sin romper")
+    void resumenDeAnimalSinSubGrupoDejaSubGrupoIdEnNull() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen8");
+        Raza raza = crearRaza("Raza-Resumen-SinSubGrupoId", 450.0);
+        crearAnimal(duenio, raza, null, "CAR-RES-008", 200.0);
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].subGrupoId").value(nullValue()));
     }
 
     @Test
