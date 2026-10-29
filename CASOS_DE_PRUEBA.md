@@ -49,6 +49,21 @@ Pruebas funcionales manuales con Thunder Client contra el backend local
 | CP29 | `GET /api/animales` con el token del CP26 (Auth → Bearer) | Token válido | 200 con la lista | 200, 2.15 KB, 85 ms | Aprobado |
 | CP30 | `GET /api/animales/resumen` con token (listado para la pantalla de animales, RF010) | Datos de prueba: AR-001, AR-002, AR-901, AR-902 | 200 con una fila por animal: raza, lote, grupo, `pesoActual`, `gmd`, `aptoVenta` | 200. AR-001: 245.0, GMD 1.0, no apto. AR-002: 200.0 (peso inicial), GMD `null`, no apto. AR-901: 210.0, GMD 0.0, no apto. AR-902: 460.0, GMD 18.888…, apto | Aprobado |
 | CP31 | `GET /api/animales/resumen` con token, campos ampliados para el detalle del animal | AR-001 (2 pesajes) | 200 con `duenioId`, `duenioNombre`, `razaId`, `subGrupoId`, `aniPesoInicial`, `aniObservacion` y `cantidadPesajes`, sin cambiar los campos anteriores | 200. AR-001: dueño 1 "Juan Pérez", raza 1, lote 1, peso inicial 210.0, observación `null`, 2 pesajes; `pesoActual` 245.0, GMD 1.0, no apto | Aprobado |
+| CP32 | `GET /api/auth/yo` con token | — | 200 con el usuario autenticado y su persona | 200, `personaId` 3 | Aprobado |
+| CP33 | `POST /api/pesajes/sesion` con 2 animales (AR-001 260 kg, AR-002 235 kg) el 2026-10-20 | `responsableId` 3 | 201 con 2 pesajes | 201, `pesaId` 46 y 47 | Aprobado |
+| CP34 | `GET /api/pesajes/sesiones` | — | Fila del 2026-10-20, Lote A: cantidad 2, total 495, promedio 247.5, mínimo 235, máximo 260 | Coincide exactamente | Aprobado |
+| CP35 | `GET /api/pesajes/sesiones/detalle?fecha=2026-10-20&subGrupoId=1` | — | AR-001: peso anterior 245, GMD ≈ 0.4167; AR-002: peso anterior y GMD `null` | AR-001: 260.0, anterior 245.0, GMD 0.4166…; AR-002: 235.0, `null`, `null` | Aprobado |
+| CP36 | `POST /api/pesajes/sesion` con un ítem de peso 0 (todo o nada) | Animal 1 válido + animal 2 con peso 0, fecha 2026-10-21 | 400 y no se guarda ninguno | 400 `El peso debe ser mayor a 0 y hasta 2000 kg`; no existe ninguna sesión del 2026-10-21 | Aprobado |
+| CP37 | `POST /api/pesajes/sesion` con fecha futura | 2030-01-01 | 400 | 400 `La fecha del pesaje no puede ser futura` | Aprobado |
+| CP38 | `POST /api/pesajes/sesion` con fecha anterior al ingreso | AR-001, 2026-07-01 | 400 | 400 `La fecha del pesaje no puede ser anterior al ingreso del animal (AR-001: 2026-08-01)` | Aprobado |
+| CP39 | `POST /api/pesajes/sesion` con un animal repetido | Animal 1 dos veces | 400 | 400 `El animal AR-001 está repetido en la sesión` | Aprobado |
+| CP40 | `POST /api/pesajes/sesion` sin ítems | `items: []` | 400 | 400 `La sesión debe tener al menos un pesaje` | Aprobado |
+| CP41 | `POST /api/pesajes/sesion` con peso exagerado | 2500 kg | 400 | 400 `El peso debe ser mayor a 0 y hasta 2000 kg` | Aprobado |
+| CP42 | `PUT /api/pesajes/46` con peso 262 y observación | `{"peso":262,"observaciones":"Corregido"}` | 200; el GMD de AR-001 se recalcula (≈ 0.4722) | 200; el detalle refleja el cambio | Aprobado |
+| CP43 | `PUT /api/pesajes/99999` | Id inexistente | 404 | 404 `Pesaje no encontrado con id: 99999` | Aprobado |
+| CP44 | `DELETE /api/pesajes/46` | — | 204 | 204, vacío | Aprobado |
+| CP45 | `DELETE /api/pesajes/47` | — | 204 | 204, vacío (datos de AR-001 y AR-002 restaurados) | Aprobado |
+| CP46 | `DELETE /api/pesajes/47` por segunda vez | — | 404 | 404 `Pesaje no encontrado con id: 47` | Aprobado |
 
 Nota sobre CP30: en AR-901 los dos pesajes tienen la misma fecha, así que cuál es "el más reciente" es arbitrario (devolvió 210.0); no afecta el uso real.
 
@@ -75,7 +90,7 @@ con 100 a 150 cabezas no es un problema, pero conviene tenerlo presente para el 
 
 ## Pendientes de probar
 
-Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25, CP30 y CP31). Queda:
+Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25 y CP30 a CP46). Queda:
 
 - Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
 
@@ -99,12 +114,16 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras ampliar el resumen del animal (2026-10-27): 38 de 38 aprobadas, 0 fallos, 0 errores.** Las 3 pruebas nuevas cubren: `cantidadPesajes` en 0 y en 2, los campos nuevos correctos (dueño, raza, lote, peso inicial, observación) y `subGrupoId` en `null` cuando no hay lote.
 
+**Tras las sesiones de pesaje (2026-10-28): 59 de 59 aprobadas, 0 fallos, 0 errores** (38 anteriores + 21 nuevas). Cubren: reglas de peso, fecha (futura, anterior al ingreso) y salida del animal; sesión todo o nada; animal repetido y sesión vacía; resumen de sesiones agrupado por fecha y lote (incluido "sin lote"); detalle con peso anterior y GMD; edición y borrado de pesajes; y `/api/auth/yo`. La prueba de atomicidad vive en su propia clase sin `@Transactional`, porque con la transacción de la prueba el "deshacer" no sería visible dentro del mismo método (en producción el rollback es inmediato).
+
 | Clase (`src/test/java/.../controller`) | Pruebas | Casos manuales que cubre |
 |---|---|---|
 | `AnimalControllerTest` | 18 | CP12 a CP17, CP19, CP20, listado (CP10), resumen (CP30) y resumen ampliado (CP31) |
 | `PesajeControllerTest` | 3 | CP18 y registro de pesajes (201 y 404) |
 | `IndicadoresControllerTest` | 9 | CP08, CP09, CP11, CP21 a CP25, y valor límite (peso igual al objetivo) |
-| `AuthControllerTest` | 7 | CP26 a CP29 y validaciones: login correcto (200), contraseña incorrecta (401), falta `usuNombre` (400), falta `usuPassword` (400), endpoint protegido sin token (401) y con token (200), y que `usuPassword` no aparezca en la respuesta de usuarios |
+| `AuthControllerTest` | 9 | CP26 a CP29 y validaciones: login correcto (200), contraseña incorrecta (401), falta `usuNombre` (400), falta `usuPassword` (400), endpoint protegido sin token (401) y con token (200), y que `usuPassword` no aparezca en la respuesta de usuarios |
+| `PesajeSesionControllerTest` | 18 | CP33 a CP46 (sesión, errores, resumen, detalle, edición y borrado) |
+| `PesajeSesionAtomicidadTest` | 1 | CP36 (todo o nada, sin `@Transactional`) |
 | `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
 
 Las pruebas manuales (CP01 a CP25) quedan como evidencia de la verificación con una herramienta

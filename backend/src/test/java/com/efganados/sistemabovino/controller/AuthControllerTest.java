@@ -106,6 +106,27 @@ class AuthControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
+    @DisplayName("GET /api/auth/yo sin token devuelve 401")
+    void yoSinTokenDevuelve401() throws Exception {
+        mockMvc.perform(get("/api/auth/yo"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/yo con token devuelve los datos del usuario autenticado")
+    void yoConTokenDevuelveDatosDelUsuarioAutenticado() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+
+        mockMvc.perform(get("/api/auth/yo")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuNombre").value(adminUsuario))
+                .andExpect(jsonPath("$.tipo").value("EMPLEADO"))
+                .andExpect(jsonPath("$.personaId").isNotEmpty())
+                .andExpect(jsonPath("$.personaNombre").value("Administrador Sistema"));
+    }
+
+    @Test
     @DisplayName("GET /api/usuarios no incluye el campo usuPassword en la respuesta")
     void listarUsuariosNoIncluyeUsuPassword() throws Exception {
         Usuario usuario = new Usuario();

@@ -2,12 +2,16 @@ package com.efganados.sistemabovino.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Usuario;
 import com.efganados.sistemabovino.repository.UsuarioRepository;
 import com.efganados.sistemabovino.service.TokenService;
@@ -61,11 +65,47 @@ public class AuthController {
         return ResponseEntity.ok(new LoginResponse(token, usuario.getUsuNombre(), tipo));
     }
 
+    /**
+     * Datos del usuario autenticado (el subject del JWT es su usuNombre; ver
+     * {@code TokenService.generarToken}). Requiere token: sin uno, la
+     * petición ni siquiera llega acá, porque {@code SecurityConfig} exige
+     * JWT en toda ruta salvo {@code POST /api/auth/login} y responde 401
+     * automáticamente.
+     */
+    @GetMapping("/yo")
+    public ResponseEntity<YoResponse> yo(@AuthenticationPrincipal Jwt jwt) {
+        Usuario usuario = usuarioRepository.findByUsuNombre(jwt.getSubject())
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + jwt.getSubject()));
+        Persona persona = usuario.getPersona();
+        return ResponseEntity.ok(new YoResponse(
+                usuario.getUsuNombre(),
+                persona != null ? persona.getPerTipo() : null,
+                persona != null ? persona.getPerId() : null,
+                persona != null ? nombreCompleto(persona) : null));
+    }
+
+    /** Junta nombre y apellido de la persona sin romper si alguno es null. */
+    private String nombreCompleto(Persona persona) {
+        String nombre = persona.getPerNombre();
+        String apellido = persona.getPerApellido();
+        if (nombre == null) {
+            return apellido;
+        }
+        if (apellido == null) {
+            return nombre;
+        }
+        return nombre + " " + apellido;
+    }
+
     /** Datos de entrada para iniciar sesión. */
     public record LoginRequest(String usuNombre, String usuPassword) {
     }
 
     /** Datos de salida tras un login exitoso. */
     public record LoginResponse(String token, String usuNombre, String tipo) {
+    }
+
+    /** Datos del usuario autenticado, devueltos por GET /api/auth/yo. */
+    public record YoResponse(String usuNombre, String tipo, Long personaId, String personaNombre) {
     }
 }

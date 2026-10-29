@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.efganados.sistemabovino.exception.ConflictoException;
+import com.efganados.sistemabovino.exception.ValidacionException;
 import com.efganados.sistemabovino.model.Animal;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
@@ -69,17 +71,47 @@ public class AnimalService {
     }
 
     /**
-     * Registra un nuevo pesaje para el animal. Cada pesaje es un registro
-     * nuevo (nunca se sobrescribe uno anterior) y no modifica ni guarda nada
-     * en {@link Animal}, porque el peso actual se deriva de los pesajes.
+     * Registra un nuevo pesaje para el animal, luego de validar las reglas
+     * de negocio del pesaje (ver {@link #validarPesaje}). Cada pesaje es un
+     * registro nuevo (nunca se sobrescribe uno anterior) y no modifica ni
+     * guarda nada en {@link Animal}, porque el peso actual se deriva de los
+     * pesajes. Centralizado acá (y no en cada controlador) para que tanto el
+     * alta individual como el registro de una sesión completa de pesajes
+     * (varios animales, misma fecha) respeten exactamente las mismas reglas.
      */
     public Pesajes registrarPesaje(Animal animal, double peso, LocalDate fecha, Persona responsable) {
+        validarPesaje(animal, peso, fecha);
         Pesajes pesaje = new Pesajes();
         pesaje.setAnimal(animal);
         pesaje.setPesaPeso(peso);
         pesaje.setPesaFecha(fecha);
         pesaje.setResponsable(responsable);
         return pesajesRepository.save(pesaje);
+    }
+
+    /**
+     * Reglas de negocio de todo pesaje nuevo: peso dentro de rango, fecha
+     * presente y no futura, no anterior al ingreso del animal, y que el
+     * animal no tenga ya registrada su salida (en cuyo caso no se le pueden
+     * seguir cargando pesajes).
+     */
+    private void validarPesaje(Animal animal, double peso, LocalDate fecha) {
+        if (peso <= 0 || peso > 2000) {
+            throw new ValidacionException("El peso debe ser mayor a 0 y hasta 2000 kg");
+        }
+        if (fecha == null) {
+            throw new ValidacionException("Falta el campo fecha");
+        }
+        if (fecha.isAfter(LocalDate.now())) {
+            throw new ValidacionException("La fecha del pesaje no puede ser futura");
+        }
+        if (fecha.isBefore(animal.getAniFechaIngreso())) {
+            throw new ValidacionException("La fecha del pesaje no puede ser anterior al ingreso del animal ("
+                    + animal.getAniCaravana() + ": " + animal.getAniFechaIngreso() + ")");
+        }
+        if (animal.getAniFechaEgreso() != null) {
+            throw new ConflictoException("El animal " + animal.getAniCaravana() + " ya tiene registrada su salida");
+        }
     }
 
     /**
