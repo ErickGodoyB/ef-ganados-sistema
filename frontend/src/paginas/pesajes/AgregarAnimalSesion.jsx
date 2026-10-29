@@ -1,18 +1,18 @@
 /**
  * Sección "+ Agregar animal" al pie del detalle de una sesión (RF011): un
- * buscador tipo combobox (accesible por teclado: flechas para moverse
- * entre resultados, Enter para elegir, Escape para cerrar la lista) filtra
- * los animales ELEGIBLES para esta sesión -- del mismo lote (o sin lote),
- * sin salida registrada y que todavía no estén en la sesión -- mostrando
- * caravana y último peso. Elegido uno, pide el peso nuevo y lo registra
- * con POST /api/pesajes/sesion (misma fecha de la sesión, un solo ítem,
+ * buscador (ver componentes/BuscadorAnimal.jsx) filtra los animales
+ * ELEGIBLES para esta sesión -- del mismo lote (o sin lote), sin salida
+ * registrada y que todavía no estén en la sesión -- mostrando caravana y
+ * último peso. Elegido uno, pide el peso nuevo y lo registra con
+ * POST /api/pesajes/sesion (misma fecha de la sesión, un solo ítem,
  * responsableId = personaId de la persona autenticada).
  */
 
-import { Plus, Search } from 'lucide-react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { Plus } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { useAuth } from '../../auth/useAuth'
+import BuscadorAnimal from '../../componentes/BuscadorAnimal'
 import { formatearPeso } from '../../utilidades/formato'
 import './AgregarAnimalSesion.css'
 
@@ -31,19 +31,16 @@ export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado
   const [elegibles, setElegibles] = useState([])
 
   const [texto, setTexto] = useState('')
-  const [listaAbierta, setListaAbierta] = useState(false)
-  const [indiceActivo, setIndiceActivo] = useState(-1)
   const [animalElegido, setAnimalElegido] = useState(null)
   const [peso, setPeso] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [errorGuardar, setErrorGuardar] = useState('')
 
-  const idBase = useId()
-  const refInput = useRef(null)
+  const refBuscador = useRef(null)
 
   useEffect(() => {
     if (abierto && !cargandoElegibles && !errorElegibles) {
-      refInput.current?.focus()
+      refBuscador.current?.enfocar()
     }
   }, [abierto, cargandoElegibles, errorElegibles])
 
@@ -77,44 +74,21 @@ export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado
     setAnimalElegido(null)
     setPeso('')
     setErrorGuardar('')
-    setListaAbierta(false)
-    setIndiceActivo(-1)
   }
 
-  const resultados = texto.trim()
-    ? elegibles.filter((animal) => animal.aniCaravana.toLowerCase().includes(texto.trim().toLowerCase()))
-    : elegibles
+  // BuscadorAnimal no necesita conocer el resto de los campos del animal
+  // (duenio, raza, etc.): solo id/caravana/peso. El lote no se muestra acá
+  // porque ya está implícito (es el mismo de la sesión).
+  const opciones = elegibles.map((animal) => ({ id: animal.aniId, caravana: animal.aniCaravana, pesoActual: animal.pesoActual }))
 
-  function elegir(animal) {
-    setAnimalElegido(animal)
-    setTexto(animal.aniCaravana)
-    setListaAbierta(false)
-    setIndiceActivo(-1)
+  function elegir(opcion) {
+    setAnimalElegido(opcion)
+    setTexto(opcion.caravana)
   }
 
   function manejarCambioTexto(valor) {
     setTexto(valor)
     setAnimalElegido(null)
-    setListaAbierta(true)
-    setIndiceActivo(-1)
-  }
-
-  function manejarTeclado(evento) {
-    if (evento.key === 'ArrowDown') {
-      evento.preventDefault()
-      setListaAbierta(true)
-      setIndiceActivo((actual) => Math.min(actual + 1, resultados.length - 1))
-    } else if (evento.key === 'ArrowUp') {
-      evento.preventDefault()
-      setListaAbierta(true)
-      setIndiceActivo((actual) => Math.max(actual - 1, 0))
-    } else if (evento.key === 'Enter' && listaAbierta && indiceActivo >= 0 && resultados[indiceActivo]) {
-      evento.preventDefault()
-      elegir(resultados[indiceActivo])
-    } else if (evento.key === 'Escape' && listaAbierta) {
-      evento.preventDefault()
-      setListaAbierta(false)
-    }
   }
 
   const pesoNumero = parsearPeso(peso)
@@ -136,10 +110,10 @@ export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado
         body: JSON.stringify({
           fecha: sesion.fecha,
           responsableId: personaId,
-          items: [{ animalId: animalElegido.aniId, peso: pesoNumero }],
+          items: [{ animalId: animalElegido.id, peso: pesoNumero }],
         }),
       })
-      const caravana = animalElegido.aniCaravana
+      const caravana = animalElegido.caravana
       cerrarSeccion()
       await onAgregado(`Animal ${caravana} agregado a la sesión`)
     } catch (err) {
@@ -190,64 +164,23 @@ export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado
 
       {!cargandoYo && !errorYo && personaId != null && !cargandoElegibles && !errorElegibles && (
         <>
-          <div className="campo agregar-animal-sesion-combobox">
-            <label htmlFor={`${idBase}-input`}>Buscar por caravana</label>
-            <div className="campo-busqueda-entrada">
-              <Search aria-hidden="true" size={18} className="campo-busqueda-icono" />
-              <input
-                id={`${idBase}-input`}
-                ref={refInput}
-                type="text"
-                role="combobox"
-                aria-haspopup="listbox"
-                aria-expanded={listaAbierta}
-                aria-controls={`${idBase}-listbox`}
-                aria-autocomplete="list"
-                aria-activedescendant={
-                  listaAbierta && indiceActivo >= 0 && resultados[indiceActivo]
-                    ? `${idBase}-opcion-${resultados[indiceActivo].aniId}`
-                    : undefined
-                }
-                className="campo-busqueda--con-icono"
-                value={texto}
-                onChange={(evento) => manejarCambioTexto(evento.target.value)}
-                onFocus={() => setListaAbierta(true)}
-                onBlur={() => setListaAbierta(false)}
-                onKeyDown={manejarTeclado}
-                placeholder="Ej. CAR-001"
-                autoComplete="off"
-                disabled={deshabilitado || guardando}
-              />
-            </div>
-            {listaAbierta && (
-              <ul className="agregar-animal-sesion-lista" role="listbox" id={`${idBase}-listbox`}>
-                {resultados.length === 0 && (
-                  <li className="agregar-animal-sesion-vacio">No hay animales elegibles con ese texto</li>
-                )}
-                {resultados.map((animal, indice) => (
-                  <li
-                    key={animal.aniId}
-                    id={`${idBase}-opcion-${animal.aniId}`}
-                    role="option"
-                    aria-selected={indice === indiceActivo}
-                    className={`agregar-animal-sesion-opcion${indice === indiceActivo ? ' agregar-animal-sesion-opcion--activa' : ''}`}
-                    onMouseDown={(evento) => evento.preventDefault()}
-                    onClick={() => elegir(animal)}
-                  >
-                    <span>{animal.aniCaravana}</span>
-                    <span className="agregar-animal-sesion-opcion-peso">{formatearPeso(animal.pesoActual)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <BuscadorAnimal
+            ref={refBuscador}
+            label="Buscar por caravana"
+            opciones={opciones}
+            valor={texto}
+            alCambiarValor={manejarCambioTexto}
+            alElegir={elegir}
+            textoSinResultados="No hay animales elegibles con ese texto"
+            disabled={deshabilitado || guardando}
+          />
 
           {animalElegido && (
             <div className="agregar-animal-sesion-formulario">
               <div className="campo">
-                <label htmlFor={`${idBase}-peso`}>Peso (kg)</label>
+                <label htmlFor="agregar-animal-sesion-peso">Peso (kg)</label>
                 <input
-                  id={`${idBase}-peso`}
+                  id="agregar-animal-sesion-peso"
                   type="text"
                   inputMode="decimal"
                   value={peso}

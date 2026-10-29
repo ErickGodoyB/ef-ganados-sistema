@@ -42,11 +42,16 @@ export default function Modal({ titulo, onCerrar, refDisparador, tamano = 'norma
       if (!refPanel.current) {
         return []
       }
+      // offsetParent es null en un elemento con "display: none" (directo o
+      // heredado, ej. el atributo hidden de un <div role="tabpanel"> no
+      // activo, ver ModalNuevoPesaje.jsx): querySelectorAll por sí solo no
+      // distingue eso, encontraría igual los campos de la pestaña oculta y
+      // la trampa de foco podría intentar llevarlos ahí.
       return Array.from(
         refPanel.current.querySelectorAll(
           'a[href], button:not(:disabled), select:not(:disabled), input:not(:disabled), textarea:not(:disabled)',
         ),
-      )
+      ).filter((elemento) => elemento.offsetParent !== null)
     }
 
     // Foco inicial al abrirse. Si el contenido todavía no tiene nada

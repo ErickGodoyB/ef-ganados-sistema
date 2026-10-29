@@ -258,3 +258,14 @@
   margin: 0;
   color: var(--texto-secundario);
 }
+
+/* Valor negativo (GMD o diferencia de peso por debajo de cero): nunca solo
+   color, siempre junto a un ícono (ver ValorGmd.jsx/ValorDiferenciaPeso.jsx,
+   que agregan el ícono y el texto accesible "Pérdida de peso"). */
+.valor-negativo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-error);
+  font-weight: 600;
+}

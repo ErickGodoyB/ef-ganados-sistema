@@ -1,8 +1,9 @@
 /**
  * Sección "+ Agregar animal" al pie del detalle de sesión (ver
- * AgregarAnimalSesion.jsx): el buscador tipo combobox y su lista de
- * resultados, y el mini formulario de peso que aparece al elegir un
- * animal.
+ * AgregarAnimalSesion.jsx). El buscador en sí (combobox y su lista de
+ * resultados) sale de componentes/BuscadorAnimal.css; acá solo queda el
+ * contenedor de la sección y el mini formulario de peso que aparece al
+ * elegir un animal.
  */
 
 .agregar-animal-sesion {
@@ -29,58 +30,6 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--texto);
-}
-
-.agregar-animal-sesion-combobox {
-  position: relative;
-}
-
-.agregar-animal-sesion-lista {
-  position: absolute;
-  z-index: 10;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  max-height: 14rem;
-  overflow-y: auto;
-  margin: 0;
-  padding: 4px;
-  list-style: none;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio-sm);
-  box-shadow: var(--sombra);
-}
-
-.agregar-animal-sesion-opcion {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 44px;
-  padding: 8px 10px;
-  font-size: 14px;
-  color: var(--texto);
-  border-radius: var(--radio-sm);
-  cursor: pointer;
-}
-
-.agregar-animal-sesion-opcion:hover,
-.agregar-animal-sesion-opcion--activa {
-  background: var(--superficie-hover);
-}
-
-.agregar-animal-sesion-opcion-peso {
-  font-size: 13px;
-  color: var(--texto-secundario);
-  white-space: nowrap;
-}
-
-.agregar-animal-sesion-vacio {
-  margin: 0;
-  padding: 10px;
-  font-size: 13px;
-  color: var(--texto-secundario);
 }
 
 .agregar-animal-sesion-formulario {

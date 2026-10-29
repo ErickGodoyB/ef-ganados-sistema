@@ -18,6 +18,7 @@ import { RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import Modal from '../../componentes/Modal'
+import ValorGmd from '../../componentes/ValorGmd'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import AgregarAnimalSesion from './AgregarAnimalSesion'
 import './ModalDetalleSesion.css'
@@ -95,16 +96,23 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
 
   const resumen = useMemo(() => {
     if (items.length === 0) {
-      return { cantidad: 0, total: 0, promedio: 0, minimo: 0, maximo: 0 }
+      return { cantidad: 0, total: 0, promedio: 0, minimo: 0, maximo: 0, gmdPromedio: null, conGmd: 0 }
     }
     const pesos = items.map((item) => item.peso)
     const total = pesos.reduce((acumulado, peso) => acumulado + peso, 0)
+    // La GMD promedio solo cuenta los animales que ya tienen un pesaje
+    // anterior (gmd no nula): el resto todavía no tiene con qué
+    // calcularla, y promediar null como 0 inflaría el promedio hacia
+    // abajo sin sentido.
+    const gmdsValidos = items.map((item) => item.gmd).filter((gmd) => gmd != null)
     return {
       cantidad: items.length,
       total,
       promedio: total / items.length,
       minimo: Math.min(...pesos),
       maximo: Math.max(...pesos),
+      gmdPromedio: gmdsValidos.length > 0 ? gmdsValidos.reduce((acumulado, gmd) => acumulado + gmd, 0) / gmdsValidos.length : null,
+      conGmd: gmdsValidos.length,
     }
   }, [items])
 
@@ -197,6 +205,15 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
         <div className="resumen-sesion-dato">
           <dt>Máximo</dt>
           <dd>{formatearPeso(resumen.maximo)}</dd>
+        </div>
+        <div className="resumen-sesion-dato">
+          <dt>GMD promedio</dt>
+          <dd>
+            <ValorGmd gmd={resumen.gmdPromedio} />
+            <span className="resumen-sesion-auxiliar">
+              {resumen.conGmd} de {resumen.cantidad} animales con pesaje anterior
+            </span>
+          </dd>
         </div>
       </dl>
 

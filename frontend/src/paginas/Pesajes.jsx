@@ -4,15 +4,15 @@
  * por lote (por subGrupoId; ver listadoSesiones.js) y por rango de fechas,
  * ordenar por cualquier columna, paginar en el cliente, y elegir qué
  * columnas opcionales mostrar (preferencia que se recuerda en localStorage,
- * ver usePreferenciasListadoPesajes). Tocar una fila/tarjeta abre
- * ModalDetalleSesion (ver ese archivo), desde donde se puede editar,
- * eliminar o agregar pesajes de la sesión. Tras cualquier cambio ahí
- * dentro, se recarga este listado sin perder búsqueda, filtros, orden ni
- * página (mismo criterio que Animales.jsx). Todavía no tiene un botón
- * "+ Nuevo pesaje" (se agrega en un tramo aparte).
+ * ver usePreferenciasListadoPesajes). El botón "+ Nuevo pesaje" (RF002)
+ * abre ModalNuevoPesaje; tocar una fila/tarjeta abre ModalDetalleSesion
+ * (ver ese archivo), desde donde se puede editar, eliminar o agregar
+ * pesajes de la sesión. En los dos casos, tras guardar se recarga este
+ * listado sin perder búsqueda, filtros, orden ni página (mismo criterio
+ * que Animales.jsx).
  */
 
-import { FilterX, Inbox, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
+import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import Paginacion from '../componentes/Paginacion'
@@ -21,6 +21,7 @@ import './Pesajes.css'
 import { COLUMNAS_OPCIONALES, OPCIONES_ORDEN_MOVIL } from './pesajes/columnas'
 import { filtrarYOrdenarSesiones, obtenerLotesDisponibles } from './pesajes/listadoSesiones'
 import ModalDetalleSesion from './pesajes/ModalDetalleSesion'
+import ModalNuevoPesaje from './pesajes/ModalNuevoPesaje'
 import TablaSesiones from './pesajes/TablaSesiones'
 import TarjetaSesion from './pesajes/TarjetaSesion'
 import { usePreferenciasListadoPesajes } from './pesajes/usePreferenciasListadoPesajes'
@@ -43,8 +44,10 @@ export default function Pesajes() {
   const [orden, setOrden] = useState({ campo: 'fecha', direccion: 'desc' })
   const [pagina, setPagina] = useState(1)
 
+  const [modalNuevoAbierto, setModalNuevoAbierto] = useState(false)
   const [sesionSeleccionada, setSesionSeleccionada] = useState(null)
   const [aviso, setAviso] = useState('')
+  const refBotonNuevoPesaje = useRef(null)
   const refDisparadorDetalle = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
@@ -135,6 +138,19 @@ export default function Pesajes() {
     mostrarAviso('La sesión quedó sin animales y se eliminó')
   }
 
+  /** Tras guardar desde "Nuevo pesaje" (cualquiera de las dos pestañas): cierra el modal, recarga el listado y avisa. */
+  function alGuardarNuevoPesaje(mensaje) {
+    setModalNuevoAbierto(false)
+    recargar()
+    mostrarAviso(mensaje)
+  }
+
+  /** "Guardar y agregar otro" de la pestaña Individual: recarga y avisa, pero el modal se queda abierto para seguir cargando. */
+  function alGuardarParcialNuevoPesaje(mensaje) {
+    recargar()
+    mostrarAviso(mensaje)
+  }
+
   const sinSesiones = !cargando && !error && sesiones.length === 0
   const sinCoincidencias = !cargando && !error && sesiones.length > 0 && resultado.length === 0
   const hayResultados = !cargando && !error && resultado.length > 0
@@ -158,6 +174,16 @@ export default function Pesajes() {
               />
             </div>
           </div>
+
+          <button
+            type="button"
+            ref={refBotonNuevoPesaje}
+            className="pesajes-boton-nuevo"
+            onClick={() => setModalNuevoAbierto(true)}
+          >
+            <Plus aria-hidden="true" size={18} />
+            Nuevo pesaje
+          </button>
 
           <PanelOpciones
             columnasObligatorias={COLUMNAS_OBLIGATORIAS}
@@ -305,6 +331,15 @@ export default function Pesajes() {
             onCambiarPagina={setPagina}
           />
         </>
+      )}
+
+      {modalNuevoAbierto && (
+        <ModalNuevoPesaje
+          onCerrar={() => setModalNuevoAbierto(false)}
+          onGuardado={alGuardarNuevoPesaje}
+          onGuardadoParcial={alGuardarParcialNuevoPesaje}
+          refDisparador={refBotonNuevoPesaje}
+        />
       )}
 
       {sesionSeleccionada && (

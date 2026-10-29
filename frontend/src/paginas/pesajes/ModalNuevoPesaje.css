@@ -1,0 +1,41 @@
+/**
+ * Modal "Nuevo pesaje" (ver ModalNuevoPesaje.jsx): acá solo queda el
+ * tablist; cada pestaña tiene su propio archivo de estilos
+ * (PestanaPorLote.css/PestanaIndividual.css).
+ */
+
+.modal-nuevo-pesaje-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.modal-nuevo-pesaje-tab {
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto-secundario);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color var(--transicion-rapida), border-color var(--transicion-rapida);
+}
+
+.modal-nuevo-pesaje-tab:hover {
+  color: var(--texto);
+}
+
+.modal-nuevo-pesaje-tab--activa {
+  color: var(--color-foco);
+  border-bottom-color: var(--color-foco);
+}
+
+.modal-nuevo-pesaje-tab:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}

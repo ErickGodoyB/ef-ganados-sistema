@@ -1,0 +1,80 @@
+/**
+ * Buscador de animal tipo combobox (ver BuscadorAnimal.jsx). El campo en
+ * sí sale de .campo-busqueda/.campo-busqueda-entrada (src/estilos/base.css);
+ * acá solo queda la lista de resultados desplegable.
+ */
+
+.buscador-animal {
+  position: relative;
+}
+
+.buscador-animal-lista {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  box-shadow: var(--sombra);
+}
+
+.buscador-animal-opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--texto);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+}
+
+.buscador-animal-opcion:hover,
+.buscador-animal-opcion--activa {
+  background: var(--superficie-hover);
+}
+
+.buscador-animal-opcion-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.buscador-animal-opcion-lote {
+  color: var(--texto-secundario);
+  font-weight: 400;
+}
+
+.buscador-animal-opcion-peso {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+  white-space: nowrap;
+}
+
+/* "Registrar animal nuevo «texto»": misma fila, pero destacada para
+   distinguirla de un animal real de la lista. --color-foco (no
+   --color-acento-texto/--color-exito-texto: esos son colores fijos
+   pensados para texto sobre SU PROPIO chip, no sobre --superficie; acá el
+   texto va directo sobre la superficie de la lista, y esta sí cambia con
+   el tema) ya está verificado contra --superficie en ambos temas. */
+.buscador-animal-opcion--nueva {
+  color: var(--color-foco);
+  font-weight: 600;
+}
+
+.buscador-animal-vacio {
+  margin: 0;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}

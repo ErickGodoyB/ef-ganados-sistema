@@ -1,0 +1,157 @@
+/**
+ * Pestaña "Por lote" del modal "Nuevo pesaje" (ver PestanaPorLote.jsx). El
+ * resumen en vivo reutiliza ".resumen-sesion" de ModalDetalleSesion.css
+ * (mismo lenguaje visual); la tabla/tarjetas de la lista acumulada
+ * reutilizan ".tabla-items-sesion"/".tarjeta" por la misma razón.
+ */
+
+.pestana-por-lote {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pestana-por-lote-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .pestana-por-lote-campos {
+    flex-direction: row;
+  }
+
+  .pestana-por-lote-campos .campo {
+    flex: 1 1 0;
+  }
+}
+
+.pestana-por-lote-aviso-sesion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -8px 0 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-acento-texto);
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.pestana-por-lote-resumen {
+  margin: 0;
+}
+
+.pestana-por-lote-ayuda {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.pestana-por-lote-carga {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .pestana-por-lote-carga {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .pestana-por-lote-carga .buscador-animal {
+    flex: 1 1 auto;
+  }
+
+  .pestana-por-lote-campo-peso {
+    flex: 0 0 9rem;
+  }
+}
+
+.pestana-por-lote-aviso-peso {
+  margin: -8px 0 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.pestana-por-lote-tabla-solo-escritorio {
+  display: none;
+}
+
+.pestana-por-lote-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .pestana-por-lote-tabla-solo-escritorio {
+    display: block;
+  }
+
+  .pestana-por-lote-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.pestana-por-lote-boton-quitar {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+.pestana-por-lote-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.pestana-por-lote-tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pestana-por-lote-tarjeta-caravana {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.pestana-por-lote-tarjeta-raza {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.pestana-por-lote-tarjeta-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.pestana-por-lote-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.pestana-por-lote-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.pestana-por-lote-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}

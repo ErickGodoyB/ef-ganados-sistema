@@ -42,8 +42,8 @@
   }
 }
 
-/* Buscador + Opciones van juntos, en la misma fila lógica (mismo criterio
-   que .animales-busqueda-fila, aunque acá no hay un botón "+ Nuevo" todavía). */
+/* Buscador + "Nuevo pesaje" + Opciones van juntos, en la misma fila
+   lógica (mismo criterio que .animales-busqueda-fila). */
 .pesajes-busqueda-fila {
   display: flex;
   align-items: flex-end;
@@ -59,6 +59,38 @@
   .pesajes-busqueda-fila {
     flex: 1 1 auto;
   }
+}
+
+/* Mismo estilo que .animales-boton-nuevo (ver la nota de TablaSesiones.css
+   sobre por qué no se comparte entre pantallas). */
+.pesajes-boton-nuevo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-boton-nuevo-texto);
+  background: var(--color-boton-nuevo-fondo);
+  /* El oliva de fondo por sí solo no llega a 3:1 contra --fondo (ver
+     Animales.css); el borde en el mismo tono oscuro del texto le da un
+     límite nítido que sí cumple ese mínimo. */
+  border: 1px solid var(--color-boton-nuevo-texto);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter var(--transicion-rapida);
+}
+
+.pesajes-boton-nuevo:hover {
+  filter: brightness(1.05);
+}
+
+.pesajes-boton-nuevo:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
 }
 
 .pesajes-filtro-error {

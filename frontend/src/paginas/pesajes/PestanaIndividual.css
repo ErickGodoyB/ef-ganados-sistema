@@ -1,0 +1,38 @@
+/**
+ * Pestaña "Individual" del modal "Nuevo pesaje" (ver PestanaIndividual.jsx).
+ */
+
+.pestana-individual {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pestana-individual-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .pestana-individual-campos {
+    flex-direction: row;
+  }
+
+  .pestana-individual-campos .campo {
+    flex: 1 1 0;
+  }
+}
+
+.pestana-individual-aviso-peso {
+  margin: -8px 0 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.pestana-individual-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
