@@ -1,0 +1,69 @@
+/**
+ * Tabla de animales de una sesión de pesaje (ver TablaItemsSesion.jsx).
+ * Mismo lenguaje visual que TablaAnimales.css, pero sin "white-space:
+ * nowrap" (acá las observaciones pueden ser texto largo) y con columnas
+ * que pueden volverse campos editables en la fila activa.
+ */
+
+.tabla-items-sesion-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tabla-items-sesion {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-items-sesion th,
+.tabla-items-sesion td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla-items-sesion thead th {
+  background: var(--superficie-hover);
+}
+
+.tabla-items-sesion tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-items-sesion-caravana {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabla-items-sesion-observacion {
+  max-width: 16rem;
+  overflow-wrap: anywhere;
+}
+
+.tabla-items-sesion-fila-edicion,
+.tabla-items-sesion-fila-eliminar {
+  background: var(--superficie-hover);
+}
+
+.tabla-items-sesion-fila-edicion input.entrada {
+  min-width: 10rem;
+}
+
+.tabla-items-sesion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Botones de ícono solo (editar/eliminar): cuadrados, área táctil mínima
+   de 44px aunque el ícono sea chico (ver base.css .boton-fantasma, que da
+   el resto del estilo). */
+.tabla-items-sesion-boton-accion {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+}

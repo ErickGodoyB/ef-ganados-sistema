@@ -7,14 +7,16 @@
  * ya significa estar abierto, así que quien lo usa decide cuándo mostrarlo
  * montándolo o desmontándolo (ver ModalNuevoAnimal.jsx). En celular ocupa
  * casi toda la pantalla (hoja inferior); en escritorio queda centrado con
- * un ancho máximo de ~32rem (ver Modal.css).
+ * un ancho máximo de ~32rem (ver Modal.css), salvo que tamano="grande"
+ * (ej. ModalDetalleSesion, que necesita lugar para una tabla): ese ancho
+ * máximo sube a ~56rem. El resto del comportamiento es idéntico.
  */
 
 import { X } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import './Modal.css'
 
-export default function Modal({ titulo, onCerrar, refDisparador, children }) {
+export default function Modal({ titulo, onCerrar, refDisparador, tamano = 'normal', children }) {
   const idTitulo = useId()
   const refPanel = useRef(null)
 
@@ -95,7 +97,7 @@ export default function Modal({ titulo, onCerrar, refDisparador, children }) {
     <div className="modal-fondo" onClick={() => refOnCerrar.current()}>
       <div
         ref={refPanel}
-        className="modal-panel"
+        className={`modal-panel${tamano === 'grande' ? ' modal-panel--grande' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={idTitulo}

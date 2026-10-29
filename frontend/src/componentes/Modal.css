@@ -36,6 +36,12 @@
     border-radius: 16px;
     padding: 28px;
   }
+
+  /* tamano="grande" (ver Modal.jsx): para contenido que necesita más
+     lugar (ej. ModalDetalleSesion, con una tabla de varias columnas). */
+  .modal-panel--grande {
+    width: min(100%, 56rem);
+  }
 }
 
 .modal-encabezado {

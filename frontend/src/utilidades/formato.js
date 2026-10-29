@@ -1,7 +1,8 @@
 /**
- * Funciones de formato en es-PY para el listado de animales (peso, GMD y
- * fecha). Centralizadas acá para no repetir Intl.NumberFormat ni la lógica
- * de fecha en cada componente que muestra estos valores.
+ * Funciones de formato en es-PY compartidas por las pantallas que muestran
+ * peso, GMD o fechas del backend (Animales, Pesajes). Centralizadas acá
+ * para no repetir Intl.NumberFormat ni la lógica de fecha en cada
+ * componente que muestra estos valores.
  */
 
 const FORMATO_PESO = new Intl.NumberFormat('es-PY', { minimumFractionDigits: 1, maximumFractionDigits: 1 })

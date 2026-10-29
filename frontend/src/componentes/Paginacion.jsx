@@ -7,6 +7,7 @@
  */
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import './Paginacion.css'
 
 export default function Paginacion({ paginaActual, totalPaginas, totalResultados, filasPorPagina, onCambiarPagina }) {
   const primeraFilaMostrada = totalResultados === 0 ? 0 : (paginaActual - 1) * filasPorPagina + 1

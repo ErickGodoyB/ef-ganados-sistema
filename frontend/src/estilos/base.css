@@ -148,6 +148,41 @@
   border-color: var(--color-error);
 }
 
+/* Campo de búsqueda/filtro genérico de un listado (label + control), usado
+   por Animales y Pesajes; cada pantalla ajusta su propio flex-basis dentro
+   de su fila de controles (ver Animales.css/Pesajes.css). */
+.campo-busqueda,
+.campo-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo-busqueda label,
+.campo-filtro label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+/* Ícono (ej. lupa) dentro del campo de búsqueda. */
+.campo-busqueda-entrada {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.campo-busqueda-icono {
+  position: absolute;
+  left: 12px;
+  color: var(--texto-secundario);
+  pointer-events: none;
+}
+
+.campo-busqueda--con-icono input {
+  padding-left: 38px;
+}
+
 /* Tarjeta: superficie elevada genérica (listas, estados vacíos, paneles). */
 .tarjeta {
   background: var(--superficie);

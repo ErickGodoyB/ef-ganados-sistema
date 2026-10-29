@@ -1,0 +1,108 @@
+/**
+ * Estilos de la página de Pesajes (RF011). Mobile-first, como el resto de
+ * la app (ver la convención en index.css): los controles van apilados por
+ * defecto y en una fila desde 768px; la tabla (TablaSesiones) y las
+ * tarjetas (TarjetaSesion) conviven en el DOM, pero solo una se ve a la vez
+ * según el ancho (pesajes-tabla-solo-escritorio / pesajes-tarjetas-solo-
+ * movil), sin necesitar JS para decidir cuál mostrar. Mismo criterio que
+ * Animales.css (duplicado con nombres propios, ver la nota en
+ * TablaSesiones.css sobre por qué no se comparte).
+ *
+ * Los inputs/selects y los estados vacíos/de error no declaran su aspecto
+ * acá: salen de .campo-filtro/.campo-busqueda, .estado-mensaje y .tarjeta
+ * de src/estilos/base.css, para que todas las pantallas compartan el mismo
+ * look.
+ */
+
+.pesajes-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pesajes-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .pesajes-controles {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .campo-busqueda {
+    flex: 1 1 220px;
+  }
+
+  .campo-filtro {
+    flex: 0 0 auto;
+  }
+}
+
+/* Buscador + Opciones van juntos, en la misma fila lógica (mismo criterio
+   que .animales-busqueda-fila, aunque acá no hay un botón "+ Nuevo" todavía). */
+.pesajes-busqueda-fila {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pesajes-busqueda-fila .campo-busqueda {
+  flex: 1 1 200px;
+}
+
+@media (min-width: 768px) {
+  .pesajes-busqueda-fila {
+    flex: 1 1 auto;
+  }
+}
+
+.pesajes-filtro-error {
+  margin: -4px 0 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
+.pesajes-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.pesajes-orden-movil {
+  display: flex;
+}
+
+@media (min-width: 768px) {
+  .pesajes-orden-movil {
+    display: none;
+  }
+}
+
+.pesajes-tabla-solo-escritorio {
+  display: none;
+}
+
+.pesajes-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .pesajes-tabla-solo-escritorio {
+    display: block;
+  }
+
+  .pesajes-tarjetas-solo-movil {
+    display: none;
+  }
+}

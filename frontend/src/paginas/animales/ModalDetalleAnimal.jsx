@@ -12,10 +12,10 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import Modal from '../../componentes/Modal'
+import ValorGmd from '../../componentes/ValorGmd'
+import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import EstadoBadge from './EstadoBadge'
 import FormularioAnimal from './FormularioAnimal'
-import ValorGmd from './ValorGmd'
-import { formatearFecha, formatearPeso } from './formato'
 import './ModalDetalleAnimal.css'
 
 const TITULOS = {

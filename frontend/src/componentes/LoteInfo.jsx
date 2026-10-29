@@ -1,8 +1,9 @@
 /**
- * Lote de un animal: la descripción del subgrupo y, abajo, en texto
- * secundario, la del grupo. Muestra "Sin lote" si el animal no tiene
- * subgrupo asignado (así viene subGrupoDescripcion desde
- * /api/animales/resumen cuando el animal no tiene subgrupo).
+ * Lote (subgrupo): su descripción y, abajo, en texto secundario, la del
+ * grupo contenedor. Muestra "Sin lote" si subGrupoDescripcion viene vacío
+ * (así lo mandan tanto /api/animales/resumen como /api/pesajes/sesiones
+ * cuando no hay subgrupo asignado). Usado por Animales (celdasAnimal.jsx)
+ * y por Pesajes (celdasSesion.jsx).
  */
 
 import './LoteInfo.css'

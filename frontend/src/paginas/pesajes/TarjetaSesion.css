@@ -1,0 +1,72 @@
+/**
+ * Tarjeta de una sesión de pesaje para pantallas chicas (ver Pesajes.css:
+ * solo se muestra por debajo de 768px). El fondo/borde/radio/sombra salen
+ * de la clase compartida ".tarjeta" (src/estilos/base.css); acá solo queda
+ * el layout propio de esta tarjeta. Mismo criterio visual que
+ * TarjetaAnimal.css (duplicado con nombres propios, ver TablaSesiones.css).
+ */
+
+.tarjeta-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+}
+
+.tarjeta-sesion:hover {
+  background: var(--superficie-hover);
+}
+
+.tarjeta-sesion-fecha {
+  align-self: flex-start;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tarjeta-sesion-fecha:hover {
+  color: var(--color-foco);
+  text-decoration: underline;
+}
+
+.tarjeta-sesion-fecha:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.tarjeta-sesion-lote {
+  font-size: 14px;
+}
+
+.tarjeta-sesion-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.tarjeta-sesion-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarjeta-sesion-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-sesion-dato dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}

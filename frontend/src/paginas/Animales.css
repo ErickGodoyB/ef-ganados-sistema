@@ -30,23 +30,7 @@
     align-items: flex-end;
     flex-wrap: wrap;
   }
-}
 
-.campo-busqueda,
-.campo-filtro {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.campo-busqueda label,
-.campo-filtro label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--texto);
-}
-
-@media (min-width: 768px) {
   .campo-busqueda {
     flex: 1 1 220px;
   }
@@ -54,24 +38,6 @@
   .campo-filtro {
     flex: 0 0 auto;
   }
-}
-
-/* Ícono de lupa dentro del campo de búsqueda. */
-.campo-busqueda-entrada {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.campo-busqueda-icono {
-  position: absolute;
-  left: 12px;
-  color: var(--texto-secundario);
-  pointer-events: none;
-}
-
-.campo-busqueda--con-icono input {
-  padding-left: 38px;
 }
 
 /* Buscador + "Nuevo animal" + Opciones van juntos, en la misma fila

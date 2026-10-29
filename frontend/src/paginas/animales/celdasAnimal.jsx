@@ -5,10 +5,10 @@
  * en dos lugares distintos.
  */
 
+import LoteInfo from '../../componentes/LoteInfo'
+import ValorGmd from '../../componentes/ValorGmd'
+import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import EstadoBadge from './EstadoBadge'
-import LoteInfo from './LoteInfo'
-import ValorGmd from './ValorGmd'
-import { formatearFecha, formatearPeso } from './formato'
 
 export function valorCelda(animal, clave) {
   switch (clave) {

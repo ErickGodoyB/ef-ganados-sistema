@@ -1,0 +1,72 @@
+/**
+ * Tarjeta de un animal de una sesión de pesaje (ver TarjetaItemSesion.jsx
+ * y ModalDetalleSesion.css). El fondo/borde/radio/sombra salen de la clase
+ * compartida ".tarjeta" (src/estilos/base.css); acá solo queda el layout
+ * propio. A diferencia de TarjetaAnimal, esta tarjeta no abre nada al
+ * tocarla (ya está dentro del modal de detalle): no lleva cursor:pointer
+ * ni hover, sus acciones son los propios botones Editar/Eliminar.
+ */
+
+.tarjeta-item-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.tarjeta-item-sesion-encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tarjeta-item-sesion-caravana {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tarjeta-item-sesion-peso {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tarjeta-item-sesion-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.tarjeta-item-sesion-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarjeta-item-sesion-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.tarjeta-item-sesion-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-item-sesion-dato dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-item-sesion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}

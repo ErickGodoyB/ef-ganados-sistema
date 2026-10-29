@@ -16,17 +16,19 @@
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
-import { OPCIONES_ORDEN_MOVIL } from './animales/columnas'
+import Paginacion from '../componentes/Paginacion'
+import PanelOpciones from '../componentes/PanelOpciones'
+import { COLUMNAS_OPCIONALES, OPCIONES_ORDEN_MOVIL } from './animales/columnas'
 import { filtrarYOrdenarAnimales, obtenerLotesDisponibles } from './animales/listadoAnimales'
 import ModalDetalleAnimal from './animales/ModalDetalleAnimal'
 import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
-import Paginacion from './animales/Paginacion'
-import PanelOpciones from './animales/PanelOpciones'
 import TablaAnimales from './animales/TablaAnimales'
 import TarjetaAnimal from './animales/TarjetaAnimal'
 import { useAnimalesResumen } from './animales/useAnimalesResumen'
 import { usePreferenciasListadoAnimales } from './animales/usePreferenciasListadoAnimales'
 import './Animales.css'
+
+const COLUMNAS_OBLIGATORIAS = [{ clave: 'aniCaravana', etiqueta: 'Caravana' }]
 
 const ESTADOS_FILTRO = [
   { valor: 'todos', etiqueta: 'Todos' },
@@ -176,6 +178,8 @@ export default function Animales() {
           </button>
 
           <PanelOpciones
+            columnasObligatorias={COLUMNAS_OBLIGATORIAS}
+            columnasOpcionales={COLUMNAS_OPCIONALES}
             columnasVisibles={columnasVisibles}
             onCambiarColumnaVisible={cambiarColumnaVisible}
             filasPorPagina={filasPorPagina}

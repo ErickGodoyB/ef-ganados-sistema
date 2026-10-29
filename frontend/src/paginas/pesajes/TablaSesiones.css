@@ -1,0 +1,109 @@
+/**
+ * Tabla del listado de sesiones de pesaje (>= 768px, ver Pesajes.css). Si
+ * las columnas visibles no entran en el ancho disponible, el scroll
+ * horizontal queda contenido en "tabla-sesiones-contenedor", nunca en la
+ * página entera (ver el cinturón de seguridad overflow-x en index.css).
+ * Mismo criterio visual que TablaAnimales.css (duplicado con nombres
+ * propios en vez de compartido, para no acoplar esta pantalla a la de
+ * Animales).
+ */
+
+.tabla-sesiones-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tabla-sesiones {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-sesiones th,
+.tabla-sesiones td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.tabla-sesiones thead th {
+  background: var(--superficie-hover);
+}
+
+.tabla-sesiones tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-sesiones tbody tr {
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+}
+
+.tabla-sesiones tbody tr:hover {
+  background: var(--superficie-hover);
+}
+
+/* La fecha es siempre la primera columna (ver TablaSesiones.jsx): se
+   destaca en negrita porque es el identificador principal de la sesión. */
+.tabla-sesiones tbody td:first-child {
+  font-weight: 700;
+}
+
+/* Botón que abre el detalle de la sesión (ver TablaSesiones.jsx): sin
+   fondo ni borde propio, hereda la negrita de la celda; el clic en
+   cualquier otro punto de la fila hace lo mismo (burbujea hasta el onClick
+   de <tr>). */
+.tabla-sesiones-boton-fecha {
+  font: inherit;
+  font-weight: inherit;
+  color: var(--texto);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tabla-sesiones-boton-fecha:hover {
+  color: var(--color-foco);
+  text-decoration: underline;
+}
+
+.tabla-sesiones-boton-fecha:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.tabla-sesiones-orden {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--texto);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tabla-sesiones-orden:hover {
+  color: var(--color-foco);
+}
+
+.tabla-sesiones-orden:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* La flecha de orden sale del propio aria-sort del <th>: así nunca puede
+   desincronizarse del estado accesible real. */
+th[aria-sort='ascending'] .tabla-sesiones-orden::after {
+  content: ' \2191';
+}
+
+th[aria-sort='descending'] .tabla-sesiones-orden::after {
+  content: ' \2193';
+}

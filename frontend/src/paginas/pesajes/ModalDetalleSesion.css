@@ -1,0 +1,75 @@
+/**
+ * Estilos del modal de detalle de sesión (ver ModalDetalleSesion.jsx). Los
+ * botones salen de src/estilos/base.css; acá queda el resumen de arriba y
+ * el interruptor tabla/tarjetas (mismo criterio que Pesajes.css, pero
+ * dentro del modal en vez de la página).
+ */
+
+.resumen-sesion {
+  margin: 0 0 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 16px;
+  padding: 14px 16px;
+  background: var(--superficie-hover);
+  border-radius: var(--radio-md);
+}
+
+@media (min-width: 480px) {
+  .resumen-sesion {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.resumen-sesion-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.resumen-sesion-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.detalle-sesion-aviso {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.resumen-sesion-dato dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.detalle-sesion-tabla-solo-escritorio {
+  display: none;
+}
+
+.detalle-sesion-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .detalle-sesion-tabla-solo-escritorio {
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  .detalle-sesion-tarjetas-solo-movil {
+    display: none;
+  }
+}
