@@ -2,22 +2,19 @@
  * Tabla de los animales de una sesión de pesaje (>= 768px, ver
  * ModalDetalleSesion.jsx y TablaItemsSesion.css). Cada fila muestra sus
  * datos de lectura, salvo la que está en accionActiva (edición o
- * confirmación de borrado): esa fila cambia su contenido para mostrar el
+ * confirmación de anulación): esa fila cambia su contenido para mostrar el
  * formulario o la confirmación correspondiente; el resto queda
  * deshabilitado mientras tanto.
  */
 
-import { Pencil, Trash2 } from 'lucide-react'
+import { Ban, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import ValorGmd from '../../componentes/ValorGmd'
 import { formatearPeso } from '../../utilidades/formato'
+import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
+import { motivoEsValido } from '../../utilidades/anulacion'
+import SelectorMotivoAnulacion from './SelectorMotivoAnulacion'
 import './TablaItemsSesion.css'
-
-/** Convierte el texto de un campo de peso (acepta coma o punto) a número; NaN si no es válido. */
-function parsearPeso(texto) {
-  const normalizado = texto.trim().replace(',', '.')
-  return normalizado === '' ? NaN : Number(normalizado)
-}
 
 export default function TablaItemsSesion({
   items,
@@ -26,10 +23,10 @@ export default function TablaItemsSesion({
   guardando,
   errorAccion,
   onEditar,
-  onEliminar,
+  onAnular,
   onGuardarEdicion,
   onCancelar,
-  onConfirmarEliminar,
+  onConfirmarAnular,
 }) {
   return (
     <div className="tabla-items-sesion-contenedor">
@@ -68,16 +65,16 @@ export default function TablaItemsSesion({
               )
             }
 
-            if (tipoAccion === 'eliminar') {
+            if (tipoAccion === 'anular') {
               return (
-                <FilaConfirmarEliminar
+                <FilaConfirmarAnular
                   key={item.pesaId}
                   item={item}
                   fecha={fecha}
                   guardando={guardando}
                   error={errorAccion}
                   onCancelar={onCancelar}
-                  onConfirmar={() => onConfirmarEliminar(item)}
+                  onConfirmar={(motivo) => onConfirmarAnular(item, motivo)}
                 />
               )
             }
@@ -107,11 +104,11 @@ export default function TablaItemsSesion({
                     <button
                       type="button"
                       className="boton-fantasma tabla-items-sesion-boton-accion"
-                      onClick={() => onEliminar(item)}
+                      onClick={() => onAnular(item)}
                       disabled={deshabilitada}
-                      aria-label={`Eliminar el pesaje de ${item.caravana}`}
+                      aria-label={`Anular el pesaje de ${item.caravana}`}
                     >
-                      <Trash2 aria-hidden="true" size={16} />
+                      <Ban aria-hidden="true" size={16} />
                     </button>
                   </div>
                 </td>
@@ -131,13 +128,12 @@ function FilaEdicion({ item, guardando, error, onGuardar, onCancelar }) {
   const [errorLocal, setErrorLocal] = useState('')
 
   function manejarGuardar() {
-    const pesoNumero = parsearPeso(peso)
-    if (!peso.trim() || Number.isNaN(pesoNumero) || pesoNumero <= 0 || pesoNumero > 2000) {
+    if (!pesoTextoEsValido(peso)) {
       setErrorLocal('Ingresá un peso válido (mayor a 0 y hasta 2000 kg)')
       return
     }
     setErrorLocal('')
-    onGuardar(pesoNumero, observaciones)
+    onGuardar(parsearPeso(peso), observaciones)
   }
 
   return (
@@ -196,26 +192,43 @@ function FilaEdicion({ item, guardando, error, onGuardar, onCancelar }) {
   )
 }
 
-/** Fila de confirmación de borrado: reemplaza las acciones por Cancelar/Eliminar, el resto de los datos se mantiene visible. */
-function FilaConfirmarEliminar({ item, fecha, guardando, error, onCancelar, onConfirmar }) {
+/** Fila de confirmación de anulación: pide el motivo (chips + texto) y reemplaza las acciones por Cancelar/Anular. */
+function FilaConfirmarAnular({ item, fecha, guardando, error, onCancelar, onConfirmar }) {
+  const [motivo, setMotivo] = useState('')
+  const [errorLocal, setErrorLocal] = useState('')
+
+  function manejarConfirmar() {
+    if (!motivoEsValido(motivo)) {
+      setErrorLocal('Ingresá un motivo de entre 3 y 255 caracteres')
+      return
+    }
+    setErrorLocal('')
+    onConfirmar(motivo)
+  }
+
   return (
-    <tr className="tabla-items-sesion-fila-eliminar">
+    <tr className="tabla-items-sesion-fila-anular">
       <td colSpan={6}>
-        ¿Eliminar el pesaje de {item.caravana} del {fecha}? Esta acción no se puede deshacer.
-        {error && (
-          <p className="campo-error" role="alert">
-            {error}
-          </p>
-        )}
+        <p className="tabla-items-sesion-anular-texto">
+          ¿Anular el pesaje de {item.caravana} del {fecha}? El pesaje deja de contar en reportes y se conserva en
+          Anulados.
+        </p>
+        <SelectorMotivoAnulacion
+          id={`anular-motivo-${item.pesaId}`}
+          motivo={motivo}
+          onCambiarMotivo={setMotivo}
+          disabled={guardando}
+          error={errorLocal || error}
+        />
       </td>
       <td colSpan={2}>
         <div className="tabla-items-sesion-acciones">
-          <button type="button" className="boton-secundario" autoFocus onClick={onCancelar} disabled={guardando}>
+          <button type="button" className="boton-secundario" onClick={onCancelar} disabled={guardando}>
             Cancelar
           </button>
-          <button type="button" className="boton-peligro" onClick={onConfirmar} disabled={guardando}>
-            <Trash2 aria-hidden="true" size={16} />
-            {guardando ? 'Eliminando...' : 'Eliminar'}
+          <button type="button" className="boton-peligro" onClick={manejarConfirmar} disabled={guardando}>
+            <Ban aria-hidden="true" size={16} />
+            {guardando ? 'Anulando...' : 'Anular'}
           </button>
         </div>
       </td>

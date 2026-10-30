@@ -2,10 +2,11 @@
  * Sección "+ Agregar animal" al pie del detalle de una sesión (RF011): un
  * buscador (ver componentes/BuscadorAnimal.jsx) filtra los animales
  * ELEGIBLES para esta sesión -- del mismo lote (o sin lote), sin salida
- * registrada y que todavía no estén en la sesión -- mostrando caravana y
- * último peso. Elegido uno, pide el peso nuevo y lo registra con
- * POST /api/pesajes/sesion (misma fecha de la sesión, un solo ítem,
- * responsableId = personaId de la persona autenticada).
+ * registrada, con ingreso no posterior a la fecha de la sesión, y que
+ * todavía no estén en la sesión -- mostrando caravana y último peso.
+ * Elegido uno, pide el peso nuevo y lo registra con POST /api/pesajes/sesion
+ * (misma fecha de la sesión, un solo ítem, responsableId = personaId de la
+ * persona autenticada).
  */
 
 import { Plus } from 'lucide-react'
@@ -14,13 +15,8 @@ import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { useAuth } from '../../auth/useAuth'
 import BuscadorAnimal from '../../componentes/BuscadorAnimal'
 import { formatearPeso } from '../../utilidades/formato'
+import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
 import './AgregarAnimalSesion.css'
-
-/** Convierte el texto de un campo de peso (acepta coma o punto) a número; NaN si no es válido. */
-function parsearPeso(texto) {
-  const normalizado = texto.trim().replace(',', '.')
-  return normalizado === '' ? NaN : Number(normalizado)
-}
 
 export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado, onAgregado }) {
   const { personaId, cargandoYo, errorYo } = useAuth()
@@ -53,6 +49,9 @@ export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado
       const animales = await peticionProtegida('/api/animales/resumen')
       const filtrados = (animales ?? []).filter((animal) => {
         if (animal.aniFechaEgreso) {
+          return false
+        }
+        if (animal.aniFechaIngreso > sesion.fecha) {
           return false
         }
         if (idsEnSesion.has(animal.aniId)) {
@@ -92,7 +91,7 @@ export default function AgregarAnimalSesion({ sesion, idsEnSesion, deshabilitado
   }
 
   const pesoNumero = parsearPeso(peso)
-  const pesoValido = peso.trim() !== '' && !Number.isNaN(pesoNumero) && pesoNumero > 0 && pesoNumero <= 2000
+  const pesoValido = pesoTextoEsValido(peso)
   const avisoPesoMenor =
     animalElegido && pesoValido && pesoNumero < animalElegido.pesoActual
       ? `Es menor al último peso registrado (${formatearPeso(animalElegido.pesoActual)})`

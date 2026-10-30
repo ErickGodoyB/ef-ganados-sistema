@@ -1,0 +1,146 @@
+/**
+ * Filtro "Intervalo" (ver Intervalo.jsx). El botón principal tiene el mismo
+ * look que un select de filtro (.campo-filtro select, ver base.css); el
+ * panel reutiliza el patrón de hoja inferior / desplegable anclado de
+ * PanelOpciones.css (mismos tokens, mismos puntos de quiebre).
+ */
+
+.intervalo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intervalo-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transicion-rapida);
+}
+
+.intervalo-boton:hover {
+  background: var(--superficie-hover);
+}
+
+.intervalo-boton:focus-visible,
+.intervalo-boton-limpiar:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.intervalo-boton-limpiar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--texto-secundario);
+  background: transparent;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+}
+
+.intervalo-boton-limpiar:hover {
+  background: var(--superficie-hover);
+}
+
+/* Fondo oscurecido: solo existe visualmente en celular (ver @media de
+   abajo), mismo criterio que PanelOpciones.css. */
+.intervalo-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: var(--fondo-superpuesto);
+}
+
+.intervalo-panel {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 45;
+  width: calc(100vw - 2rem);
+  max-width: 22rem;
+  max-height: calc(100dvh - 2 * 16px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+}
+
+@media (min-width: 768px) {
+  .intervalo-fondo {
+    display: none;
+  }
+
+  .intervalo-panel {
+    position: absolute;
+    left: 0;
+    bottom: auto;
+    top: calc(100% + 8px);
+    transform: none;
+    width: 20rem;
+    max-width: calc(100vw - 2rem);
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+.intervalo-atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intervalo-atajos .boton-secundario {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.intervalo-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 420px) {
+  .intervalo-campos {
+    flex-direction: row;
+  }
+
+  .intervalo-campos .campo {
+    flex: 1 1 0;
+  }
+}
+
+.intervalo-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
+.intervalo-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

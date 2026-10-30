@@ -44,12 +44,16 @@
 }
 
 .tabla-items-sesion-fila-edicion,
-.tabla-items-sesion-fila-eliminar {
+.tabla-items-sesion-fila-anular {
   background: var(--superficie-hover);
 }
 
 .tabla-items-sesion-fila-edicion input.entrada {
   min-width: 10rem;
+}
+
+.tabla-items-sesion-anular-texto {
+  margin: 0 0 10px;
 }
 
 .tabla-items-sesion-acciones {

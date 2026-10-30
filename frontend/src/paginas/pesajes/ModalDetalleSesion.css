@@ -1,9 +1,42 @@
 /**
  * Estilos del modal de detalle de sesión (ver ModalDetalleSesion.jsx). Los
- * botones salen de src/estilos/base.css; acá queda el resumen de arriba y
- * el interruptor tabla/tarjetas (mismo criterio que Pesajes.css, pero
- * dentro del modal en vez de la página).
+ * botones salen de src/estilos/base.css; acá queda el resumen de arriba, el
+ * interruptor tabla/tarjetas (mismo criterio que Pesajes.css, pero dentro
+ * del modal en vez de la página) y los paneles inline de "Anular sesión"/
+ * "Cambiar fecha" (ver PanelAnularSesion.jsx/PanelCambiarFechaSesion.jsx).
  */
+
+.detalle-sesion-acciones-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.panel-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--superficie-hover);
+  border-radius: var(--radio-md);
+}
+
+.panel-sesion--peligro {
+  border: 1px solid var(--color-error);
+}
+
+.panel-sesion-texto {
+  margin: 0;
+}
+
+.panel-sesion-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
 .resumen-sesion {
   margin: 0 0 20px;

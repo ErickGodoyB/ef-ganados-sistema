@@ -223,9 +223,9 @@ public class PesajeService {
             throw new IllegalArgumentException("No se encontró una sesión con pesajes activos en esa fecha y lote");
         }
 
-        // Primero se valida TODO (ningún animal por debajo de su ingreso, ningún
-        // animal ya con un pesaje activo en la fecha nueva) y recién después se
-        // mueve: así, si algo falla, no queda ningún pesaje movido a medias.
+        // Primero se valida todo (que ningún animal tenga una fecha anterior a su ingreso
+        // ni un pesaje activo en la fecha nueva) y recién después se mueve; así, si algo
+        // falla, ningún pesaje queda movido a medias.
         for (Pesajes pesaje : activos) {
             Animal animal = pesaje.getAnimal();
             if (nuevaFecha.isBefore(animal.getAniFechaIngreso())) {

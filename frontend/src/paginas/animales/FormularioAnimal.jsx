@@ -20,6 +20,7 @@
 import { RefreshCw } from 'lucide-react'
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
+import { parsearPeso, pesoEsValido } from '../../utilidades/peso'
 import AltaRapidaLote from './AltaRapidaLote'
 import AltaRapidaRaza from './AltaRapidaRaza'
 import { useDatosFormularioAnimal } from './useDatosFormularioAnimal'
@@ -32,12 +33,6 @@ function obtenerFechaHoyIso() {
   const mes = String(ahora.getMonth() + 1).padStart(2, '0')
   const dia = String(ahora.getDate()).padStart(2, '0')
   return `${anio}-${mes}-${dia}`
-}
-
-/** Convierte el texto de un campo de peso (acepta coma o punto) a número; NaN si no es válido. */
-function parsearPeso(texto) {
-  const normalizado = texto.trim().replace(',', '.')
-  return normalizado === '' ? NaN : Number(normalizado)
 }
 
 const FormularioAnimal = forwardRef(function FormularioAnimal(
@@ -148,7 +143,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
       const peso = parsearPeso(pesoInicial)
       if (Number.isNaN(peso)) {
         encontrados.pesoInicial = 'Ingresá un número válido'
-      } else if (peso <= 0 || peso > 2000) {
+      } else if (!pesoEsValido(peso)) {
         encontrados.pesoInicial = 'El peso debe ser mayor a 0 y hasta 2000 kg'
       }
     }

@@ -20,6 +20,46 @@
   gap: 16px;
 }
 
+/* Selector "Sesiones"/"Anulados" (ver Pesajes.jsx, role="tablist"), junto
+   al título: control segmentado (fondo con dos botones, el activo
+   destacado), para distinguirse de las acciones de un encabezado
+   corriente (ej. "+ Nuevo animal") sin competir visualmente con ellas. */
+.pesajes-vistas {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--superficie-hover);
+  border-radius: var(--radio-md);
+}
+
+.pesajes-vista-tab {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto-secundario);
+  background: transparent;
+  border: none;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida), color var(--transicion-rapida);
+}
+
+.pesajes-vista-tab:hover {
+  color: var(--texto);
+}
+
+.pesajes-vista-tab:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.pesajes-vista-tab--activa {
+  color: var(--texto);
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+}
+
 .pesajes-controles {
   display: flex;
   flex-direction: column;
@@ -91,12 +131,6 @@
 .pesajes-boton-nuevo:focus-visible {
   outline: 2px solid var(--color-foco);
   outline-offset: 2px;
-}
-
-.pesajes-filtro-error {
-  margin: -4px 0 0;
-  font-size: 13px;
-  color: var(--color-error);
 }
 
 .pesajes-aviso {

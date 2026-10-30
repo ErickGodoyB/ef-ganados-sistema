@@ -1,0 +1,44 @@
+/**
+ * Campo de motivo de anulación (ver SelectorMotivoAnulacion.jsx): chips de
+ * motivos frecuentes arriba, el textarea debajo. El textarea reutiliza
+ * ".entrada" de base.css; acá solo quedan los chips.
+ */
+
+.selector-motivo-anulacion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selector-motivo-anulacion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selector-motivo-anulacion-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+}
+
+.selector-motivo-anulacion-chip:hover:not(:disabled) {
+  background: var(--superficie);
+}
+
+.selector-motivo-anulacion-chip:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.selector-motivo-anulacion-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

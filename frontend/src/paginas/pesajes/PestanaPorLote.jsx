@@ -4,8 +4,15 @@
  * se guarda todavía) y recién al tocar "Guardar" se manda todo junto como
  * una sesión (POST /api/pesajes/sesion, todo o nada). Si ya existe una
  * sesión de ese lote en esa fecha, lo avisa (sin bloquear: los animales que
- * se carguen se suman a ella) y excluye del buscador a los que ya se
- * pesaron ese día.
+ * se carguen se suman a ella) y excluye del buscador a los que ya no son
+ * elegibles para esa fecha/lote (ver utilidades/elegibilidadPesaje.js: ya
+ * tienen un pesaje activo ese día, su ingreso es posterior, o tienen
+ * salida registrada).
+ *
+ * Cambiar el LOTE vacía la lista acumulada (pide confirmación, porque esos
+ * animales pertenecían al lote anterior); cambiar la FECHA no la vacía,
+ * pero puede sacar de ella -avisando cuáles- a los animales que dejaron de
+ * servir para la fecha nueva (ver el efecto que verifica la sesión).
  *
  * Expone, vía ref, solicitarCierre(): mismo criterio que FormularioAnimal
  * (ver su JSDoc), para que el modal que la envuelve respete la misma
@@ -18,7 +25,10 @@ import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { useAuth } from '../../auth/useAuth'
 import BuscadorAnimal from '../../componentes/BuscadorAnimal'
 import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
+import { motivoNoElegible } from '../../utilidades/elegibilidadPesaje'
 import { formatearPeso } from '../../utilidades/formato'
+import { calcularDiferenciaPeso, parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
+import { calcularResumenPesos } from '../../utilidades/resumenSesion'
 // Reutiliza ".resumen-sesion" (el resumen en vivo) y ".tabla-items-sesion"
 // (la tabla de animales) de ModalDetalleSesion.jsx/TablaItemsSesion.jsx:
 // mismo lenguaje visual, acá con una lista local en vez de una ya guardada.
@@ -37,15 +47,8 @@ function obtenerFechaHoyIso() {
   return `${anio}-${mes}-${dia}`
 }
 
-/** Convierte el texto de un campo de peso (acepta coma o punto) a número; NaN si no es válido. */
-function parsearPeso(texto) {
-  const normalizado = texto.trim().replace(',', '.')
-  return normalizado === '' ? NaN : Number(normalizado)
-}
-
 function pesoFilaValido(fila) {
-  const numero = parsearPeso(fila.pesoTexto)
-  return fila.pesoTexto.trim() !== '' && !Number.isNaN(numero) && numero > 0 && numero <= 2000
+  return pesoTextoEsValido(fila.pesoTexto)
 }
 
 const PestanaPorLote = forwardRef(function PestanaPorLote(
@@ -63,6 +66,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
 
   const [sesionExistente, setSesionExistente] = useState(false)
   const [idsYaPesadosHoy, setIdsYaPesadosHoy] = useState(new Set())
+  const [avisoCambioFecha, setAvisoCambioFecha] = useState('')
 
   const [listaAcumulada, setListaAcumulada] = useState([])
 
@@ -108,6 +112,12 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   // ofrecerlos de nuevo). Un error acá no es grave: se trata como "no hay
   // sesión previa" en vez de bloquear toda la pestaña por una consulta
   // que ni siquiera hace falta para poder cargar pesajes nuevos.
+  //
+  // Además, con los ids recién traídos, se reconcilia la lista acumulada:
+  // cambiar la fecha no la vacía (eso solo pasa al cambiar de lote, ver
+  // cambiarLote), pero un animal ya cargado puede dejar de servir para la
+  // fecha nueva (ya tiene un pesaje activo ese día, o su ingreso quedó
+  // después) y hay que sacarlo, avisando cuál.
   useEffect(() => {
     if (!loteId || !fecha) {
       setSesionExistente(false)
@@ -126,8 +136,19 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
           return
         }
         const lista = detalle ?? []
+        const nuevosIds = new Set(lista.map((item) => item.animalId))
         setSesionExistente(lista.length > 0)
-        setIdsYaPesadosHoy(new Set(lista.map((item) => item.animalId)))
+        setIdsYaPesadosHoy(nuevosIds)
+        setAvisoCambioFecha('')
+        setListaAcumulada((actual) => {
+          const invalidas = actual.filter((fila) => motivoNoElegible(fila.animal, fecha, nuevosIds) != null)
+          if (invalidas.length === 0) {
+            return actual
+          }
+          const caravanas = invalidas.map((fila) => fila.animal.aniCaravana).join(', ')
+          setAvisoCambioFecha(`Se quitaron de la lista (ya no sirven para esta fecha): ${caravanas}`)
+          return actual.filter((fila) => motivoNoElegible(fila.animal, fecha, nuevosIds) == null)
+        })
       } catch {
         if (!cancelado) {
           setSesionExistente(false)
@@ -164,15 +185,12 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
       return []
     }
     return animales.filter((animal) => {
-      if (loteId === 'sin-lote' ? animal.subGrupoId != null : String(animal.subGrupoId) !== loteId) {
-        return false
-      }
-      if (idsYaPesadosHoy.has(animal.aniId)) {
+      if (motivoNoElegible(animal, fecha, idsYaPesadosHoy, loteId) != null) {
         return false
       }
       return !listaAcumulada.some((fila) => fila.animal.aniId === animal.aniId)
     })
-  }, [animales, loteId, idsYaPesadosHoy, listaAcumulada])
+  }, [animales, loteId, fecha, idsYaPesadosHoy, listaAcumulada])
 
   const opcionesCarga = animalesDelLote.map((animal) => ({
     id: animal.aniId,
@@ -180,38 +198,44 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
     pesoActual: animal.pesoActual,
   }))
 
-  /** Pide confirmación si hay animales cargados antes de cambiar algo que vacía la lista (lote o fecha). */
-  function confirmarSiHayCargados(cambiar) {
+  // Si lo escrito coincide EXACTO con la caravana de un animal que ya
+  // existe (sea o no elegible para este lote/fecha), nunca se ofrece
+  // "Registrar animal nuevo": si no es elegible, en vez de esa opción se
+  // explica el motivo.
+  const textoCargaBuscado = textoCarga.trim()
+  const animalCargaExistente = textoCargaBuscado
+    ? animales.find((animal) => animal.aniCaravana.toLowerCase() === textoCargaBuscado.toLowerCase())
+    : null
+  const motivoCargaExistente = animalCargaExistente
+    ? motivoNoElegible(animalCargaExistente, fecha, idsYaPesadosHoy, loteId)
+    : null
+
+  function cambiarLote(valor) {
     if (listaAcumulada.length > 0) {
-      if (!window.confirm('Vas a perder los animales cargados. ¿Cambiar igual?')) {
+      if (!window.confirm('Los animales cargados pertenecen al lote anterior. ¿Cambiar igual?')) {
         return
       }
       setListaAcumulada([])
     }
-    cambiar()
+    setLoteId(valor)
+    setTextoCarga('')
+    setAnimalCarga(null)
+    setPesoCarga('')
+    setErrorCarga('')
   }
 
-  function cambiarLote(valor) {
-    confirmarSiHayCargados(() => {
-      setLoteId(valor)
-      setTextoCarga('')
-      setAnimalCarga(null)
-      setPesoCarga('')
-      setErrorCarga('')
-    })
-  }
-
+  /**
+   * Cambiar la fecha NO vacía la lista acumulada (a diferencia de cambiar
+   * de lote): el efecto que vuelve a consultar la sesión de la fecha nueva
+   * (ver más arriba) es quien saca de la lista, si corresponde, los
+   * animales que dejaron de servir para ella, avisando cuáles.
+   */
   function cambiarFecha(valor) {
-    confirmarSiHayCargados(() => {
-      setFecha(valor)
-      // La fila de carga en curso se limpia también acá: a qué animales se
-      // considera "ya pesados hoy" depende de la fecha, así que un animal
-      // elegido con la fecha anterior podría dejar de ser válido.
-      setTextoCarga('')
-      setAnimalCarga(null)
-      setPesoCarga('')
-      setErrorCarga('')
-    })
+    setFecha(valor)
+    setTextoCarga('')
+    setAnimalCarga(null)
+    setPesoCarga('')
+    setErrorCarga('')
   }
 
   function elegirAnimalCarga(opcion) {
@@ -225,7 +249,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   }
 
   const pesoCargaNumero = parsearPeso(pesoCarga)
-  const pesoCargaValido = pesoCarga.trim() !== '' && !Number.isNaN(pesoCargaNumero) && pesoCargaNumero > 0 && pesoCargaNumero <= 2000
+  const pesoCargaValido = pesoTextoEsValido(pesoCarga)
   const avisoPesoCargaMenor =
     animalCarga && pesoCargaValido && pesoCargaNumero < animalCarga.pesoActual
       ? `Es menor al último peso registrado (${formatearPeso(animalCarga.pesoActual)})`
@@ -265,19 +289,8 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   }
 
   const resumen = useMemo(() => {
-    const validas = listaAcumulada.filter(pesoFilaValido)
-    if (validas.length === 0) {
-      return { cantidad: 0, total: 0, promedio: 0, minimo: 0, maximo: 0 }
-    }
-    const pesos = validas.map((fila) => parsearPeso(fila.pesoTexto))
-    const total = pesos.reduce((acumulado, peso) => acumulado + peso, 0)
-    return {
-      cantidad: validas.length,
-      total,
-      promedio: total / validas.length,
-      minimo: Math.min(...pesos),
-      maximo: Math.max(...pesos),
-    }
+    const pesos = listaAcumulada.filter(pesoFilaValido).map((fila) => parsearPeso(fila.pesoTexto))
+    return calcularResumenPesos(pesos)
   }, [listaAcumulada])
 
   const todosLosPesosValidos = listaAcumulada.length > 0 && listaAcumulada.every(pesoFilaValido)
@@ -364,6 +377,13 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
         </p>
       )}
 
+      {avisoCambioFecha && (
+        <p className="pestana-por-lote-aviso-sesion" aria-live="polite">
+          <TriangleAlert aria-hidden="true" size={16} />
+          {avisoCambioFecha}
+        </p>
+      )}
+
       <dl className="resumen-sesion pestana-por-lote-resumen">
         <div className="resumen-sesion-dato">
           <dt>Cantidad</dt>
@@ -407,14 +427,17 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
             valor={textoCarga}
             alCambiarValor={cambiarTextoCarga}
             alElegir={elegirAnimalCarga}
-            textoSinResultados="No hay animales elegibles con ese texto"
-            alNoEncontrado={(texto) =>
-              onRegistrarNuevo({
-                caravana: texto,
-                subGrupoId: loteId === 'sin-lote' ? undefined : Number(loteId),
-                fecha,
-                pesoInicial: pesoCargaValido ? pesoCargaNumero : undefined,
-              })
+            textoSinResultados={motivoCargaExistente || 'No hay animales elegibles con ese texto'}
+            alNoEncontrado={
+              animalCargaExistente
+                ? undefined
+                : (texto) =>
+                    onRegistrarNuevo({
+                      caravana: texto,
+                      subGrupoId: loteId === 'sin-lote' ? undefined : Number(loteId),
+                      fecha,
+                      pesoInicial: pesoCargaValido ? pesoCargaNumero : undefined,
+                    })
             }
             disabled={guardando}
           />
@@ -498,7 +521,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
                     </td>
                     <td>
                       <ValorDiferenciaPeso
-                        diferencia={pesoFilaValido(fila) ? parsearPeso(fila.pesoTexto) - fila.animal.pesoActual : null}
+                        diferencia={pesoFilaValido(fila) ? calcularDiferenciaPeso(parsearPeso(fila.pesoTexto), fila.animal.pesoActual) : null}
                       />
                     </td>
                     <td>
@@ -555,7 +578,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
                     <dt>Diferencia</dt>
                     <dd>
                       <ValorDiferenciaPeso
-                        diferencia={pesoFilaValido(fila) ? parsearPeso(fila.pesoTexto) - fila.animal.pesoActual : null}
+                        diferencia={pesoFilaValido(fila) ? calcularDiferenciaPeso(parsearPeso(fila.pesoTexto), fila.animal.pesoActual) : null}
                       />
                     </dd>
                   </div>

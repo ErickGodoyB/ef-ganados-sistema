@@ -2,21 +2,19 @@
  * Tarjeta de un animal de una sesión de pesaje para pantallas chicas
  * (< 768px, ver ModalDetalleSesion.jsx y TarjetaItemSesion.css). Según
  * "tipoAccion" muestra los datos de lectura, el formulario de edición (solo
- * peso y observación) o la confirmación de borrado; "deshabilitada" es
- * true cuando OTRA tarjeta está en alguno de esos dos modos.
+ * peso y observación) o la confirmación de anulación (motivo);
+ * "deshabilitada" es true cuando OTRA tarjeta está en alguno de esos dos
+ * modos.
  */
 
-import { Pencil, Trash2 } from 'lucide-react'
+import { Ban, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import ValorGmd from '../../componentes/ValorGmd'
 import { formatearPeso } from '../../utilidades/formato'
+import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
+import { motivoEsValido } from '../../utilidades/anulacion'
+import SelectorMotivoAnulacion from './SelectorMotivoAnulacion'
 import './TarjetaItemSesion.css'
-
-/** Convierte el texto de un campo de peso (acepta coma o punto) a número; NaN si no es válido. */
-function parsearPeso(texto) {
-  const normalizado = texto.trim().replace(',', '.')
-  return normalizado === '' ? NaN : Number(normalizado)
-}
 
 export default function TarjetaItemSesion({
   item,
@@ -27,10 +25,10 @@ export default function TarjetaItemSesion({
   guardando,
   errorAccion,
   onEditar,
-  onEliminar,
+  onAnular,
   onGuardarEdicion,
   onCancelar,
-  onConfirmarEliminar,
+  onConfirmarAnular,
 }) {
   if (activa && tipoAccion === 'editar') {
     return (
@@ -38,27 +36,16 @@ export default function TarjetaItemSesion({
     )
   }
 
-  if (activa && tipoAccion === 'eliminar') {
+  if (activa && tipoAccion === 'anular') {
     return (
-      <article className="tarjeta-item-sesion tarjeta">
-        <p>
-          ¿Eliminar el pesaje de {item.caravana} del {fecha}? Esta acción no se puede deshacer.
-        </p>
-        {errorAccion && (
-          <p className="campo-error" role="alert">
-            {errorAccion}
-          </p>
-        )}
-        <div className="tarjeta-item-sesion-acciones">
-          <button type="button" className="boton-secundario" autoFocus onClick={onCancelar} disabled={guardando}>
-            Cancelar
-          </button>
-          <button type="button" className="boton-peligro" onClick={onConfirmarEliminar} disabled={guardando}>
-            <Trash2 aria-hidden="true" size={16} />
-            {guardando ? 'Eliminando...' : 'Eliminar'}
-          </button>
-        </div>
-      </article>
+      <TarjetaConfirmarAnular
+        item={item}
+        fecha={fecha}
+        guardando={guardando}
+        error={errorAccion}
+        onCancelar={onCancelar}
+        onConfirmar={onConfirmarAnular}
+      />
     )
   }
 
@@ -104,9 +91,49 @@ export default function TarjetaItemSesion({
           <Pencil aria-hidden="true" size={16} />
           Editar
         </button>
-        <button type="button" className="boton-peligro" onClick={onEliminar} disabled={deshabilitada}>
-          <Trash2 aria-hidden="true" size={16} />
-          Eliminar
+        <button type="button" className="boton-peligro" onClick={onAnular} disabled={deshabilitada}>
+          <Ban aria-hidden="true" size={16} />
+          Anular
+        </button>
+      </div>
+    </article>
+  )
+}
+
+/** Confirmación de anulación de la tarjeta: pide el motivo (chips + texto) antes de anular. */
+function TarjetaConfirmarAnular({ item, fecha, guardando, error, onCancelar, onConfirmar }) {
+  const [motivo, setMotivo] = useState('')
+  const [errorLocal, setErrorLocal] = useState('')
+
+  function manejarConfirmar() {
+    if (!motivoEsValido(motivo)) {
+      setErrorLocal('Ingresá un motivo de entre 3 y 255 caracteres')
+      return
+    }
+    setErrorLocal('')
+    onConfirmar(motivo)
+  }
+
+  return (
+    <article className="tarjeta-item-sesion tarjeta">
+      <p>
+        ¿Anular el pesaje de {item.caravana} del {fecha}? El pesaje deja de contar en reportes y se conserva en
+        Anulados.
+      </p>
+      <SelectorMotivoAnulacion
+        id={`tarjeta-anular-motivo-${item.pesaId}`}
+        motivo={motivo}
+        onCambiarMotivo={setMotivo}
+        disabled={guardando}
+        error={errorLocal || error}
+      />
+      <div className="tarjeta-item-sesion-acciones">
+        <button type="button" className="boton-secundario" onClick={onCancelar} disabled={guardando}>
+          Cancelar
+        </button>
+        <button type="button" className="boton-peligro" onClick={manejarConfirmar} disabled={guardando}>
+          <Ban aria-hidden="true" size={16} />
+          {guardando ? 'Anulando...' : 'Anular'}
         </button>
       </div>
     </article>
@@ -120,13 +147,12 @@ function TarjetaEdicion({ item, guardando, error, onGuardar, onCancelar }) {
   const [errorLocal, setErrorLocal] = useState('')
 
   function manejarGuardar() {
-    const pesoNumero = parsearPeso(peso)
-    if (!peso.trim() || Number.isNaN(pesoNumero) || pesoNumero <= 0 || pesoNumero > 2000) {
+    if (!pesoTextoEsValido(peso)) {
       setErrorLocal('Ingresá un peso válido (mayor a 0 y hasta 2000 kg)')
       return
     }
     setErrorLocal('')
-    onGuardar(pesoNumero, observaciones)
+    onGuardar(parsearPeso(peso), observaciones)
   }
 
   return (

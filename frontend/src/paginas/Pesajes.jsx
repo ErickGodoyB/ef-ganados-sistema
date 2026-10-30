@@ -15,6 +15,7 @@
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
+import Intervalo from '../componentes/Intervalo'
 import Paginacion from '../componentes/Paginacion'
 import PanelOpciones from '../componentes/PanelOpciones'
 import './Pesajes.css'
@@ -26,6 +27,7 @@ import TablaSesiones from './pesajes/TablaSesiones'
 import TarjetaSesion from './pesajes/TarjetaSesion'
 import { usePreferenciasListadoPesajes } from './pesajes/usePreferenciasListadoPesajes'
 import { useSesionesResumen } from './pesajes/useSesionesResumen'
+import VistaAnulados from './pesajes/VistaAnulados'
 
 const COLUMNAS_OBLIGATORIAS = [
   { clave: 'fecha', etiqueta: 'Fecha' },
@@ -36,6 +38,13 @@ export default function Pesajes() {
   const { sesiones, cargando, error, recargar } = useSesionesResumen()
   const { columnasVisibles, filasPorPagina, cambiarColumnaVisible, cambiarFilasPorPagina, restablecer } =
     usePreferenciasListadoPesajes()
+
+  // "Sesiones" (listado normal) o "Anulados" (solo lectura, ver
+  // VistaAnulados.jsx); el filtro de Intervalo (desde/hasta) es común a las
+  // dos vistas.
+  const [vista, setVista] = useState('sesiones')
+  const refTabSesiones = useRef(null)
+  const refTabAnulados = useRef(null)
 
   const [busqueda, setBusqueda] = useState('')
   const [lote, setLote] = useState('todos')
@@ -51,7 +60,21 @@ export default function Pesajes() {
   const refDisparadorDetalle = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
-  const rangoInvalido = Boolean(desde && hasta && desde > hasta)
+  /** Cambia el intervalo aplicado (ver componentes/Intervalo.jsx); ya viene validado (desde <= hasta o alguno vacío). */
+  function cambiarIntervalo({ desde: nuevoDesde, hasta: nuevoHasta }) {
+    setDesde(nuevoDesde)
+    setHasta(nuevoHasta)
+  }
+
+  /** Flechas izquierda/derecha alternan entre las dos vistas y mueven el foco con ellas (patrón ARIA tablist). */
+  function manejarTeclaVista(evento) {
+    if (evento.key === 'ArrowRight' || evento.key === 'ArrowLeft') {
+      evento.preventDefault()
+      const siguiente = vista === 'sesiones' ? 'anulados' : 'sesiones'
+      setVista(siguiente)
+      ;(siguiente === 'sesiones' ? refTabSesiones : refTabAnulados).current?.focus()
+    }
+  }
 
   // Volver a la página 1 cuando cambia la búsqueda, un filtro o el orden
   // (mismo patrón que Animales.jsx: se ajusta durante el render, no en un
@@ -71,18 +94,8 @@ export default function Pesajes() {
   const lotesDisponibles = useMemo(() => obtenerLotesDisponibles(sesiones), [sesiones])
 
   const resultado = useMemo(
-    () =>
-      filtrarYOrdenarSesiones(sesiones, {
-        busqueda,
-        lote,
-        // Mientras el rango esté invertido, se ignora (ver el mensaje de
-        // error bajo "Hasta"): mostrar "sin coincidencias" sería más
-        // confuso que simplemente no filtrar por fecha todavía.
-        desde: rangoInvalido ? '' : desde,
-        hasta: rangoInvalido ? '' : hasta,
-        orden,
-      }),
-    [sesiones, busqueda, lote, desde, hasta, rangoInvalido, orden],
+    () => filtrarYOrdenarSesiones(sesiones, { busqueda, lote, desde, hasta, orden }),
+    [sesiones, busqueda, lote, desde, hasta, orden],
   )
 
   const totalPaginas = Math.max(1, Math.ceil(resultado.length / filasPorPagina))
@@ -131,11 +144,11 @@ export default function Pesajes() {
     }
   }
 
-  /** La sesión que se estaba viendo se quedó sin animales (se eliminó el último pesaje): cierra el detalle, recarga y avisa. */
+  /** La sesión que se estaba viendo se quedó sin pesajes activos (se anuló el último): cierra el detalle, recarga y avisa. */
   function alQuedarSinAnimales() {
     setSesionSeleccionada(null)
     recargar()
-    mostrarAviso('La sesión quedó sin animales y se eliminó')
+    mostrarAviso('La sesión quedó sin pesajes activos y se cerró')
   }
 
   /** Tras guardar desde "Nuevo pesaje" (cualquiera de las dos pestañas): cierra el modal, recarga el listado y avisa. */
@@ -157,23 +170,56 @@ export default function Pesajes() {
 
   return (
     <div className="pesajes-pagina">
-      <EncabezadoPagina titulo="Pesajes" />
+      <EncabezadoPagina titulo="Pesajes">
+        <div role="tablist" aria-label="Vista de pesajes" className="pesajes-vistas">
+          <button
+            type="button"
+            ref={refTabSesiones}
+            role="tab"
+            id="pesajes-tab-sesiones"
+            aria-selected={vista === 'sesiones'}
+            aria-controls="pesajes-panel-sesiones"
+            tabIndex={vista === 'sesiones' ? 0 : -1}
+            className={`pesajes-vista-tab${vista === 'sesiones' ? ' pesajes-vista-tab--activa' : ''}`}
+            onClick={() => setVista('sesiones')}
+            onKeyDown={manejarTeclaVista}
+          >
+            Sesiones
+          </button>
+          <button
+            type="button"
+            ref={refTabAnulados}
+            role="tab"
+            id="pesajes-tab-anulados"
+            aria-selected={vista === 'anulados'}
+            aria-controls="pesajes-panel-anulados"
+            tabIndex={vista === 'anulados' ? 0 : -1}
+            className={`pesajes-vista-tab${vista === 'anulados' ? ' pesajes-vista-tab--activa' : ''}`}
+            onClick={() => setVista('anulados')}
+            onKeyDown={manejarTeclaVista}
+          >
+            Anulados
+          </button>
+        </div>
+      </EncabezadoPagina>
 
       <div className="pesajes-controles">
         <div className="pesajes-busqueda-fila">
-          <div className="campo-busqueda campo-busqueda--con-icono">
-            <label htmlFor="pesajes-busqueda">Buscar por lote o grupo</label>
-            <div className="campo-busqueda-entrada">
-              <Search aria-hidden="true" size={18} className="campo-busqueda-icono" />
-              <input
-                id="pesajes-busqueda"
-                type="search"
-                value={busqueda}
-                onChange={(evento) => setBusqueda(evento.target.value)}
-                placeholder="Ej. Recría"
-              />
+          {vista === 'sesiones' && (
+            <div className="campo-busqueda campo-busqueda--con-icono">
+              <label htmlFor="pesajes-busqueda">Buscar por lote o grupo</label>
+              <div className="campo-busqueda-entrada">
+                <Search aria-hidden="true" size={18} className="campo-busqueda-icono" />
+                <input
+                  id="pesajes-busqueda"
+                  type="search"
+                  value={busqueda}
+                  onChange={(evento) => setBusqueda(evento.target.value)}
+                  placeholder="Ej. Recría"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             type="button"
@@ -185,83 +231,36 @@ export default function Pesajes() {
             Nuevo pesaje
           </button>
 
-          <PanelOpciones
-            columnasObligatorias={COLUMNAS_OBLIGATORIAS}
-            columnasOpcionales={COLUMNAS_OPCIONALES}
-            columnasVisibles={columnasVisibles}
-            onCambiarColumnaVisible={cambiarColumnaVisible}
-            filasPorPagina={filasPorPagina}
-            onCambiarFilasPorPagina={cambiarFilasPorPagina}
-            onRestablecer={restablecer}
-          />
+          {vista === 'sesiones' && (
+            <PanelOpciones
+              columnasObligatorias={COLUMNAS_OBLIGATORIAS}
+              columnasOpcionales={COLUMNAS_OPCIONALES}
+              columnasVisibles={columnasVisibles}
+              onCambiarColumnaVisible={cambiarColumnaVisible}
+              filasPorPagina={filasPorPagina}
+              onCambiarFilasPorPagina={cambiarFilasPorPagina}
+              onRestablecer={restablecer}
+            />
+          )}
         </div>
 
-        <div className="campo-filtro">
-          <label htmlFor="pesajes-filtro-lote">Lote</label>
-          <select id="pesajes-filtro-lote" value={lote} onChange={(evento) => setLote(evento.target.value)}>
-            <option value="todos">Todos los lotes</option>
-            <option value="sin-lote">Sin lote</option>
-            {lotesDisponibles.map((opcion) => (
-              <option key={opcion.valor} value={opcion.valor}>
-                {opcion.etiqueta}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Intervalo desde={desde} hasta={hasta} onCambiar={cambiarIntervalo} />
 
-        <div className="campo-filtro">
-          <label htmlFor="pesajes-filtro-desde">Desde</label>
-          <input
-            id="pesajes-filtro-desde"
-            type="date"
-            value={desde}
-            max={hasta || undefined}
-            onChange={(evento) => setDesde(evento.target.value)}
-            aria-invalid={rangoInvalido}
-            aria-describedby={rangoInvalido ? 'pesajes-filtro-rango-error' : undefined}
-          />
-        </div>
-
-        <div className="campo-filtro">
-          <label htmlFor="pesajes-filtro-hasta">Hasta</label>
-          <input
-            id="pesajes-filtro-hasta"
-            type="date"
-            value={hasta}
-            min={desde || undefined}
-            onChange={(evento) => setHasta(evento.target.value)}
-            aria-invalid={rangoInvalido}
-            aria-describedby={rangoInvalido ? 'pesajes-filtro-rango-error' : undefined}
-          />
-        </div>
+        {vista === 'sesiones' && (
+          <div className="campo-filtro">
+            <label htmlFor="pesajes-filtro-lote">Lote</label>
+            <select id="pesajes-filtro-lote" value={lote} onChange={(evento) => setLote(evento.target.value)}>
+              <option value="todos">Todos los lotes</option>
+              <option value="sin-lote">Sin lote</option>
+              {lotesDisponibles.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.etiqueta}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
-
-      {rangoInvalido && (
-        <p id="pesajes-filtro-rango-error" className="pesajes-filtro-error" role="alert">
-          "Desde" no puede ser posterior a "Hasta"
-        </p>
-      )}
-
-      <div className="campo-filtro pesajes-orden-movil">
-        <label htmlFor="pesajes-orden-movil">Ordenar por</label>
-        <select
-          id="pesajes-orden-movil"
-          value={`${orden.campo}:${orden.direccion}`}
-          onChange={(evento) => alCambiarOrdenMovil(evento.target.value)}
-        >
-          {OPCIONES_ORDEN_MOVIL.map((opcion) => (
-            <option key={opcion.valor} value={opcion.valor}>
-              {opcion.etiqueta}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {!cargando && !error && (
-        <p className="visualmente-oculto" aria-live="polite">
-          {resultado.length === 1 ? '1 sesión encontrada' : `${resultado.length} sesiones encontradas`}
-        </p>
-      )}
 
       {aviso && (
         <p className="pesajes-aviso" role="status" aria-live="polite">
@@ -269,68 +268,99 @@ export default function Pesajes() {
         </p>
       )}
 
-      {cargando && <p role="status">Cargando pesajes…</p>}
-
-      {!cargando && error && (
-        <div className="estado-mensaje tarjeta">
-          <TriangleAlert aria-hidden="true" size={40} className="estado-mensaje-icono" />
-          <p>{error}</p>
-          <button type="button" className="boton boton-secundario" onClick={recargar}>
-            <RefreshCw aria-hidden="true" size={16} />
-            Reintentar
-          </button>
+      {vista === 'anulados' && (
+        <div id="pesajes-panel-anulados" role="tabpanel" aria-labelledby="pesajes-tab-anulados">
+          <VistaAnulados desde={desde} hasta={hasta} />
         </div>
       )}
 
-      {sinSesiones && (
-        <div className="estado-mensaje tarjeta">
-          <Inbox aria-hidden="true" size={40} className="estado-mensaje-icono" />
-          <p>Todavía no hay pesajes registrados</p>
-        </div>
-      )}
-
-      {sinCoincidencias && (
-        <div className="estado-mensaje tarjeta">
-          <SearchX aria-hidden="true" size={40} className="estado-mensaje-icono" />
-          <p>No hay sesiones que coincidan</p>
-          <button type="button" className="boton boton-secundario" onClick={limpiarFiltros}>
-            <FilterX aria-hidden="true" size={16} />
-            Limpiar filtros
-          </button>
-        </div>
-      )}
-
-      {hayResultados && (
-        <>
-          <div className="pesajes-tabla-solo-escritorio">
-            <TablaSesiones
-              sesiones={sesionesDeLaPagina}
-              columnasVisibles={columnasVisibles}
-              orden={orden}
-              onOrdenar={alOrdenar}
-              onAbrirDetalle={alAbrirDetalle}
-            />
+      {vista === 'sesiones' && (
+        <div id="pesajes-panel-sesiones" role="tabpanel" aria-labelledby="pesajes-tab-sesiones">
+          <div className="campo-filtro pesajes-orden-movil">
+            <label htmlFor="pesajes-orden-movil">Ordenar por</label>
+            <select
+              id="pesajes-orden-movil"
+              value={`${orden.campo}:${orden.direccion}`}
+              onChange={(evento) => alCambiarOrdenMovil(evento.target.value)}
+            >
+              {OPCIONES_ORDEN_MOVIL.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.etiqueta}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="pesajes-tarjetas-solo-movil">
-            {sesionesDeLaPagina.map((sesion) => (
-              <TarjetaSesion
-                key={`${sesion.fecha}-${sesion.subGrupoId ?? 'sin-lote'}`}
-                sesion={sesion}
-                columnasVisibles={columnasVisibles}
-                onAbrirDetalle={alAbrirDetalle}
+          {!cargando && !error && (
+            <p className="visualmente-oculto" aria-live="polite">
+              {resultado.length === 1 ? '1 sesión encontrada' : `${resultado.length} sesiones encontradas`}
+            </p>
+          )}
+
+          {cargando && <p role="status">Cargando pesajes…</p>}
+
+          {!cargando && error && (
+            <div className="estado-mensaje tarjeta">
+              <TriangleAlert aria-hidden="true" size={40} className="estado-mensaje-icono" />
+              <p>{error}</p>
+              <button type="button" className="boton boton-secundario" onClick={recargar}>
+                <RefreshCw aria-hidden="true" size={16} />
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {sinSesiones && (
+            <div className="estado-mensaje tarjeta">
+              <Inbox aria-hidden="true" size={40} className="estado-mensaje-icono" />
+              <p>Todavía no hay pesajes registrados</p>
+            </div>
+          )}
+
+          {sinCoincidencias && (
+            <div className="estado-mensaje tarjeta">
+              <SearchX aria-hidden="true" size={40} className="estado-mensaje-icono" />
+              <p>No hay sesiones que coincidan</p>
+              <button type="button" className="boton boton-secundario" onClick={limpiarFiltros}>
+                <FilterX aria-hidden="true" size={16} />
+                Limpiar filtros
+              </button>
+            </div>
+          )}
+
+          {hayResultados && (
+            <>
+              <div className="pesajes-tabla-solo-escritorio">
+                <TablaSesiones
+                  sesiones={sesionesDeLaPagina}
+                  columnasVisibles={columnasVisibles}
+                  orden={orden}
+                  onOrdenar={alOrdenar}
+                  onAbrirDetalle={alAbrirDetalle}
+                />
+              </div>
+
+              <div className="pesajes-tarjetas-solo-movil">
+                {sesionesDeLaPagina.map((sesion) => (
+                  <TarjetaSesion
+                    key={`${sesion.fecha}-${sesion.subGrupoId ?? 'sin-lote'}`}
+                    sesion={sesion}
+                    columnasVisibles={columnasVisibles}
+                    onAbrirDetalle={alAbrirDetalle}
+                  />
+                ))}
+              </div>
+
+              <Paginacion
+                paginaActual={paginaActual}
+                totalPaginas={totalPaginas}
+                totalResultados={resultado.length}
+                filasPorPagina={filasPorPagina}
+                onCambiarPagina={setPagina}
               />
-            ))}
-          </div>
-
-          <Paginacion
-            paginaActual={paginaActual}
-            totalPaginas={totalPaginas}
-            totalResultados={resultado.length}
-            filasPorPagina={filasPorPagina}
-            onCambiarPagina={setPagina}
-          />
-        </>
+            </>
+          )}
+        </div>
       )}
 
       {modalNuevoAbierto && (

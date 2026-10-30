@@ -30,3 +30,29 @@ export function formatearFecha(fechaIso) {
   const [anio, mes, dia] = fechaIso.split('-')
   return `${dia}/${mes}/${anio}`
 }
+
+/** Formatea una fecha ISO como dd/mm (sin año), para el botón "Intervalo" (ver componentes/Intervalo.jsx). */
+export function formatearFechaCorta(fechaIso) {
+  if (!fechaIso) {
+    return ''
+  }
+  const [, mes, dia] = fechaIso.split('-')
+  return `${dia}/${mes}`
+}
+
+/**
+ * Formatea un LocalDateTime del backend ("aaaa-mm-ddTHH:mm:ss[.nnn]") como
+ * "dd/mm/aaaa HH:mm", para "Anulado el" en la vista de Anulados. Se parte a
+ * mano, con el mismo criterio que formatearFecha, para no arriesgarse a un
+ * corrimiento de huso horario.
+ */
+export function formatearFechaHora(fechaHoraIso) {
+  if (!fechaHoraIso) {
+    return ''
+  }
+  const [fecha, hora] = fechaHoraIso.split('T')
+  if (!hora) {
+    return formatearFecha(fecha)
+  }
+  return `${formatearFecha(fecha)} ${hora.slice(0, 5)}`
+}

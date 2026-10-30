@@ -104,7 +104,7 @@ const BuscadorAnimal = forwardRef(function BuscadorAnimal(
   return (
     <div className="campo buscador-animal">
       <label htmlFor={`${idBase}-input`}>{label}</label>
-      <div className="campo-busqueda-entrada">
+      <div className="campo-busqueda-entrada campo-busqueda--con-icono">
         <Search aria-hidden="true" size={18} className="campo-busqueda-icono" />
         <input
           id={`${idBase}-input`}
@@ -116,7 +116,6 @@ const BuscadorAnimal = forwardRef(function BuscadorAnimal(
           aria-controls={`${idBase}-listbox`}
           aria-autocomplete="list"
           aria-activedescendant={idActivo}
-          className="campo-busqueda--con-icono"
           value={valor}
           onChange={manejarCambioTexto}
           onFocus={() => setListaAbierta(true)}

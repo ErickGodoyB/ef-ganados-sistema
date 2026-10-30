@@ -1,0 +1,56 @@
+/**
+ * Pantalla "Mi cuenta" (ver Cuenta.jsx). Mobile-first: las dos secciones
+ * van apiladas en una sola columna en cualquier ancho (el formulario no
+ * necesita más que eso); los campos y botones salen de base.css.
+ */
+
+.cuenta-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 28rem;
+}
+
+.cuenta-seccion {
+  padding: 18px 20px;
+}
+
+.cuenta-seccion h2 {
+  margin: 0 0 14px;
+}
+
+.cuenta-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.cuenta-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.cuenta-dato dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.cuenta-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cuenta-exito {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-sm);
+}

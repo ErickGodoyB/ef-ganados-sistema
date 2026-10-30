@@ -81,12 +81,21 @@ const BarraLateral = forwardRef(function BarraLateral({ abierta, onNavegar }, re
       </nav>
 
       <div className="barra-lateral-pie">
-        <div className="barra-lateral-tarjeta-usuario">
+        <NavLink
+          to="/cuenta"
+          className={({ isActive }) =>
+            `barra-lateral-tarjeta-usuario${isActive ? ' barra-lateral-tarjeta-usuario--activa' : ''}`
+          }
+          onClick={onNavegar}
+        >
           <span className="barra-lateral-avatar" aria-hidden="true">
             {inicialUsuario}
           </span>
-          <p className="barra-lateral-usuario">{usuario?.usuNombre}</p>
-        </div>
+          <span className="barra-lateral-tarjeta-usuario-textos">
+            <span className="barra-lateral-usuario">{usuario?.usuNombre}</span>
+            <span className="barra-lateral-mi-cuenta">Mi cuenta</span>
+          </span>
+        </NavLink>
         <div className="barra-lateral-pie-acciones">
           <BotonTema variante="sidebar" />
           <button type="button" className="barra-lateral-salir" onClick={cerrarSesion}>

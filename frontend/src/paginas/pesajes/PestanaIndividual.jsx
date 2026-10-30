@@ -7,11 +7,14 @@
  * en vez del que cierra todo (onGuardado).
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import BuscadorAnimal from '../../componentes/BuscadorAnimal'
 import { useAuth } from '../../auth/useAuth'
+import { motivoNoElegible } from '../../utilidades/elegibilidadPesaje'
 import { formatearPeso } from '../../utilidades/formato'
+import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
+import { useIdsYaPesadosEnFecha } from './useIdsYaPesadosEnFecha'
 import './PestanaIndividual.css'
 
 /** Fecha de hoy en formato aaaa-mm-dd, en hora local. */
@@ -21,12 +24,6 @@ function obtenerFechaHoyIso() {
   const mes = String(ahora.getMonth() + 1).padStart(2, '0')
   const dia = String(ahora.getDate()).padStart(2, '0')
   return `${anio}-${mes}-${dia}`
-}
-
-/** Convierte el texto de un campo de peso (acepta coma o punto) a número; NaN si no es válido. */
-function parsearPeso(texto) {
-  const normalizado = texto.trim().replace(',', '.')
-  return normalizado === '' ? NaN : Number(normalizado)
 }
 
 /** "Lote — Grupo", o null si el animal no tiene lote (BuscadorAnimal no muestra ese segmento si es null). */
@@ -58,6 +55,7 @@ export default function PestanaIndividual({
   const [errorGuardar, setErrorGuardar] = useState('')
 
   const refBuscador = useRef(null)
+  const idsYaPesadosHoy = useIdsYaPesadosEnFecha(fecha)
 
   useEffect(() => {
     function aplicarPreseleccion() {
@@ -77,7 +75,12 @@ export default function PestanaIndividual({
     aplicarPreseleccion()
   }, [animalParaPreseleccionar, onConsumidaPreseleccion])
 
-  const opciones = animales.map((animal) => ({
+  const elegibles = useMemo(
+    () => animales.filter((animal) => motivoNoElegible(animal, fecha, idsYaPesadosHoy) == null),
+    [animales, fecha, idsYaPesadosHoy],
+  )
+
+  const opciones = elegibles.map((animal) => ({
     id: animal.aniId,
     caravana: animal.aniCaravana,
     lote: textoLoteDeAnimal(animal),
@@ -94,8 +97,17 @@ export default function PestanaIndividual({
     setAnimalElegido(null)
   }
 
+  // Si lo escrito coincide EXACTO con la caravana de un animal que ya
+  // existe (sea o no elegible), nunca se ofrece "Registrar animal nuevo":
+  // si no es elegible, en vez de esa opción se explica el motivo.
+  const textoBuscado = texto.trim()
+  const animalExistente = textoBuscado
+    ? animales.find((animal) => animal.aniCaravana.toLowerCase() === textoBuscado.toLowerCase())
+    : null
+  const motivoExistente = animalExistente ? motivoNoElegible(animalExistente, fecha, idsYaPesadosHoy) : null
+
   const pesoNumero = parsearPeso(peso)
-  const pesoValido = peso.trim() !== '' && !Number.isNaN(pesoNumero) && pesoNumero > 0 && pesoNumero <= 2000
+  const pesoValido = pesoTextoEsValido(peso)
   const avisoPesoMenor =
     animalElegido && pesoValido && pesoNumero < animalElegido.pesoActual
       ? `Es menor al último peso registrado (${formatearPeso(animalElegido.pesoActual)})`
@@ -153,8 +165,8 @@ export default function PestanaIndividual({
             valor={texto}
             alCambiarValor={cambiarTexto}
             alElegir={elegir}
-            textoSinResultados="No hay animales con ese texto"
-            alNoEncontrado={(textoEscrito) => onRegistrarNuevo({ caravana: textoEscrito, fecha })}
+            textoSinResultados={motivoExistente || 'No hay animales con ese texto'}
+            alNoEncontrado={animalExistente ? undefined : (textoEscrito) => onRegistrarNuevo({ caravana: textoEscrito, fecha })}
             disabled={guardando}
           />
 

@@ -11,6 +11,7 @@ import RutaProtegida from './auth/RutaProtegida'
 import { useAuth } from './auth/useAuth'
 import LayoutPrincipal from './layout/LayoutPrincipal'
 import Animales from './paginas/Animales'
+import Cuenta from './paginas/Cuenta'
 import Login from './paginas/Login'
 import Pesajes from './paginas/Pesajes'
 import Reportes from './paginas/Reportes'
@@ -41,6 +42,7 @@ function App() {
               <Route path="animales" element={<Animales />} />
               <Route path="pesajes" element={<Pesajes />} />
               <Route path="reportes" element={<Reportes />} />
+              <Route path="cuenta" element={<Cuenta />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

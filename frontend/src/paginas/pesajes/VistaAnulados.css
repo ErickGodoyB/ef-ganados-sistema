@@ -1,0 +1,106 @@
+/**
+ * Vista "Anulados" (ver VistaAnulados.jsx). De solo lectura: la tabla y las
+ * tarjetas usan una apariencia atenuada (texto secundario, salvo la
+ * caravana) para distinguirlas a simple vista de un listado editable como
+ * TablaSesiones. Mobile-first, mismo patrón tabla/tarjetas que el resto de
+ * la app (ver Pesajes.css).
+ */
+
+.vista-anulados {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vista-anulados-tabla-solo-escritorio {
+  display: none;
+}
+
+.vista-anulados-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .vista-anulados-tabla-solo-escritorio {
+    display: block;
+  }
+
+  .vista-anulados-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.tabla-anulados-contenedor,
+.vista-anulados-tabla-solo-escritorio {
+  overflow-x: auto;
+}
+
+.tabla-anulados {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--texto-secundario);
+}
+
+.tabla-anulados th {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  color: var(--texto-secundario);
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla-anulados td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla-anulados-caravana {
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tabla-anulados-motivo {
+  max-width: 18rem;
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-anulado {
+  padding: 14px 16px;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-anulado-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.tarjeta-anulado-caravana {
+  color: var(--texto);
+}
+
+.tarjeta-anulado-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  margin: 0;
+}
+
+.tarjeta-anulado-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tarjeta-anulado-datos dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}

@@ -183,6 +183,46 @@
   padding-left: 38px;
 }
 
+/* Campo de contraseña con botón de mostrar/ocultar (ver Login.jsx y
+   Cuenta.jsx): el input reserva espacio a la derecha para el botón, que se
+   posiciona encima con área táctil de 44px aunque el ícono sea chico. */
+.campo-password {
+  position: relative;
+  display: flex;
+}
+
+.campo-password input {
+  padding-right: 44px;
+}
+
+.boton-mostrar-password {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--texto-secundario);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida), color var(--transicion-rapida);
+}
+
+.boton-mostrar-password:hover {
+  background: var(--superficie-hover);
+  color: var(--texto);
+}
+
+.boton-mostrar-password:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
 /* Tarjeta: superficie elevada genérica (listas, estados vacíos, paneles). */
 .tarjeta {
   background: var(--superficie);

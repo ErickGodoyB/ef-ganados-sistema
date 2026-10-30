@@ -5,11 +5,16 @@
  * (FormularioAnimal en modo "crear", como otra vista del mismo modal, ver
  * ModalDetalleAnimal.jsx para el mismo criterio con un animal existente).
  *
- * Los animales elegibles (sin salida) se traen acá una sola vez y se
- * comparten entre las dos pestañas por props, en vez de que cada una pida
- * lo mismo por su cuenta. Las dos pestañas quedan siempre montadas (una
- * oculta con el atributo "hidden", no desmontada): así cambiar de pestaña
- * nunca pierde lo que se estaba cargando en la otra.
+ * Los animales (TODOS, sin filtrar por salida/ingreso/lote acá) se traen
+ * una sola vez y se comparten entre las dos pestañas por props, en vez de
+ * que cada una pida lo mismo por su cuenta; cada pestaña filtra sus propios
+ * elegibles (ver utilidades/elegibilidadPesaje.js) según su fecha y lote.
+ * Se necesita la lista completa (no solo los elegibles) para poder avisar
+ * el motivo cuando se escribe la caravana de un animal que existe pero no
+ * sirve para esta fecha/lote, en vez de ofrecer registrarlo de nuevo. Las
+ * dos pestañas quedan siempre montadas (una oculta con el atributo
+ * "hidden", no desmontada): así cambiar de pestaña nunca pierde lo que se
+ * estaba cargando en la otra.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -53,9 +58,9 @@ export default function ModalNuevoPesaje({ onCerrar, onGuardado, onGuardadoParci
     setErrorAnimales('')
     try {
       const datos = await peticionProtegida('/api/animales/resumen')
-      const sinSalida = (datos ?? []).filter((animal) => !animal.aniFechaEgreso)
-      setAnimales(sinSalida)
-      return sinSalida
+      const todos = datos ?? []
+      setAnimales(todos)
+      return todos
     } catch {
       setErrorAnimales('No se pudieron cargar los animales.')
       return null

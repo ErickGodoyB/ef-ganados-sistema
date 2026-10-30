@@ -149,11 +149,40 @@
   gap: 12px;
 }
 
+/* Tarjeta de usuario (ver BarraLateral.jsx): es un enlace a /cuenta, con el
+   mismo criterio hover/foco que .barra-lateral-enlace, pero con su propio
+   padding (más chico, porque convive con el avatar circular). */
 .barra-lateral-tarjeta-usuario {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  padding: 6px 8px;
+  border-radius: var(--radio-md);
+  text-decoration: none;
+  transition: background-color var(--transicion-rapida);
+}
+
+.barra-lateral-tarjeta-usuario:hover,
+.barra-lateral-tarjeta-usuario--activa {
+  background: var(--color-sidebar-hover);
+}
+
+.barra-lateral-tarjeta-usuario:focus-visible {
+  outline: 2px solid var(--color-sidebar-foco);
+  outline-offset: 2px;
+}
+
+.barra-lateral-tarjeta-usuario-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.barra-lateral-mi-cuenta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-sidebar-texto-secundario);
 }
 
 .barra-lateral-avatar {

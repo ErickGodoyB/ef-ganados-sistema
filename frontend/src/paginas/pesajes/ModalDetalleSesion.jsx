@@ -1,56 +1,82 @@
 /**
  * Modal de detalle de una sesión de pesaje (RF011): trae la lista de
  * animales pesados ese día en ese lote (GET /api/pesajes/sesiones/detalle)
- * y permite editar o eliminar el pesaje de cada uno, y agregar un animal
- * más a la sesión, todo sin salir del modal y guardando al toque (no hay
- * un botón "Guardar" general). El resumen de arriba (cantidad, total,
- * promedio, mínimo, máximo) se recalcula en el cliente a partir de la
- * lista local de animales, así queda actualizado en vivo tras cada cambio
- * sin depender de una nueva consulta aparte al backend.
+ * y permite editar o anular el pesaje de cada uno, anular la sesión
+ * completa, cambiarle la fecha, y agregar un animal más, todo sin salir
+ * del modal y guardando al toque (no hay un botón "Guardar" general). El
+ * resumen de arriba (cantidad, total, promedio, mínimo, máximo, GMD
+ * promedio) se recalcula en el cliente a partir de la lista local de
+ * animales, así queda actualizado en vivo tras cada cambio sin depender de
+ * una nueva consulta aparte al backend.
  *
- * Solo un animal puede estar en edición o en confirmación de borrado a la
- * vez (accionActiva): mientras una fila está en alguno de esos dos modos,
- * el resto queda deshabilitado, para no perder de vista qué se está
- * guardando y evitar carreras entre dos acciones a la vez.
+ * Los pesajes nunca se borran (ver CLAUDE.md): "anular" los marca como
+ * tales (PUT /api/pesajes/{id}/anular) pero se conservan, visibles después
+ * en la vista "Anulados" (ver VistaAnulados.jsx); por eso ya no hay un
+ * DELETE acá.
+ *
+ * "fechaActual" (no "sesion.fecha" directo) es la fecha vigente de esta
+ * sesión dentro del modal: cambia sola si "Cambiar fecha" tiene éxito, sin
+ * tener que cerrar y volver a abrir el modal para ver el detalle en la
+ * fecha nueva.
+ *
+ * Solo una cosa puede estar en curso a la vez: una fila en edición o
+ * confirmación de anulación (accionActiva), o el panel de "Anular sesión"/
+ * "Cambiar fecha" (panelSesion). Mientras una fila está activa, el resto
+ * queda deshabilitado, para no perder de vista qué se está guardando y
+ * evitar carreras entre dos acciones a la vez.
  */
 
-import { RefreshCw, TriangleAlert } from 'lucide-react'
+import { Ban, CalendarCog, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import Modal from '../../componentes/Modal'
 import ValorGmd from '../../componentes/ValorGmd'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
+import { calcularGmdPromedioSesion, calcularResumenPesos } from '../../utilidades/resumenSesion'
 import AgregarAnimalSesion from './AgregarAnimalSesion'
 import './ModalDetalleSesion.css'
+import PanelAnularSesion from './PanelAnularSesion'
+import PanelCambiarFechaSesion from './PanelCambiarFechaSesion'
 import TablaItemsSesion from './TablaItemsSesion'
 import TarjetaItemSesion from './TarjetaItemSesion'
 
 /** "dd/mm/aaaa · Lote — Grupo" (o "Sin lote"), para el título del modal. */
-function tituloSesion(sesion) {
-  const fecha = formatearFecha(sesion.fecha)
+function tituloSesion(sesion, fecha) {
+  const fechaFormateada = formatearFecha(fecha)
   if (!sesion.subGrupoDescripcion) {
-    return `${fecha} · Sin lote`
+    return `${fechaFormateada} · Sin lote`
   }
   const lote = sesion.grupoDescripcion
     ? `${sesion.subGrupoDescripcion} — ${sesion.grupoDescripcion}`
     : sesion.subGrupoDescripcion
-  return `${fecha} · ${lote}`
+  return `${fechaFormateada} · ${lote}`
 }
 
 export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQuedoSinAnimales, refDisparador }) {
+  // La fecha vigente de la sesión dentro del modal: cambia si "Cambiar
+  // fecha" tiene éxito (ver cambiarFechaSesion), sin depender de que el
+  // padre vuelva a pasar un "sesion" distinto.
+  const [fechaActual, setFechaActual] = useState(sesion.fecha)
+
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
-  // { tipo: 'editar' | 'eliminar', pesaId } | null: qué fila está siendo
-  // editada o confirmada para borrar, como mucho una a la vez.
+  // { tipo: 'editar' | 'anular', pesaId } | null: qué fila está siendo
+  // editada o confirmada para anular, como mucho una a la vez.
   const [accionActiva, setAccionActiva] = useState(null)
   const [guardandoAccion, setGuardandoAccion] = useState(false)
   const [errorAccion, setErrorAccion] = useState('')
   const [avisoLocal, setAvisoLocal] = useState('')
   const refTemporizadorAviso = useRef(null)
 
+  // Panel del encabezado abierto (ninguno, "Anular sesión" o "Cambiar
+  // fecha"): igual que accionActiva, como mucho uno a la vez.
+  const [panelSesion, setPanelSesion] = useState(null)
+  const [guardandoPanel, setGuardandoPanel] = useState(false)
+  const [errorPanel, setErrorPanel] = useState('')
+
   // Aviso propio del modal (además de avisarle a Pesajes.jsx, que solo se
-  // ve una vez cerrado el modal): como acá se puede editar/eliminar/agregar
+  // ve una vez cerrado el modal): como acá se puede editar/anular/agregar
   // varias veces sin cerrar nada, cada acción necesita su propia
   // confirmación visible (y accesible, aria-live) en el momento.
   function mostrarAvisoLocal(mensaje) {
@@ -63,7 +89,7 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
     setCargando(true)
     setError('')
     try {
-      const parametros = new URLSearchParams({ fecha: sesion.fecha })
+      const parametros = new URLSearchParams({ fecha: fechaActual })
       if (sesion.subGrupoId != null) {
         parametros.set('subGrupoId', sesion.subGrupoId)
       }
@@ -77,17 +103,19 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
     } finally {
       setCargando(false)
     }
-  }, [sesion.fecha, sesion.subGrupoId])
+  }, [fechaActual, sesion.subGrupoId])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarDetalle()
   }, [cargarDetalle])
 
-  // Si la sesión no tiene (o se quedó sin) animales, no tiene sentido
-  // seguir mostrando el modal: pasa tanto si ya estaba vacía al abrirlo
-  // (alguien la vació en otra sesión) como si el último pesaje se borró
-  // recién acá; en los dos casos se cierra y se avisa igual.
+  // Si la sesión no tiene (o se quedó sin) animales con un pesaje ACTIVO,
+  // no tiene sentido seguir mostrando el modal: pasa tanto si ya estaba
+  // vacía al abrirlo (se anuló en otro lado) como si el último pesaje
+  // activo se anuló recién acá; en los dos casos se cierra y se avisa
+  // igual. La anulación de la SESIÓN COMPLETA (ver anularSesionCompleta)
+  // no pasa por acá: cierra y avisa directo, con su propio mensaje.
   useEffect(() => {
     if (!cargando && !error && items.length === 0) {
       onQuedoSinAnimales()
@@ -95,25 +123,9 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
   }, [cargando, error, items, onQuedoSinAnimales])
 
   const resumen = useMemo(() => {
-    if (items.length === 0) {
-      return { cantidad: 0, total: 0, promedio: 0, minimo: 0, maximo: 0, gmdPromedio: null, conGmd: 0 }
-    }
-    const pesos = items.map((item) => item.peso)
-    const total = pesos.reduce((acumulado, peso) => acumulado + peso, 0)
-    // La GMD promedio solo cuenta los animales que ya tienen un pesaje
-    // anterior (gmd no nula): el resto todavía no tiene con qué
-    // calcularla, y promediar null como 0 inflaría el promedio hacia
-    // abajo sin sentido.
-    const gmdsValidos = items.map((item) => item.gmd).filter((gmd) => gmd != null)
-    return {
-      cantidad: items.length,
-      total,
-      promedio: total / items.length,
-      minimo: Math.min(...pesos),
-      maximo: Math.max(...pesos),
-      gmdPromedio: gmdsValidos.length > 0 ? gmdsValidos.reduce((acumulado, gmd) => acumulado + gmd, 0) / gmdsValidos.length : null,
-      conGmd: gmdsValidos.length,
-    }
+    const resumenPesos = calcularResumenPesos(items.map((item) => item.peso))
+    const { gmdPromedio, conGmd } = calcularGmdPromedioSesion(items.map((item) => item.gmd))
+    return { ...resumenPesos, gmdPromedio, conGmd }
   }, [items])
 
   const idsEnSesion = useMemo(() => new Set(items.map((item) => item.animalId)), [items])
@@ -123,9 +135,9 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
     setAccionActiva({ tipo: 'editar', pesaId: item.pesaId })
   }
 
-  function iniciarEliminacion(item) {
+  function iniciarAnulacion(item) {
     setErrorAccion('')
-    setAccionActiva({ tipo: 'eliminar', pesaId: item.pesaId })
+    setAccionActiva({ tipo: 'anular', pesaId: item.pesaId })
   }
 
   function cancelarAccion() {
@@ -155,24 +167,80 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
     }
   }
 
-  /** Elimina el pesaje de un animal de la sesión; si no era el último, avisa acá (si lo era, avisa el efecto de arriba). */
-  async function eliminarItem(item) {
+  /** Anula el pesaje de un animal de la sesión; si no era el último activo, avisa acá (si lo era, avisa el efecto de arriba). */
+  async function anularItem(item, motivo) {
     setGuardandoAccion(true)
     setErrorAccion('')
     try {
-      await peticionProtegida(`/api/pesajes/${item.pesaId}`, { method: 'DELETE' })
+      await peticionProtegida(`/api/pesajes/${item.pesaId}/anular`, {
+        method: 'PUT',
+        body: JSON.stringify({ motivo }),
+      })
       setAccionActiva(null)
       const nuevaLista = await cargarDetalle()
       if (nuevaLista && nuevaLista.length > 0) {
-        mostrarAvisoLocal(`Pesaje de ${item.caravana} eliminado`)
-        onCambiada(`Pesaje de ${item.caravana} eliminado`)
+        mostrarAvisoLocal(`Pesaje de ${item.caravana} anulado`)
+        onCambiada(`Pesaje de ${item.caravana} anulado`)
       }
     } catch (err) {
       setErrorAccion(
-        err instanceof ErrorHttp ? err.message || 'No se pudo eliminar el pesaje.' : 'No se pudo conectar con el servidor.',
+        err instanceof ErrorHttp ? err.message || 'No se pudo anular el pesaje.' : 'No se pudo conectar con el servidor.',
       )
     } finally {
       setGuardandoAccion(false)
+    }
+  }
+
+  function abrirPanelSesion(panel) {
+    setErrorPanel('')
+    setPanelSesion(panel)
+  }
+
+  function cerrarPanelSesion() {
+    setErrorPanel('')
+    setPanelSesion(null)
+  }
+
+  /** Anula TODOS los pesajes activos de la sesión en un solo paso. Al terminar, cierra el detalle (ya no queda nada que ver) y avisa cuántos. */
+  async function anularSesionCompleta(motivo) {
+    setGuardandoPanel(true)
+    setErrorPanel('')
+    try {
+      const respuesta = await peticionProtegida('/api/pesajes/sesion/anular', {
+        method: 'PUT',
+        body: JSON.stringify({ fecha: fechaActual, subGrupoId: sesion.subGrupoId, motivo }),
+      })
+      onCerrar()
+      onCambiada(`Sesión anulada: ${respuesta.cantidad} pesajes`)
+    } catch (err) {
+      setErrorPanel(
+        err instanceof ErrorHttp ? err.message || 'No se pudo anular la sesión.' : 'No se pudo conectar con el servidor.',
+      )
+    } finally {
+      setGuardandoPanel(false)
+    }
+  }
+
+  /** Mueve todos los pesajes activos de la sesión a una fecha nueva. Al terminar, el detalle se recarga solo con la fecha nueva (ver cargarDetalle). */
+  async function cambiarFechaSesion(nuevaFecha) {
+    setGuardandoPanel(true)
+    setErrorPanel('')
+    try {
+      const respuesta = await peticionProtegida('/api/pesajes/sesion/fecha', {
+        method: 'PUT',
+        body: JSON.stringify({ fecha: fechaActual, subGrupoId: sesion.subGrupoId, nuevaFecha }),
+      })
+      setFechaActual(nuevaFecha)
+      cerrarPanelSesion()
+      const mensaje = `Fecha cambiada: ${respuesta.cantidad} pesajes movidos al ${formatearFecha(nuevaFecha)}`
+      mostrarAvisoLocal(mensaje)
+      onCambiada(mensaje)
+    } catch (err) {
+      setErrorPanel(
+        err instanceof ErrorHttp ? err.message || 'No se pudo cambiar la fecha de la sesión.' : 'No se pudo conectar con el servidor.',
+      )
+    } finally {
+      setGuardandoPanel(false)
     }
   }
 
@@ -183,8 +251,52 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
     onCambiada(mensaje)
   }
 
+  const hayAccionODialogoActivo = accionActiva != null || panelSesion != null
+
   return (
-    <Modal titulo={tituloSesion(sesion)} onCerrar={onCerrar} refDisparador={refDisparador} tamano="grande">
+    <Modal titulo={tituloSesion(sesion, fechaActual)} onCerrar={onCerrar} refDisparador={refDisparador} tamano="grande">
+      <div className="detalle-sesion-acciones-encabezado">
+        <button
+          type="button"
+          className="boton-secundario"
+          onClick={() => abrirPanelSesion(panelSesion === 'cambiarFecha' ? null : 'cambiarFecha')}
+          disabled={hayAccionODialogoActivo && panelSesion !== 'cambiarFecha'}
+        >
+          <CalendarCog aria-hidden="true" size={16} />
+          Cambiar fecha
+        </button>
+        <button
+          type="button"
+          className="boton-peligro"
+          onClick={() => abrirPanelSesion(panelSesion === 'anular' ? null : 'anular')}
+          disabled={hayAccionODialogoActivo && panelSesion !== 'anular'}
+        >
+          <Ban aria-hidden="true" size={16} />
+          Anular sesión
+        </button>
+      </div>
+
+      {panelSesion === 'anular' && (
+        <PanelAnularSesion
+          cantidad={items.length}
+          guardando={guardandoPanel}
+          error={errorPanel}
+          onCancelar={cerrarPanelSesion}
+          onConfirmar={anularSesionCompleta}
+        />
+      )}
+
+      {panelSesion === 'cambiarFecha' && (
+        <PanelCambiarFechaSesion
+          fechaActual={fechaActual}
+          cantidad={items.length}
+          guardando={guardandoPanel}
+          error={errorPanel}
+          onCancelar={cerrarPanelSesion}
+          onConfirmar={cambiarFechaSesion}
+        />
+      )}
+
       <dl className="resumen-sesion">
         <div className="resumen-sesion-dato">
           <dt>Cantidad</dt>
@@ -241,15 +353,15 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
           <div className="detalle-sesion-tabla-solo-escritorio">
             <TablaItemsSesion
               items={items}
-              fecha={formatearFecha(sesion.fecha)}
+              fecha={formatearFecha(fechaActual)}
               accionActiva={accionActiva}
               guardando={guardandoAccion}
               errorAccion={errorAccion}
               onEditar={iniciarEdicion}
-              onEliminar={iniciarEliminacion}
+              onAnular={iniciarAnulacion}
               onGuardarEdicion={guardarEdicion}
               onCancelar={cancelarAccion}
-              onConfirmarEliminar={eliminarItem}
+              onConfirmarAnular={anularItem}
             />
           </div>
 
@@ -258,17 +370,17 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
               <TarjetaItemSesion
                 key={item.pesaId}
                 item={item}
-                fecha={formatearFecha(sesion.fecha)}
+                fecha={formatearFecha(fechaActual)}
                 activa={accionActiva?.pesaId === item.pesaId}
                 tipoAccion={accionActiva?.pesaId === item.pesaId ? accionActiva.tipo : null}
                 deshabilitada={accionActiva != null && accionActiva.pesaId !== item.pesaId}
                 guardando={guardandoAccion}
                 errorAccion={accionActiva?.pesaId === item.pesaId ? errorAccion : ''}
                 onEditar={() => iniciarEdicion(item)}
-                onEliminar={() => iniciarEliminacion(item)}
+                onAnular={() => iniciarAnulacion(item)}
                 onGuardarEdicion={(peso, observaciones) => guardarEdicion(item, peso, observaciones)}
                 onCancelar={cancelarAccion}
-                onConfirmarEliminar={() => eliminarItem(item)}
+                onConfirmarAnular={(motivo) => anularItem(item, motivo)}
               />
             ))}
           </div>
@@ -276,9 +388,9 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
       )}
 
       <AgregarAnimalSesion
-        sesion={sesion}
+        sesion={{ ...sesion, fecha: fechaActual }}
         idsEnSesion={idsEnSesion}
-        deshabilitado={accionActiva != null}
+        deshabilitado={hayAccionODialogoActivo}
         onAgregado={alAgregarAnimal}
       />
     </Modal>
