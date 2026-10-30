@@ -2,6 +2,7 @@ package com.efganados.sistemabovino.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.efganados.sistemabovino.controller.AuthController.CambiarClaveRequest;
 import com.efganados.sistemabovino.controller.AuthController.LoginRequest;
 import com.efganados.sistemabovino.model.Usuario;
 import com.efganados.sistemabovino.repository.UsuarioRepository;
@@ -140,5 +142,129 @@ class AuthControllerTest extends AutenticacionTestSupport {
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.usuPassword").doesNotExist());
+    }
+
+    // ---- PUT /api/auth/clave ----
+
+    @Test
+    @DisplayName("Cambiar la clave con datos válidos devuelve 204; la vieja deja de funcionar y la nueva sí")
+    void cambiarClaveConDatosValidosDevuelve204() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest(adminPassword, "clave-nueva-123");
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest(adminUsuario, adminPassword))))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest(adminUsuario, "clave-nueva-123"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("El token obtenido antes de cambiar la clave sigue siendo válido después del cambio")
+    void tokenAnteriorAlCambioDeClaveSigueSiendoValido() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest(adminPassword, "clave-nueva-123");
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/auth/yo")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuNombre").value(adminUsuario));
+    }
+
+    @Test
+    @DisplayName("Cambiar la clave con la clave actual incorrecta devuelve 400 (no 401)")
+    void cambiarClaveConClaveActualIncorrectaDevuelve400() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest("clave-equivocada", "clave-nueva-123");
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("La clave actual no es correcta"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la clave sin claveActual devuelve 400")
+    void cambiarClaveSinClaveActualDevuelve400() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest(null, "clave-nueva-123");
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Falta el campo claveActual"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la clave sin claveNueva devuelve 400")
+    void cambiarClaveSinClaveNuevaDevuelve400() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest(adminPassword, null);
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Falta el campo claveNueva"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la clave con la nueva igual a la actual devuelve 400")
+    void cambiarClaveConNuevaIgualALaActualDevuelve400() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest(adminPassword, adminPassword);
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("La clave nueva debe ser distinta de la actual"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la clave con la nueva más corta que el mínimo configurado devuelve 400")
+    void cambiarClaveConNuevaMasCortaQueElMinimoDevuelve400() throws Exception {
+        String token = encabezadoAutorizacionAdmin();
+        CambiarClaveRequest request = new CambiarClaveRequest(adminPassword, "abcd");
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("La clave nueva debe tener al menos 5 caracteres"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la clave sin token devuelve 401")
+    void cambiarClaveSinTokenDevuelve401() throws Exception {
+        CambiarClaveRequest request = new CambiarClaveRequest(adminPassword, "clave-nueva-123");
+
+        mockMvc.perform(put("/api/auth/clave")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
     }
 }

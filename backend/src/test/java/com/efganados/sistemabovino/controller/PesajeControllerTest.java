@@ -140,6 +140,71 @@ class PesajeControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
+    @DisplayName("Registrar un pesaje con fecha anterior al ingreso del animal devuelve 400")
+    void registrarPesajeConFechaAnteriorAlIngresoDevuelve400() throws Exception {
+        // Reproduce el reporte: animal con ingreso 2026-07-26, pesaje con
+        // fecha 2026-07-05 (anterior). El servidor debe rechazarlo.
+        Persona duenio = crearPersona("Dueño-TEST-25");
+        Raza raza = new Raza();
+        raza.setRzDescripcion("Raza-TEST-25");
+        raza.setRzPesoObjetivoVenta(450.0);
+        razaRepository.save(raza);
+
+        Grupo grupo = new Grupo();
+        grupo.setGrpDescripcion("Lote-TEST-25");
+        grupoRepository.save(grupo);
+
+        SubGrupo subGrupo = new SubGrupo();
+        subGrupo.setGrupo(grupo);
+        subGrupo.setSbDescripcion("SubGrupo-TEST-25");
+        subGrupoRepository.save(subGrupo);
+
+        Animal animal = new Animal();
+        animal.setDuenio(duenio);
+        animal.setRaza(raza);
+        animal.setSubGrupo(subGrupo);
+        animal.setAniCaravana("TEST-25");
+        animal.setAniFechaIngreso(LocalDate.of(2026, 7, 26));
+        animal.setAniPesoInicial(200.0);
+        animalRepository.save(animal);
+
+        Persona responsable = crearPersona("Responsable-TEST-25");
+        NuevoPesajeRequest request = new NuevoPesajeRequest(210.0, LocalDate.of(2026, 7, 5), responsable.getPerId());
+
+        mockMvc.perform(post("/api/animales/{id}/pesajes", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(
+                        "La fecha del pesaje no puede ser anterior al ingreso del animal (TEST-25: 2026-07-26)"));
+    }
+
+    @Test
+    @DisplayName("Registrar un pesaje para un animal que ya tiene un pesaje activo ese día devuelve 409")
+    void registrarPesajeConAnimalYaPesadoEseDiaDevuelve409() throws Exception {
+        Animal animal = crearAnimal("CAR-PESAJE-DUP-001");
+        Persona responsable = crearPersona("Responsable-Dup-001");
+        LocalDate fecha = LocalDate.of(2026, 2, 1);
+
+        NuevoPesajeRequest primero = new NuevoPesajeRequest(250.0, fecha, responsable.getPerId());
+        mockMvc.perform(post("/api/animales/{id}/pesajes", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(primero)))
+                .andExpect(status().isCreated());
+
+        NuevoPesajeRequest segundo = new NuevoPesajeRequest(260.0, fecha, responsable.getPerId());
+        mockMvc.perform(post("/api/animales/{id}/pesajes", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(segundo)))
+                .andExpect(status().isConflict())
+                .andExpect(content().string(
+                        "El animal CAR-PESAJE-DUP-001 ya tiene un pesaje activo el 01/02/2026. Editá ese pesaje o anulalo."));
+    }
+
+    @Test
     @DisplayName("Registrar un pesaje para un animal inexistente devuelve 404")
     void registrarPesajeConAnimalInexistenteDevuelve404() throws Exception {
         Persona responsable = crearPersona("Responsable-003");

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.efganados.sistemabovino.model.Animal;
+import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
@@ -203,7 +204,7 @@ public class AnimalController {
                 grupo != null ? grupo.getGrpDescripcion() : null,
                 animal.getAniPesoInicial(),
                 animal.getAniObservacion(),
-                pesajesRepository.countByAnimal_AniId(animal.getAniId()),
+                pesajesRepository.countByAnimal_AniIdAndPesaEstado(animal.getAniId(), EstadoPesaje.ACTIVO),
                 animalService.pesoActual(animal),
                 animalService.calcularGMD(animal),
                 animalService.estaAptoParaVenta(animal),

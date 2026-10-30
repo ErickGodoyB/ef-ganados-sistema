@@ -1,7 +1,7 @@
 package com.efganados.sistemabovino.controller;
 
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,9 +23,11 @@ import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.controller.PesajesController.ActualizarPesajeRequest;
+import com.efganados.sistemabovino.controller.PesajesController.AnularPesajeRequest;
 import com.efganados.sistemabovino.controller.PesajesController.ItemSesionPesajeRequest;
 import com.efganados.sistemabovino.controller.PesajesController.SesionPesajeRequest;
 import com.efganados.sistemabovino.model.Animal;
+import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
@@ -132,6 +135,13 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
         pesaje.setResponsable(responsable);
         pesaje.setPesaFecha(fecha);
         pesaje.setPesaPeso(peso);
+        return pesajesRepository.save(pesaje);
+    }
+
+    /** Registra un pesaje ya ANULADO directamente por repositorio, para probar que se excluye de los cálculos. */
+    private Pesajes registrarPesajeAnuladoDirecto(Animal animal, double peso, LocalDate fecha) {
+        Pesajes pesaje = registrarPesajeDirecto(animal, peso, fecha);
+        pesaje.setPesaEstado(EstadoPesaje.ANULADO);
         return pesajesRepository.save(pesaje);
     }
 
@@ -331,6 +341,44 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
                 .andExpect(content().string("Persona responsable no encontrada con id: 999"));
     }
 
+    @Test
+    @DisplayName("Registrar una sesión para un animal que ya tiene un pesaje activo ese día devuelve 409")
+    void registrarSesionConAnimalYaPesadoEseDiaDevuelve409() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Sesion-Duplicado", "Grupo-Sesion-Duplicado");
+        Animal animal = crearAnimal("CAR-SES-DUP-001", subGrupo, LocalDate.of(2026, 1, 1));
+        LocalDate fecha = LocalDate.of(2026, 2, 1);
+        registrarPesajeDirecto(animal, 200.0, fecha);
+
+        SesionPesajeRequest request = new SesionPesajeRequest(fecha, responsable.getPerId(),
+                List.of(new ItemSesionPesajeRequest(animal.getAniId(), 210.0)));
+
+        mockMvc.perform(post("/api/pesajes/sesion")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(content().string(
+                        "El animal CAR-SES-DUP-001 ya tiene un pesaje activo el 01/02/2026. Editá ese pesaje o anulalo."));
+    }
+
+    @Test
+    @DisplayName("Registrar una sesión para un animal con un pesaje ANULADO ese mismo día no choca con la regla de duplicado")
+    void registrarSesionConAnimalConPesajeAnuladoEseDiaDevuelve201() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Sesion-Anulado", "Grupo-Sesion-Anulado");
+        Animal animal = crearAnimal("CAR-SES-ANU-001", subGrupo, LocalDate.of(2026, 1, 1));
+        LocalDate fecha = LocalDate.of(2026, 2, 1);
+        registrarPesajeAnuladoDirecto(animal, 200.0, fecha);
+
+        SesionPesajeRequest request = new SesionPesajeRequest(fecha, responsable.getPerId(),
+                List.of(new ItemSesionPesajeRequest(animal.getAniId(), 210.0)));
+
+        mockMvc.perform(post("/api/pesajes/sesion")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+    }
+
     // ---- GET /api/pesajes/sesiones ----
 
     @Test
@@ -367,6 +415,25 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$[2].subGrupoId").value(nullValue()))
                 .andExpect(jsonPath("$[2].cantidad").value(1))
                 .andExpect(jsonPath("$[2].total").value(150.0));
+    }
+
+    @Test
+    @DisplayName("El resumen de sesiones no considera pesajes anulados")
+    void resumenDeSesionesNoConsideraPesajesAnulados() throws Exception {
+        SubGrupo lote = crearSubGrupo("Lote-Resumen-Anulado", "Grupo-Resumen-Anulado");
+        LocalDate ingreso = LocalDate.of(2026, 1, 1);
+        LocalDate fecha = LocalDate.of(2026, 3, 1);
+
+        Animal animal = crearAnimal("CAR-RES-ANU-001", lote, ingreso);
+        registrarPesajeDirecto(animal, 200.0, fecha);
+        registrarPesajeAnuladoDirecto(animal, 999.0, fecha);
+
+        mockMvc.perform(get("/api/pesajes/sesiones")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].cantidad").value(1))
+                .andExpect(jsonPath("$[0].total").value(200.0));
     }
 
     // ---- GET /api/pesajes/sesiones/detalle ----
@@ -421,6 +488,35 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].caravana").value("CAR-DET-SL-001"));
+    }
+
+    @Test
+    @DisplayName("El detalle de una sesión no incluye pesajes anulados ni los usa como pesoAnterior")
+    void detalleDeSesionNoIncluyePesajesAnulados() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Detalle-Anulado", "Grupo-Detalle-Anulado");
+        LocalDate ingreso = LocalDate.of(2026, 1, 1);
+
+        Animal animal = crearAnimal("CAR-DET-ANU-001", subGrupo, ingreso);
+        // Pesaje anulado antes, que no debe contarse como "anterior".
+        registrarPesajeAnuladoDirecto(animal, 150.0, LocalDate.of(2026, 3, 15));
+        Pesajes activo = registrarPesajeDirecto(animal, 200.0, LocalDate.of(2026, 4, 1));
+        // Pesaje anulado el mismo día de la sesión consultada: no debe aparecer en el detalle.
+        registrarPesajeAnuladoDirecto(animal, 999.0, LocalDate.of(2026, 4, 1));
+
+        mockMvc.perform(get("/api/pesajes/sesiones/detalle")
+                        .header("Authorization", token)
+                        .param("fecha", LocalDate.of(2026, 4, 1).toString())
+                        .param("subGrupoId", subGrupo.getSbId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].animalId").value(animal.getAniId()))
+                .andExpect(jsonPath("$[0].peso").value(200.0))
+                .andExpect(jsonPath("$[0].pesoAnterior").value(nullValue()))
+                .andExpect(jsonPath("$[0].gmd").value(nullValue()));
+
+        // Confirmamos además que el pesaje anulado quedó conservado, no borrado.
+        Assertions.assertEquals(3, pesajesRepository.count());
+        Assertions.assertNotNull(activo.getPesaId());
     }
 
     // ---- PUT /api/pesajes/{id} ----
@@ -486,26 +582,145 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
                 .andExpect(content().string("Pesaje no encontrado con id: 999"));
     }
 
-    // ---- DELETE /api/pesajes/{id} ----
+    @Test
+    @DisplayName("Actualizar un pesaje anulado devuelve 409")
+    void actualizarPesajeAnuladoDevuelve409() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Editar-Anulado", "Grupo-Editar-Anulado");
+        Animal animal = crearAnimal("CAR-EDIT-ANU-001", subGrupo, LocalDate.of(2026, 1, 1));
+        Pesajes pesaje = registrarPesajeAnuladoDirecto(animal, 200.0, LocalDate.of(2026, 1, 11));
+
+        ActualizarPesajeRequest request = new ActualizarPesajeRequest(210.0, null);
+
+        mockMvc.perform(put("/api/pesajes/{id}", pesaje.getPesaId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("No se puede editar un pesaje anulado"));
+    }
+
+    // ---- PUT /api/pesajes/{id}/anular ----
+    // Los pesajes no se borran físicamente (ver la nota de PesajesController):
+    // estos tests reemplazan a los que antes probaban el DELETE.
 
     @Test
-    @DisplayName("Eliminar un pesaje existente devuelve 204")
-    void eliminarPesajeExistenteDevuelve204() throws Exception {
-        SubGrupo subGrupo = crearSubGrupo("Lote-Borrar", "Grupo-Borrar");
-        Animal animal = crearAnimal("CAR-DEL-001", subGrupo, LocalDate.of(2026, 1, 1));
+    @DisplayName("Anular un pesaje existente devuelve 200 con el pesaje en estado ANULADO")
+    void anularPesajeExistenteDevuelve200() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Anular", "Grupo-Anular");
+        Animal animal = crearAnimal("CAR-ANU-001", subGrupo, LocalDate.of(2026, 1, 1));
         Pesajes pesaje = registrarPesajeDirecto(animal, 200.0, LocalDate.of(2026, 1, 11));
 
-        mockMvc.perform(delete("/api/pesajes/{id}", pesaje.getPesaId())
-                        .header("Authorization", token))
-                .andExpect(status().isNoContent());
+        AnularPesajeRequest request = new AnularPesajeRequest("Error de balanza");
+
+        mockMvc.perform(put("/api/pesajes/{id}/anular", pesaje.getPesaId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pesaEstado").value("ANULADO"))
+                .andExpect(jsonPath("$.pesaMotivoAnulacion").value("Error de balanza"))
+                .andExpect(jsonPath("$.pesaAnuladoEn").value(notNullValue()));
+
+        Pesajes recargado = pesajesRepository.findById(pesaje.getPesaId()).orElseThrow();
+        Assertions.assertEquals(EstadoPesaje.ANULADO, recargado.getPesaEstado());
+        Assertions.assertNotNull(recargado.getAnuladoPor());
     }
 
     @Test
-    @DisplayName("Eliminar un pesaje inexistente devuelve 404")
-    void eliminarPesajeInexistenteDevuelve404() throws Exception {
-        mockMvc.perform(delete("/api/pesajes/{id}", 999L)
-                        .header("Authorization", token))
+    @DisplayName("Anular un pesaje inexistente devuelve 404")
+    void anularPesajeInexistenteDevuelve404() throws Exception {
+        AnularPesajeRequest request = new AnularPesajeRequest("Error de balanza");
+
+        mockMvc.perform(put("/api/pesajes/{id}/anular", 999L)
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Pesaje no encontrado con id: 999"));
+    }
+
+    @Test
+    @DisplayName("Anular un pesaje ya anulado devuelve 409")
+    void anularPesajeYaAnuladoDevuelve409() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Anular-Doble", "Grupo-Anular-Doble");
+        Animal animal = crearAnimal("CAR-ANU-002", subGrupo, LocalDate.of(2026, 1, 1));
+        Pesajes pesaje = registrarPesajeAnuladoDirecto(animal, 200.0, LocalDate.of(2026, 1, 11));
+
+        AnularPesajeRequest request = new AnularPesajeRequest("Motivo cualquiera");
+
+        mockMvc.perform(put("/api/pesajes/{id}/anular", pesaje.getPesaId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("El pesaje ya está anulado"));
+    }
+
+    @Test
+    @DisplayName("Anular un pesaje sin motivo devuelve 400")
+    void anularPesajeSinMotivoDevuelve400() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Anular-SinMotivo", "Grupo-Anular-SinMotivo");
+        Animal animal = crearAnimal("CAR-ANU-003", subGrupo, LocalDate.of(2026, 1, 1));
+        Pesajes pesaje = registrarPesajeDirecto(animal, 200.0, LocalDate.of(2026, 1, 11));
+
+        AnularPesajeRequest request = new AnularPesajeRequest(null);
+
+        mockMvc.perform(put("/api/pesajes/{id}/anular", pesaje.getPesaId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Falta el campo motivo (debe tener entre 3 y 255 caracteres)"));
+    }
+
+    @Test
+    @DisplayName("Anular un pesaje con motivo muy corto devuelve 400")
+    void anularPesajeConMotivoMuyCortoDevuelve400() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Anular-MotivoCorto", "Grupo-Anular-MotivoCorto");
+        Animal animal = crearAnimal("CAR-ANU-004", subGrupo, LocalDate.of(2026, 1, 1));
+        Pesajes pesaje = registrarPesajeDirecto(animal, 200.0, LocalDate.of(2026, 1, 11));
+
+        AnularPesajeRequest request = new AnularPesajeRequest("ab");
+
+        mockMvc.perform(put("/api/pesajes/{id}/anular", pesaje.getPesaId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Falta el campo motivo (debe tener entre 3 y 255 caracteres)"));
+    }
+
+    @Test
+    @DisplayName("Un pesaje anulado no afecta la GMD ni el peso actual del animal")
+    void pesajeAnuladoNoAfectaGmdNiPesoActual() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Anular-Gmd", "Grupo-Anular-Gmd");
+        Animal animal = crearAnimal("CAR-ANU-GMD-001", subGrupo, LocalDate.of(2026, 1, 1));
+        registrarPesajeDirecto(animal, 200.0, LocalDate.of(2026, 1, 11));
+        Pesajes segundo = registrarPesajeDirecto(animal, 210.0, LocalDate.of(2026, 1, 21));
+
+        // GMD antes de anular: (210 - 200) / 10 días = 1.0.
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("1.0"));
+
+        AnularPesajeRequest request = new AnularPesajeRequest("Pesaje incorrecto");
+        mockMvc.perform(put("/api/pesajes/{id}/anular", segundo.getPesaId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        // Sin el segundo pesaje (anulado), queda solo uno: sin GMD (null) y peso actual 200.0.
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string(""));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.aniCaravana=='CAR-ANU-GMD-001')].pesoActual").value(200.0))
+                .andExpect(jsonPath("$[?(@.aniCaravana=='CAR-ANU-GMD-001')].cantidadPesajes").value(1));
     }
 }

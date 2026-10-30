@@ -1,6 +1,7 @@
 package com.efganados.sistemabovino.service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.efganados.sistemabovino.exception.ConflictoException;
 import com.efganados.sistemabovino.exception.ValidacionException;
 import com.efganados.sistemabovino.model.Animal;
+import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
 import com.efganados.sistemabovino.repository.AnimalRepository;
@@ -21,6 +23,8 @@ import com.efganados.sistemabovino.repository.PesajesRepository;
  */
 @Service
 public class AnimalService {
+
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final AnimalRepository animalRepository;
     private final PesajesRepository pesajesRepository;
@@ -35,7 +39,8 @@ public class AnimalService {
      * ningún pesaje, usa el peso inicial como mejor dato disponible.
      */
     public double pesoActual(Animal animal) {
-        List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdOrderByPesaFechaDesc(animal.getAniId());
+        List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdAndPesaEstadoOrderByPesaFechaDesc(
+                animal.getAniId(), EstadoPesaje.ACTIVO);
         if (!pesajes.isEmpty()) {
             return pesajes.get(0).getPesaPeso();
         }
@@ -49,7 +54,8 @@ public class AnimalService {
      * solo informativo; la GMD se basa únicamente en pesajes registrados.
      */
     public Double calcularGMD(Animal animal) {
-        List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdOrderByPesaFechaDesc(animal.getAniId());
+        List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdAndPesaEstadoOrderByPesaFechaDesc(
+                animal.getAniId(), EstadoPesaje.ACTIVO);
         if (pesajes.size() < 2) {
             return null;
         }
@@ -91,9 +97,10 @@ public class AnimalService {
 
     /**
      * Reglas de negocio de todo pesaje nuevo: peso dentro de rango, fecha
-     * presente y no futura, no anterior al ingreso del animal, y que el
+     * presente y no futura, no anterior al ingreso del animal, que el
      * animal no tenga ya registrada su salida (en cuyo caso no se le pueden
-     * seguir cargando pesajes).
+     * seguir cargando pesajes), y que no tenga ya un pesaje ACTIVO ese mismo
+     * día (uno anulado no cuenta: esa fecha vuelve a estar libre).
      */
     private void validarPesaje(Animal animal, double peso, LocalDate fecha) {
         if (peso <= 0 || peso > 2000) {
@@ -111,6 +118,11 @@ public class AnimalService {
         }
         if (animal.getAniFechaEgreso() != null) {
             throw new ConflictoException("El animal " + animal.getAniCaravana() + " ya tiene registrada su salida");
+        }
+        if (pesajesRepository.findFirstByAnimal_AniIdAndPesaFechaAndPesaEstado(animal.getAniId(), fecha, EstadoPesaje.ACTIVO)
+                .isPresent()) {
+            throw new ConflictoException("El animal " + animal.getAniCaravana() + " ya tiene un pesaje activo el "
+                    + fecha.format(FORMATO_FECHA) + ". Editá ese pesaje o anulalo.");
         }
     }
 
