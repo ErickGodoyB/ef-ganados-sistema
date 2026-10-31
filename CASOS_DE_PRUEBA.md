@@ -61,11 +61,55 @@ Pruebas funcionales manuales con Thunder Client contra el backend local
 | CP41 | `POST /api/pesajes/sesion` con peso exagerado | 2500 kg | 400 | 400 `El peso debe ser mayor a 0 y hasta 2000 kg` | Aprobado |
 | CP42 | `PUT /api/pesajes/46` con peso 262 y observación | `{"peso":262,"observaciones":"Corregido"}` | 200; el GMD de AR-001 se recalcula (≈ 0.4722) | 200; el detalle refleja el cambio | Aprobado |
 | CP43 | `PUT /api/pesajes/99999` | Id inexistente | 404 | 404 `Pesaje no encontrado con id: 99999` | Aprobado |
-| CP44 | `DELETE /api/pesajes/46` | — | 204 | 204, vacío | Aprobado |
-| CP45 | `DELETE /api/pesajes/47` | — | 204 | 204, vacío (datos de AR-001 y AR-002 restaurados) | Aprobado |
-| CP46 | `DELETE /api/pesajes/47` por segunda vez | — | 404 | 404 `Pesaje no encontrado con id: 47` | Aprobado |
+| CP44 | `DELETE /api/pesajes/46` | — | 204 | 204, vacío | Aprobado (histórico: el endpoint se eliminó el 2026-10-30) |
+| CP45 | `DELETE /api/pesajes/47` | — | 204 | 204, vacío (datos de AR-001 y AR-002 restaurados) | Aprobado (histórico) |
+| CP46 | `DELETE /api/pesajes/47` por segunda vez | — | 404 | 404 `Pesaje no encontrado con id: 47` | Aprobado (histórico) |
 
 Nota sobre CP30: en AR-901 los dos pesajes tienen la misma fecha, así que cuál es "el más reciente" es arbitrario (devolvió 210.0); no afecta el uso real.
+
+**Cambios posteriores que afectan a estos casos (2026-10-30/31):**
+- CP44 a CP46: el `DELETE` físico de pesajes se **eliminó**; lo reemplaza la anulación lógica (`PUT /api/pesajes/{id}/anular`), cubierta por pruebas automáticas.
+- CP21 a CP23, CP30 y CP35 (GMD): las expectativas de "GMD `null` con un solo pesaje" quedan **desactualizadas** cuando se construya la regla nueva (el peso inicial será el punto de partida del GMD; ver `CONTEXTO_PROYECTO.md`, sección 8). Hay que revalidarlas y actualizarlas entonces.
+- CP33, CP36 y similares: ahora existe además la regla de **un pesaje activo por animal por día** (409).
+
+## Casos nuevos cubiertos solo por pruebas automáticas (no probados en Thunder Client)
+
+| Endpoint | Qué se verifica |
+|---|---|
+| `PUT /api/pesajes/{id}/anular` | 200 con estado anulado; motivo obligatorio (3 a 255 caracteres, 400); doble anulación 409; id inexistente 404 |
+| `PUT /api/pesajes/sesion/anular` | Anula todos los pesajes activos de la sesión (todo o nada); 404 si no existe o no tiene activos |
+| `GET /api/pesajes/anulados` | Lista con motivo, fecha y quién anuló; filtro por fechas |
+| `PUT /api/pesajes/sesion/fecha` | Mueve la sesión; rechaza fecha futura, igual a la actual, anterior al ingreso (400) y animal con pesaje activo en la nueva fecha (409); 404 si la sesión no existe |
+| `PUT /api/pesajes/{id}` sobre un pesaje anulado | 409 |
+| `POST /api/pesajes/sesion` y `POST /api/animales/{id}/pesajes` | 409 `El animal <caravana> ya tiene un pesaje activo el dd/MM/yyyy...`; fecha anterior al ingreso 400 (verificado) |
+| Consultas de peso actual, GMD, resumen, listados | Los pesajes anulados no cuentan |
+| `PUT /api/auth/clave` | 204 con datos correctos; clave actual incorrecta 400 (no 401); clave igual a la actual o demasiado corta 400 |
+| `POST` y `PUT /api/animales` | 400 si `aniFechaIngreso` es posterior al primer pesaje activo; los anulados no cuentan; animal sin pesajes sin restricción |
+
+## Pruebas manuales de la interfaz — Pesajes (2026-10-29 a 2026-10-31)
+
+Hechas por el autor en PC (y celular Android) con los datos `TEST-xx`.
+
+| N.º | Prueba | Resultado |
+|---|---|---|
+| UI-01 | Nuevo pesaje "Por lote" (Lote B, fecha de hoy, varios animales) y guardar | Aprobado: el listado muestra una sesión con varios animales |
+| UI-02 | Volver a cargar un animal ya incluido en la sesión | Aprobado: lo rechaza con el mensaje del servidor / el buscador explica el motivo |
+| UI-03 | Anular un pesaje con motivo | Aprobado: desaparece de la sesión y aparece en la vista Anulados |
+| UI-04 | Anular una sesión completa con varios animales | Aprobado: aparece en Anulados con el motivo |
+| UI-05 | Cambiar la fecha de la sesión a una fecha libre / a una fecha con conflicto | Aprobado: con fecha libre mueve la sesión; con conflicto muestra el mensaje 409 |
+| UI-06 | Filtro Intervalo (atajos y rango manual) | Aprobado tras corrección: el campo "Hasta" se salía del panel y el panel no se cerraba al abrir un modal ni al hacer clic afuera |
+| UI-07 | Buscadores: ícono de lupa sobre el texto de ejemplo | Aprobado tras corrección (la clase de padding estaba en el elemento equivocado) |
+| UI-08 | Mi cuenta: clave actual incorrecta | Aprobado: muestra el error y no cierra la sesión |
+| UI-09 | Mi cuenta: cambio real de clave (`admin`) e ingreso con la nueva | Aprobado |
+| UI-10 | Pestaña Individual: "Guardar y agregar otro" | Parcial: limpia animal y peso y conserva la fecha, pero no devolvía el foco al buscador; corregido por Claude Code el 2026-10-31 (falta verificar en pantalla) |
+| UI-11 | Pestaña Individual: animal que ya tiene pesaje ese día | Aprobado: avisa `El animal AR-001 ya tiene un pesaje activo el 30/10/2026...` y no deja cargar |
+| UI-12 | Alta rápida de animal desde el modal (caravana inexistente) | **Falla**: guarda el animal, pero al volver no quedan elegidos el lote ni el animal ni el foco en el peso. Cancelar sí vuelve sin cambios. Corrección pedida, pendiente |
+| UI-13 | Animal con ingreso posterior a la fecha (TEST-25, fecha 2026-07-05) | Aprobado: explica que ingresó el 26/07/2026 y no ofrece registrar animal nuevo |
+| UI-14 | Peso menor al último del animal | Aprobado: avisa sin bloquear; diferencia y GMD negativos con ícono y texto |
+| UI-15 | GMD promedio en el detalle de una sesión | Aprobado |
+| UI-16 | Prueba en celular Android (modal, tarjetas, Intervalo, Mi cuenta) | Aprobado |
+
+**Hallazgo (2026-10-31):** un animal con un solo pesaje no mostraba ganancia diaria porque el peso inicial no se consideraba punto de partida. Se decidió que el peso inicial a la fecha de ingreso sea el punto de partida del GMD (regla pendiente de construir).
 
 Nota sobre CP13: el primer intento dio 405 (Method Not Allowed) porque la petición salió como POST
 en lugar de PUT (error del probador, no del sistema). Repetida con PUT, devolvió 200.
@@ -90,7 +134,7 @@ con 100 a 150 cabezas no es un problema, pero conviene tenerlo presente para el 
 
 ## Pendientes de probar
 
-Todos los casos de borde previstos de la API ya fueron probados (CP01 a CP25 y CP30 a CP46). Queda:
+Todos los casos de borde previstos de la API ya fueron probados en Thunder Client (CP01 a CP25 y CP30 a CP46; los endpoints posteriores están cubiertos por pruebas automáticas). Queda:
 
 - Capturas de pantalla de CP19, CP21 y CP22 (no se sacaron; repetir solo si hacen falta para el informe, o reemplazar por las pruebas automáticas).
 
@@ -116,14 +160,21 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras las sesiones de pesaje (2026-10-28): 59 de 59 aprobadas, 0 fallos, 0 errores** (38 anteriores + 21 nuevas). Cubren: reglas de peso, fecha (futura, anterior al ingreso) y salida del animal; sesión todo o nada; animal repetido y sesión vacía; resumen de sesiones agrupado por fecha y lote (incluido "sin lote"); detalle con peso anterior y GMD; edición y borrado de pesajes; y `/api/auth/yo`. La prueba de atomicidad vive en su propia clase sin `@Transactional`, porque con la transacción de la prueba el "deshacer" no sería visible dentro del mismo método (en producción el rollback es inmediato).
 
+**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas**.
+
+**Pruebas del frontend (Vitest, 2026-10-30): 135 de 135 aprobadas** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
+
+La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalControllerTest` (22 tras las 4 nuevas) y la clase `PesajeAnulacionYFechaSesionControllerTest` (14, nueva). Las demás clases cambiaron de cantidad al adaptar los tests del `DELETE` y agregar los de anulación y clave; el desglose exacto se obtiene con `.\mvnw.cmd test`.
+
 | Clase (`src/test/java/.../controller`) | Pruebas | Casos manuales que cubre |
 |---|---|---|
-| `AnimalControllerTest` | 18 | CP12 a CP17, CP19, CP20, listado (CP10), resumen (CP30) y resumen ampliado (CP31) |
+| `AnimalControllerTest` | 22 | CP12 a CP17, CP19, CP20, listado (CP10), resumen (CP30) y resumen ampliado (CP31) |
 | `PesajeControllerTest` | 3 | CP18 y registro de pesajes (201 y 404) |
 | `IndicadoresControllerTest` | 9 | CP08, CP09, CP11, CP21 a CP25, y valor límite (peso igual al objetivo) |
 | `AuthControllerTest` | 9 | CP26 a CP29 y validaciones: login correcto (200), contraseña incorrecta (401), falta `usuNombre` (400), falta `usuPassword` (400), endpoint protegido sin token (401) y con token (200), y que `usuPassword` no aparezca en la respuesta de usuarios |
 | `PesajeSesionControllerTest` | 18 | CP33 a CP46 (sesión, errores, resumen, detalle, edición y borrado) |
 | `PesajeSesionAtomicidadTest` | 1 | CP36 (todo o nada, sin `@Transactional`) |
+| `PesajeAnulacionYFechaSesionControllerTest` | 14 | Anular sesión, cambio de fecha de sesión y listado de anulados (sin caso manual) |
 | `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
 
 Las pruebas manuales (CP01 a CP25) quedan como evidencia de la verificación con una herramienta
