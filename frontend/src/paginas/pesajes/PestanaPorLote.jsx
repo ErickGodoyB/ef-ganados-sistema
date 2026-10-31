@@ -80,6 +80,15 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
 
   const refBuscadorCarga = useRef(null)
   const refPesoCarga = useRef(null)
+  const refBotonAgregar = useRef(null)
+  // Pedido de foco para "+ Agregar" tras la preselección de alta rápida: no
+  // se puede enfocar en el mismo momento en que se llama setAnimalCarga más
+  // abajo, porque ese botón sigue disabled (depende de animalCarga) hasta
+  // que el estado nuevo se renderice; se consume en el efecto de abajo, una
+  // vez que animalCarga/pesoCargaValido ya habilitaron el botón. Es un ref
+  // (no un estado) para no disparar un re-render extra solo por apagar el
+  // pedido ya atendido.
+  const refPedidoFocoBoton = useRef(false)
 
   useEffect(() => {
     let cancelado = false
@@ -163,9 +172,13 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   }, [loteId, fecha])
 
   // El animal recién creado por alta rápida (ver ModalNuevoPesaje.jsx) se
-  // preselecciona acá apenas vuelve a mostrarse esta pestaña, con el foco
-  // en el peso; "onConsumidaPreseleccion" evita volver a aplicarlo en cada
-  // re-render.
+  // preselecciona acá apenas vuelve a mostrarse esta pestaña;
+  // "onConsumidaPreseleccion" evita volver a aplicarlo en cada re-render.
+  // El peso NO se toca (el formulario de alta rápida nunca lo tocó): si el
+  // usuario ya lo había escrito antes de pedir el alta, sigue ahí. El foco
+  // va al botón "+ Agregar" cuando ese peso ya es válido (ya se puede
+  // confirmar la fila tal cual) o al campo de peso si todavía falta
+  // completarlo.
   useEffect(() => {
     function aplicarPreseleccion() {
       if (animalParaPreseleccionar?.pestana !== 'lote') {
@@ -174,11 +187,19 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
       const animal = animalParaPreseleccionar.animal
       setAnimalCarga({ id: animal.aniId, caravana: animal.aniCaravana, pesoActual: animal.pesoActual })
       setTextoCarga(animal.aniCaravana)
-      refPesoCarga.current?.focus()
+      if (pesoTextoEsValido(pesoCarga)) {
+        // No se puede enfocar el botón acá todavía: su disabled depende de
+        // animalCarga, que recién se acaba de pedir más arriba y todavía no
+        // se renderizó (ver el efecto de abajo, que lo consume una vez que
+        // sí está habilitado).
+        refPedidoFocoBoton.current = true
+      } else {
+        refPesoCarga.current?.focus()
+      }
       onConsumidaPreseleccion()
     }
     aplicarPreseleccion()
-  }, [animalParaPreseleccionar, onConsumidaPreseleccion])
+  }, [animalParaPreseleccionar, onConsumidaPreseleccion, pesoCarga])
 
   const animalesDelLote = useMemo(() => {
     if (!loteId) {
@@ -254,6 +275,13 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
     animalCarga && pesoCargaValido && pesoCargaNumero < animalCarga.pesoActual
       ? `Es menor al último peso registrado (${formatearPeso(animalCarga.pesoActual)})`
       : ''
+
+  useEffect(() => {
+    if (refPedidoFocoBoton.current && animalCarga && pesoCargaValido && !guardando) {
+      refBotonAgregar.current?.focus()
+      refPedidoFocoBoton.current = false
+    }
+  }, [animalCarga, pesoCargaValido, guardando])
 
   /** Agrega el animal elegido con el peso escrito a la lista local (nada se guarda todavía) y devuelve el foco al buscador. */
   function agregarALaLista() {
@@ -459,6 +487,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
 
           <button
             type="button"
+            ref={refBotonAgregar}
             className="boton-secundario"
             onClick={agregarALaLista}
             disabled={guardando || !animalCarga || !pesoCargaValido}

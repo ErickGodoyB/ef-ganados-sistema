@@ -134,4 +134,88 @@ describe('PestanaPorLote', () => {
     expect(screen.queryByText(/Registrar animal nuevo/)).not.toBeInTheDocument()
     expect(screen.getByText('CAR-OTRO pertenece al lote Lote B')).toBeInTheDocument()
   })
+
+  it(
+    'tras el alta rápida, sin un peso ya escrito, el animal queda elegido y el foco va al campo de peso',
+    async () => {
+      const usuario = userEvent.setup()
+      const onConsumidaPreseleccion = vi.fn()
+      configurarMock({})
+      const { rerender } = render(
+        <PestanaPorLote
+          animales={ANIMALES}
+          cargandoAnimales={false}
+          errorAnimales=""
+          animalParaPreseleccionar={null}
+          onConsumidaPreseleccion={onConsumidaPreseleccion}
+          onRegistrarNuevo={vi.fn()}
+          onCerrar={vi.fn()}
+          onGuardado={vi.fn()}
+        />,
+      )
+      await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
+
+      const animalNuevo = { aniId: 99, aniCaravana: 'CAR-NUEVO', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, subGrupoId: 10, pesoActual: 150 }
+      rerender(
+        <PestanaPorLote
+          animales={[...ANIMALES, animalNuevo]}
+          cargandoAnimales={false}
+          errorAnimales=""
+          animalParaPreseleccionar={{ pestana: 'lote', animal: animalNuevo }}
+          onConsumidaPreseleccion={onConsumidaPreseleccion}
+          onRegistrarNuevo={vi.fn()}
+          onCerrar={vi.fn()}
+          onGuardado={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('CAR-NUEVO')
+      await waitFor(() => expect(screen.getByLabelText('Peso (kg)')).toHaveFocus())
+      expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it(
+    'tras el alta rápida, con un peso ya escrito, el animal queda elegido, el peso se conserva y el foco va a "Agregar"',
+    async () => {
+      const usuario = userEvent.setup()
+      const onConsumidaPreseleccion = vi.fn()
+      configurarMock({})
+      const { rerender } = render(
+        <PestanaPorLote
+          animales={ANIMALES}
+          cargandoAnimales={false}
+          errorAnimales=""
+          animalParaPreseleccionar={null}
+          onConsumidaPreseleccion={onConsumidaPreseleccion}
+          onRegistrarNuevo={vi.fn()}
+          onCerrar={vi.fn()}
+          onGuardado={vi.fn()}
+        />,
+      )
+      await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
+      await usuario.type(screen.getByLabelText('Peso (kg)'), '150')
+
+      const animalNuevo = { aniId: 99, aniCaravana: 'CAR-NUEVO', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, subGrupoId: 10, pesoActual: 150 }
+      rerender(
+        <PestanaPorLote
+          animales={[...ANIMALES, animalNuevo]}
+          cargandoAnimales={false}
+          errorAnimales=""
+          animalParaPreseleccionar={{ pestana: 'lote', animal: animalNuevo }}
+          onConsumidaPreseleccion={onConsumidaPreseleccion}
+          onRegistrarNuevo={vi.fn()}
+          onCerrar={vi.fn()}
+          onGuardado={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('CAR-NUEVO')
+      expect(screen.getByLabelText('Peso (kg)')).toHaveValue('150')
+      await waitFor(() => expect(screen.getByRole('button', { name: /Agregar/ })).toHaveFocus())
+      expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
+    },
+  )
 })

@@ -4,7 +4,10 @@
  * completa. "Guardar" cierra el modal; "Guardar y agregar otro" limpia
  * animal y peso (conserva la fecha) y deja el modal abierto para seguir
  * cargando, así que usa su propio aviso/recarga de fondo (onGuardadoParcial)
- * en vez del que cierra todo (onGuardado).
+ * en vez del que cierra todo (onGuardado), y le devuelve el foco al
+ * buscador (vía el efecto que consume "pedidoFocoBuscador": enfocar en el
+ * momento mismo de guardar no funciona porque el campo todavía tiene el
+ * disabled viejo, de cuando guardando era true).
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -53,8 +56,16 @@ export default function PestanaIndividual({
   const [guardando, setGuardando] = useState(false)
   const [accionEnCurso, setAccionEnCurso] = useState(null)
   const [errorGuardar, setErrorGuardar] = useState('')
+  // Pedido de foco para el buscador tras "Guardar y agregar otro": se marca
+  // en guardar() y se consume en el efecto de abajo, una vez que el
+  // re-render ya dejó el campo habilitado (ver ese efecto: enfocar en el
+  // momento no funciona porque el campo todavía está disabled={guardando}
+  // con el valor viejo de guardando). Es un ref (no un estado) para no
+  // disparar un re-render extra solo por apagar el pedido ya atendido.
+  const refPedidoFocoBuscador = useRef(false)
 
   const refBuscador = useRef(null)
+  const refPeso = useRef(null)
   const idsYaPesadosHoy = useIdsYaPesadosEnFecha(fecha)
 
   useEffect(() => {
@@ -70,10 +81,21 @@ export default function PestanaIndividual({
         pesoActual: animal.pesoActual,
       })
       setTexto(animal.aniCaravana)
+      // El siguiente dato que falta es el peso (la fecha ya estaba puesta
+      // de antes): a diferencia de "Por lote", acá no hay un botón
+      // "+ Agregar" al que mandar el foco si ya había un peso escrito.
+      refPeso.current?.focus()
       onConsumidaPreseleccion()
     }
     aplicarPreseleccion()
   }, [animalParaPreseleccionar, onConsumidaPreseleccion])
+
+  useEffect(() => {
+    if (refPedidoFocoBuscador.current && !guardando) {
+      refBuscador.current?.enfocar()
+      refPedidoFocoBuscador.current = false
+    }
+  }, [guardando])
 
   const elegibles = useMemo(
     () => animales.filter((animal) => motivoNoElegible(animal, fecha, idsYaPesadosHoy) == null),
@@ -130,7 +152,7 @@ export default function PestanaIndividual({
         setTexto('')
         setAnimalElegido(null)
         setPeso('')
-        refBuscador.current?.enfocar()
+        refPedidoFocoBuscador.current = true
         onGuardadoParcial(mensaje)
       } else {
         onGuardado(mensaje)
@@ -187,6 +209,7 @@ export default function PestanaIndividual({
               <label htmlFor="nuevo-pesaje-individual-peso">Peso (kg)</label>
               <input
                 id="nuevo-pesaje-individual-peso"
+                ref={refPeso}
                 type="text"
                 inputMode="decimal"
                 value={peso}

@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { peticionProtegida } from '../../api/cliente'
 import PestanaIndividual from './PestanaIndividual'
 
 vi.mock('../../auth/useAuth', () => ({
@@ -9,6 +10,11 @@ vi.mock('../../auth/useAuth', () => ({
 
 vi.mock('./useIdsYaPesadosEnFecha', () => ({
   useIdsYaPesadosEnFecha: () => new Set(),
+}))
+
+vi.mock('../../api/cliente', () => ({
+  peticionProtegida: vi.fn(),
+  ErrorHttp: class ErrorHttp extends Error {},
 }))
 
 const ANIMALES = [
@@ -91,5 +97,57 @@ describe('PestanaIndividual', () => {
     await usuario.type(screen.getByRole('combobox'), 'NUEVO-123')
 
     expect(screen.getByText(/Registrar animal nuevo «NUEVO-123»/)).toBeInTheDocument()
+  })
+
+  it('"Guardar y agregar otro" limpia animal y peso, conserva la fecha y devuelve el foco al buscador', async () => {
+    peticionProtegida.mockResolvedValue({})
+    const usuario = userEvent.setup()
+    renderPestana()
+
+    await usuario.type(screen.getByRole('combobox'), 'CAR-001')
+    await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '210')
+    const fechaPrevia = screen.getByLabelText('Fecha').value
+
+    await usuario.click(screen.getByRole('button', { name: 'Guardar y agregar otro' }))
+
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveFocus())
+    expect(screen.getByRole('combobox')).toHaveValue('')
+    expect(screen.getByLabelText('Peso (kg)')).toHaveValue('')
+    expect(screen.getByLabelText('Fecha')).toHaveValue(fechaPrevia)
+  })
+
+  it('tras el alta rápida, el animal queda elegido en el buscador y el foco va al peso', () => {
+    const onConsumidaPreseleccion = vi.fn()
+    const animalNuevo = { aniId: 99, aniCaravana: 'CAR-NUEVO', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, pesoActual: 180 }
+    const { rerender } = render(
+      <PestanaIndividual
+        animales={ANIMALES}
+        cargandoAnimales={false}
+        errorAnimales=""
+        animalParaPreseleccionar={null}
+        onConsumidaPreseleccion={onConsumidaPreseleccion}
+        onRegistrarNuevo={vi.fn()}
+        onGuardado={vi.fn()}
+        onGuardadoParcial={vi.fn()}
+      />,
+    )
+
+    rerender(
+      <PestanaIndividual
+        animales={[...ANIMALES, animalNuevo]}
+        cargandoAnimales={false}
+        errorAnimales=""
+        animalParaPreseleccionar={{ pestana: 'individual', animal: animalNuevo }}
+        onConsumidaPreseleccion={onConsumidaPreseleccion}
+        onRegistrarNuevo={vi.fn()}
+        onGuardado={vi.fn()}
+        onGuardadoParcial={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('combobox')).toHaveValue('CAR-NUEVO')
+    expect(screen.getByLabelText('Peso (kg)')).toHaveFocus()
+    expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
   })
 })
