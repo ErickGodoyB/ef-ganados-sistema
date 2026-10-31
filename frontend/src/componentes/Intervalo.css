@@ -59,11 +59,13 @@
 }
 
 /* Fondo oscurecido: solo existe visualmente en celular (ver @media de
-   abajo), mismo criterio que PanelOpciones.css. */
+   abajo), mismo criterio que PanelOpciones.css. Z-index por debajo del de
+   Modal.css (40): si alguna vez un modal y este panel llegaran a estar
+   montados a la vez, el modal tiene que quedar siempre arriba. */
 .intervalo-fondo {
   position: fixed;
   inset: 0;
-  z-index: 44;
+  z-index: 34;
   background: var(--fondo-superpuesto);
 }
 
@@ -72,7 +74,7 @@
   left: 50%;
   bottom: 16px;
   transform: translateX(-50%);
-  z-index: 45;
+  z-index: 35;
   width: calc(100vw - 2rem);
   max-width: 22rem;
   max-height: calc(100dvh - 2 * 16px);
@@ -121,6 +123,14 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* min-width: 0 en los dos modos: un <input type="date"> tiene un ancho
+   mínimo de contenido propio, y sin esto un ítem flex nunca se achica por
+   debajo de ese mínimo (default "min-width: auto"), así que "Hasta"
+   terminaba saliéndose del panel en vez de compartir el ancho disponible. */
+.intervalo-campos .campo {
+  min-width: 0;
 }
 
 @media (min-width: 420px) {

@@ -45,6 +45,31 @@ describe('Intervalo', () => {
     expect(boton).toHaveFocus()
   })
 
+  it('un clic afuera del panel lo cierra', async () => {
+    const usuario = userEvent.setup()
+    render(
+      <div>
+        <button type="button">Otro control de la pantalla</button>
+        <Intervalo desde="" hasta="" onCambiar={vi.fn()} />
+      </div>,
+    )
+    const boton = screen.getByRole('button', { name: 'Intervalo' })
+    await usuario.click(boton)
+    expect(boton).toHaveAttribute('aria-expanded', 'true')
+
+    await usuario.click(screen.getByRole('button', { name: 'Otro control de la pantalla' }))
+    expect(boton).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('un clic dentro del panel (ej. un atajo) no lo cierra', async () => {
+    const usuario = userEvent.setup()
+    render(<Intervalo desde="" hasta="" onCambiar={vi.fn()} />)
+    const boton = screen.getByRole('button', { name: 'Intervalo' })
+    await usuario.click(boton)
+    await usuario.click(screen.getByRole('button', { name: 'Hoy' }))
+    expect(boton).toHaveAttribute('aria-expanded', 'true')
+  })
+
   it('un atajo completa Desde/Hasta y "Aplicar" confirma el rango', async () => {
     const usuario = userEvent.setup()
     const onCambiar = vi.fn()

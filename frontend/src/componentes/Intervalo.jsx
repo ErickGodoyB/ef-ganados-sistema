@@ -15,6 +15,17 @@
  * pantalla) y Escape lo cierra devolviendo el foco al botón. En celular es
  * una hoja inferior (mismo criterio que PanelOpciones.jsx); desde 768px es
  * un desplegable anclado al botón.
+ *
+ * También se cierra con un clic/toque fuera del panel, con el mismo
+ * mecanismo (mousedown + ref del contenedor) que ya usa PanelOpciones.jsx,
+ * para que los dos paneles del listado se comporten igual. Como el panel
+ * atrapa el foco mientras está abierto, no hace falta escuchar aparte
+ * cuándo se abre un modal u otro panel (Lote, Opciones): para llegar a ese
+ * botón con el mouse hay que primero hacer clic fuera de este panel, lo
+ * que ya lo cierra; y por teclado no se puede, porque el foco no puede
+ * salir de acá mientras está abierto. El z-index del panel queda por
+ * debajo del de Modal.css a propósito, para el caso en que de todos modos
+ * quedaran montados juntos.
  */
 
 import { Calendar, X } from 'lucide-react'
@@ -36,6 +47,7 @@ export default function Intervalo({ desde, hasta, onCambiar, etiqueta = 'Interva
   const [borradorHasta, setBorradorHasta] = useState(hasta)
 
   const idPanel = useId()
+  const refContenedor = useRef(null)
   const refBoton = useRef(null)
   const refPanel = useRef(null)
 
@@ -75,7 +87,11 @@ export default function Intervalo({ desde, hasta, onCambiar, etiqueta = 'Interva
   }
 
   // Trampa de foco + Escape mientras el panel está abierto (mismo criterio
-  // que Modal.jsx, acotado a refPanel en vez de todo el documento).
+  // que Modal.jsx, acotado a refPanel en vez de todo el documento), más el
+  // cierre al hacer clic/toque afuera (mismo mecanismo que PanelOpciones.jsx:
+  // mousedown + ref del contenedor completo, botón incluido, para que un
+  // clic en el propio botón no cuente como "afuera" y lo siga manejando su
+  // onClick de siempre).
   useEffect(() => {
     if (!abierto) {
       return undefined
@@ -91,6 +107,12 @@ export default function Intervalo({ desde, hasta, onCambiar, etiqueta = 'Interva
     }
 
     elementosFocables()[0]?.focus()
+
+    function alHacerClicAfuera(evento) {
+      if (refContenedor.current && !refContenedor.current.contains(evento.target)) {
+        setAbierto(false)
+      }
+    }
 
     function alPresionarTecla(evento) {
       if (evento.key === 'Escape') {
@@ -116,12 +138,16 @@ export default function Intervalo({ desde, hasta, onCambiar, etiqueta = 'Interva
       }
     }
 
+    document.addEventListener('mousedown', alHacerClicAfuera)
     document.addEventListener('keydown', alPresionarTecla)
-    return () => document.removeEventListener('keydown', alPresionarTecla)
+    return () => {
+      document.removeEventListener('mousedown', alHacerClicAfuera)
+      document.removeEventListener('keydown', alPresionarTecla)
+    }
   }, [abierto])
 
   return (
-    <div className="intervalo">
+    <div className="intervalo" ref={refContenedor}>
       <button
         type="button"
         ref={refBoton}
