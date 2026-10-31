@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.controller.AnimalController.AnimalRequest;
 import com.efganados.sistemabovino.model.Animal;
+import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
@@ -127,6 +128,17 @@ class AnimalControllerTest extends AutenticacionTestSupport {
         pesaje.setResponsable(responsable);
         pesaje.setPesaFecha(fecha);
         pesaje.setPesaPeso(peso);
+        pesajesRepository.save(pesaje);
+    }
+
+    /** Registra un pesaje ya ANULADO de prueba para el animal, directamente por repositorio. */
+    private void registrarPesajeAnulado(Animal animal, Persona responsable, double peso, LocalDate fecha) {
+        Pesajes pesaje = new Pesajes();
+        pesaje.setAnimal(animal);
+        pesaje.setResponsable(responsable);
+        pesaje.setPesaFecha(fecha);
+        pesaje.setPesaPeso(peso);
+        pesaje.setPesaEstado(EstadoPesaje.ANULADO);
         pesajesRepository.save(pesaje);
     }
 
@@ -240,6 +252,88 @@ class AnimalControllerTest extends AutenticacionTestSupport {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.aniObservacion").value("Observación actualizada"));
+    }
+
+    @Test
+    @DisplayName("Actualizar la fecha de ingreso a una anterior o igual al primer pesaje activo devuelve 200")
+    void actualizarFechaIngresoAnteriorOIgualAlPrimerPesajeDevuelve200() throws Exception {
+        Persona duenio = crearPersona("Dueño-IngresoOk");
+        Raza raza = crearRaza("Raza-IngresoOk", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-IngresoOk");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ING-OK", 200.0);
+        registrarPesaje(animal, duenio, 210.0, LocalDate.of(2026, 3, 10));
+
+        // Igual a la fecha del primer (y único) pesaje: límite inclusive.
+        AnimalRequest request = new AnimalRequest(duenio.getPerId(), raza.getRzId(), subGrupo.getSbId(),
+                "CAR-ING-OK", LocalDate.of(2026, 3, 10), 200.0, null, null);
+
+        mockMvc.perform(put("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.aniFechaIngreso").value("2026-03-10"));
+    }
+
+    @Test
+    @DisplayName("Actualizar la fecha de ingreso a una posterior al primer pesaje activo devuelve 400")
+    void actualizarFechaIngresoPosteriorAlPrimerPesajeDevuelve400() throws Exception {
+        Persona duenio = crearPersona("Dueño-IngresoMal");
+        Raza raza = crearRaza("Raza-IngresoMal", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-IngresoMal");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ING-MAL", 200.0);
+        registrarPesaje(animal, duenio, 210.0, LocalDate.of(2026, 3, 10));
+        registrarPesaje(animal, duenio, 220.0, LocalDate.of(2026, 4, 1));
+
+        AnimalRequest request = new AnimalRequest(duenio.getPerId(), raza.getRzId(), subGrupo.getSbId(),
+                "CAR-ING-MAL", LocalDate.of(2026, 3, 11), 200.0, null, null);
+
+        mockMvc.perform(put("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("La fecha de ingreso no puede ser posterior al primer pesaje del animal (10/03/2026)"));
+    }
+
+    @Test
+    @DisplayName("Un pesaje ANULADO anterior a la fecha de ingreso nueva no cuenta: devuelve 200")
+    void actualizarFechaIngresoConSoloUnPesajeAnuladoDevuelve200() throws Exception {
+        Persona duenio = crearPersona("Dueño-IngresoAnulado");
+        Raza raza = crearRaza("Raza-IngresoAnulado", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-IngresoAnulado");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ING-ANU", 200.0);
+        registrarPesajeAnulado(animal, duenio, 210.0, LocalDate.of(2026, 1, 5));
+
+        // Posterior al pesaje anulado: si contara, esto daría 400. Como no cuenta, pasa.
+        AnimalRequest request = new AnimalRequest(duenio.getPerId(), raza.getRzId(), subGrupo.getSbId(),
+                "CAR-ING-ANU", LocalDate.of(2026, 6, 1), 200.0, null, null);
+
+        mockMvc.perform(put("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.aniFechaIngreso").value("2026-06-01"));
+    }
+
+    @Test
+    @DisplayName("Un animal sin pesajes puede mover su fecha de ingreso libremente: devuelve 200")
+    void actualizarFechaIngresoDeAnimalSinPesajesDevuelve200() throws Exception {
+        Persona duenio = crearPersona("Dueño-IngresoSinPesajes");
+        Raza raza = crearRaza("Raza-IngresoSinPesajes", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-IngresoSinPesajes");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ING-SP", 200.0);
+
+        AnimalRequest request = new AnimalRequest(duenio.getPerId(), raza.getRzId(), subGrupo.getSbId(),
+                "CAR-ING-SP", LocalDate.of(2026, 12, 31), 200.0, null, null);
+
+        mockMvc.perform(put("/api/animales/{id}", animal.getAniId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.aniFechaIngreso").value("2026-12-31"));
     }
 
     @Test

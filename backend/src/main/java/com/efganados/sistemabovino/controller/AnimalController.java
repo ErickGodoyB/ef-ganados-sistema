@@ -98,6 +98,10 @@ public class AnimalController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Ya existe un animal con la caravana: " + request.aniCaravana());
         }
+        // Un animal nuevo todavía no puede tener pesajes: no-op, ver
+        // AnimalService.validarFechaIngreso. Se llama igual, por las
+        // mismas dudas, para que la regla quede en un solo lugar.
+        animalService.validarFechaIngreso(null, request.aniFechaIngreso());
         Animal animal = new Animal();
         aplicarDatos(animal, request);
         Animal guardado = animalRepository.save(animal);
@@ -118,6 +122,7 @@ public class AnimalController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Ya existe un animal con la caravana: " + request.aniCaravana());
         }
+        animalService.validarFechaIngreso(id, request.aniFechaIngreso());
         return animalRepository.findById(id)
                 .map(existente -> {
                     aplicarDatos(existente, request);

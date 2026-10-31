@@ -127,6 +127,28 @@ public class AnimalService {
     }
 
     /**
+     * Valida que la fecha de ingreso de un animal no quede después de su
+     * propio pesaje ACTIVO más antiguo (si lo tiene): mover el ingreso para
+     * adelante dejaría un pesaje "de antes de que el animal existiera". Un
+     * pesaje ANULADO no cuenta (esa fecha vuelve a estar libre, mismo
+     * criterio que {@link #validarPesaje}). "animalId" es null al crear un
+     * animal nuevo (todavía no puede tener pesajes), en cuyo caso la regla
+     * no aplica.
+     */
+    public void validarFechaIngreso(Long animalId, LocalDate nuevaFechaIngreso) {
+        if (animalId == null) {
+            return;
+        }
+        pesajesRepository.findFirstByAnimal_AniIdAndPesaEstadoOrderByPesaFechaAsc(animalId, EstadoPesaje.ACTIVO)
+                .ifPresent(primerPesaje -> {
+                    if (nuevaFechaIngreso.isAfter(primerPesaje.getPesaFecha())) {
+                        throw new ValidacionException("La fecha de ingreso no puede ser posterior al primer pesaje del animal ("
+                                + primerPesaje.getPesaFecha().format(FORMATO_FECHA) + ")");
+                    }
+                });
+    }
+
+    /**
      * Busca un animal por su ID. Lanza una excepción si no existe, para que
      * el controlador pueda responder con un error claro (ej. 404).
      */

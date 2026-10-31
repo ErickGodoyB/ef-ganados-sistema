@@ -39,6 +39,13 @@ public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
     Optional<Pesajes> findFirstByAnimal_AniIdAndPesaFechaAndPesaEstado(Long aniId, LocalDate fecha, EstadoPesaje estado);
 
     /**
+     * El pesaje más antiguo del animal en el estado dado (ver
+     * AnimalService.validarFechaIngreso: el ingreso de un animal no puede
+     * quedar después de su propio primer pesaje ACTIVO).
+     */
+    Optional<Pesajes> findFirstByAnimal_AniIdAndPesaEstadoOrderByPesaFechaAsc(Long aniId, EstadoPesaje estado);
+
+    /**
      * Pesajes de una sesión con lote (misma fecha + mismo subgrupo) en el
      * estado dado, ordenados por caravana y, a igual caravana (un mismo
      * animal pesado más de una vez el mismo día), por pesaId: así el orden
