@@ -11,10 +11,20 @@
  * elegibles (ver utilidades/elegibilidadPesaje.js) según su fecha y lote.
  * Se necesita la lista completa (no solo los elegibles) para poder avisar
  * el motivo cuando se escribe la caravana de un animal que existe pero no
- * sirve para esta fecha/lote, en vez de ofrecer registrarlo de nuevo. Las
- * dos pestañas quedan siempre montadas (una oculta con el atributo
- * "hidden", no desmontada): así cambiar de pestaña nunca pierde lo que se
- * estaba cargando en la otra.
+ * sirve para esta fecha/lote, en vez de ofrecer registrarlo de nuevo.
+ *
+ * Las dos pestañas (y el bloque que las contiene) quedan siempre montadas,
+ * ocultas con el atributo "hidden" en vez de desmontadas con un && -- tanto
+ * al cambiar entre "Por lote"/"Individual" como al ir y volver del alta
+ * rápida. Si el bloque de las pestañas se desmontara al mostrar el
+ * formulario (como pasaba antes acá: ese bloque estaba condicionado a
+ * vista === 'tabs', así que cambiar a 'alta-rapida' lo desmontaba del
+ * todo), PestanaPorLote perdería el lote y la fecha elegidos (y la lista ya
+ * cargada) cada vez que se registrara un animal nuevo desde ahí, porque al
+ * volver se monta una instancia nueva con su estado inicial. Por eso el
+ * alta rápida (FormularioAnimal) es la única vista que sigue montándose y
+ * desmontándose de verdad: no tiene nada que conservar entre una alta y la
+ * siguiente, así que cada vez arranca con un formulario limpio.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -74,11 +84,17 @@ export default function ModalNuevoPesaje({ onCerrar, onGuardado, onGuardadoParci
     cargarAnimales()
   }, [cargarAnimales])
 
+  // Al volver a "tabs" con un animal para preseleccionar, el foco no es
+  // cosa de este componente: la pestaña de destino lo manda a algo más
+  // específico (el peso, o "+ Agregar" si ya había uno escrito; ver su
+  // propio efecto). Si este efecto enfocara la pestaña igual, ganaría la
+  // carrera (los efectos de este componente corren después que los de sus
+  // hijos) y pisaría ese foco más específico.
   useEffect(() => {
-    if (vista === 'tabs') {
+    if (vista === 'tabs' && animalParaPreseleccionar == null) {
       (pestanaActiva === 'lote' ? refTabLote : refTabIndividual).current?.focus()
     }
-  }, [vista, pestanaActiva])
+  }, [vista, pestanaActiva, animalParaPreseleccionar])
 
   /** Flechas izquierda/derecha alternan entre las dos pestañas y mueven el foco con ellas (patrón ARIA tablist). */
   function manejarTeclaTab(evento) {
@@ -131,77 +147,78 @@ export default function ModalNuevoPesaje({ onCerrar, onGuardado, onGuardadoParci
 
   return (
     <Modal titulo={TITULOS[vista]} onCerrar={manejarCierre} refDisparador={refDisparador} tamano="grande">
-      {vista === 'tabs' && (
-        <>
-          <div role="tablist" aria-label="Tipo de carga de pesajes" className="modal-nuevo-pesaje-tabs">
-            <button
-              type="button"
-              ref={refTabLote}
-              role="tab"
-              id="nuevo-pesaje-tab-lote"
-              aria-selected={pestanaActiva === 'lote'}
-              aria-controls="nuevo-pesaje-panel-lote"
-              tabIndex={pestanaActiva === 'lote' ? 0 : -1}
-              className={`modal-nuevo-pesaje-tab${pestanaActiva === 'lote' ? ' modal-nuevo-pesaje-tab--activa' : ''}`}
-              onClick={() => setPestanaActiva('lote')}
-              onKeyDown={manejarTeclaTab}
-            >
-              Por lote
-            </button>
-            <button
-              type="button"
-              ref={refTabIndividual}
-              role="tab"
-              id="nuevo-pesaje-tab-individual"
-              aria-selected={pestanaActiva === 'individual'}
-              aria-controls="nuevo-pesaje-panel-individual"
-              tabIndex={pestanaActiva === 'individual' ? 0 : -1}
-              className={`modal-nuevo-pesaje-tab${pestanaActiva === 'individual' ? ' modal-nuevo-pesaje-tab--activa' : ''}`}
-              onClick={() => setPestanaActiva('individual')}
-              onKeyDown={manejarTeclaTab}
-            >
-              Individual
-            </button>
-          </div>
-
-          <div
-            role="tabpanel"
-            id="nuevo-pesaje-panel-lote"
-            aria-labelledby="nuevo-pesaje-tab-lote"
-            hidden={pestanaActiva !== 'lote'}
+      {/* hidden, no desmontado: ver el porqué en el comentario de arriba del
+          archivo (PestanaPorLote perdería lote/fecha/lista si esto se
+          desmontara al ir al alta rápida). */}
+      <div hidden={vista !== 'tabs'}>
+        <div role="tablist" aria-label="Tipo de carga de pesajes" className="modal-nuevo-pesaje-tabs">
+          <button
+            type="button"
+            ref={refTabLote}
+            role="tab"
+            id="nuevo-pesaje-tab-lote"
+            aria-selected={pestanaActiva === 'lote'}
+            aria-controls="nuevo-pesaje-panel-lote"
+            tabIndex={pestanaActiva === 'lote' ? 0 : -1}
+            className={`modal-nuevo-pesaje-tab${pestanaActiva === 'lote' ? ' modal-nuevo-pesaje-tab--activa' : ''}`}
+            onClick={() => setPestanaActiva('lote')}
+            onKeyDown={manejarTeclaTab}
           >
-            <PestanaPorLote
-              ref={refPestanaLote}
-              animales={animales}
-              cargandoAnimales={cargandoAnimales}
-              errorAnimales={errorAnimales}
-              animalParaPreseleccionar={animalParaPreseleccionar}
-              onConsumidaPreseleccion={limpiarPreseleccion}
-              onRegistrarNuevo={(datos) => iniciarAltaRapida('lote', datos)}
-              onCerrar={onCerrar}
-              onGuardado={onGuardado}
-            />
-          </div>
-
-          <div
-            role="tabpanel"
-            id="nuevo-pesaje-panel-individual"
-            aria-labelledby="nuevo-pesaje-tab-individual"
-            hidden={pestanaActiva !== 'individual'}
+            Por lote
+          </button>
+          <button
+            type="button"
+            ref={refTabIndividual}
+            role="tab"
+            id="nuevo-pesaje-tab-individual"
+            aria-selected={pestanaActiva === 'individual'}
+            aria-controls="nuevo-pesaje-panel-individual"
+            tabIndex={pestanaActiva === 'individual' ? 0 : -1}
+            className={`modal-nuevo-pesaje-tab${pestanaActiva === 'individual' ? ' modal-nuevo-pesaje-tab--activa' : ''}`}
+            onClick={() => setPestanaActiva('individual')}
+            onKeyDown={manejarTeclaTab}
           >
-            <PestanaIndividual
-              animales={animales}
-              cargandoAnimales={cargandoAnimales}
-              errorAnimales={errorAnimales}
-              animalParaPreseleccionar={animalParaPreseleccionar}
-              onConsumidaPreseleccion={limpiarPreseleccion}
-              onRegistrarNuevo={(datos) => iniciarAltaRapida('individual', datos)}
-              onGuardado={onGuardado}
-              onGuardadoParcial={onGuardadoParcial}
-            />
-          </div>
-        </>
-      )}
+            Individual
+          </button>
+        </div>
+
+        <div
+          role="tabpanel"
+          id="nuevo-pesaje-panel-lote"
+          aria-labelledby="nuevo-pesaje-tab-lote"
+          hidden={pestanaActiva !== 'lote'}
+        >
+          <PestanaPorLote
+            ref={refPestanaLote}
+            animales={animales}
+            cargandoAnimales={cargandoAnimales}
+            errorAnimales={errorAnimales}
+            animalParaPreseleccionar={animalParaPreseleccionar}
+            onConsumidaPreseleccion={limpiarPreseleccion}
+            onRegistrarNuevo={(datos) => iniciarAltaRapida('lote', datos)}
+            onCerrar={onCerrar}
+            onGuardado={onGuardado}
+          />
+        </div>
+
+        <div
+          role="tabpanel"
+          id="nuevo-pesaje-panel-individual"
+          aria-labelledby="nuevo-pesaje-tab-individual"
+          hidden={pestanaActiva !== 'individual'}
+        >
+          <PestanaIndividual
+            animales={animales}
+            cargandoAnimales={cargandoAnimales}
+            errorAnimales={errorAnimales}
+            animalParaPreseleccionar={animalParaPreseleccionar}
+            onConsumidaPreseleccion={limpiarPreseleccion}
+            onRegistrarNuevo={(datos) => iniciarAltaRapida('individual', datos)}
+            onGuardado={onGuardado}
+            onGuardadoParcial={onGuardadoParcial}
+          />
+        </div>
+      </div>
 
       {vista === 'alta-rapida' && (
         <FormularioAnimal

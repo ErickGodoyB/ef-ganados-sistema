@@ -10,6 +10,7 @@
 import { Ban, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import ValorGmd from '../../componentes/ValorGmd'
+import ValorPesoAnterior from '../../componentes/ValorPesoAnterior'
 import { formatearPeso } from '../../utilidades/formato'
 import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
 import { motivoEsValido } from '../../utilidades/anulacion'
@@ -63,7 +64,13 @@ export default function TarjetaItemSesion({
         </div>
         <div className="tarjeta-item-sesion-dato">
           <dt>Peso anterior</dt>
-          <dd>{item.pesoAnterior == null ? '—' : formatearPeso(item.pesoAnterior)}</dd>
+          <dd>
+            <ValorPesoAnterior
+              pesoAnterior={item.pesoAnterior}
+              pesoAnteriorEsIngreso={item.pesoAnteriorEsIngreso}
+              fechaPesoAnterior={item.fechaPesoAnterior}
+            />
+          </dd>
         </div>
         <div className="tarjeta-item-sesion-dato">
           <dt>GMD</dt>

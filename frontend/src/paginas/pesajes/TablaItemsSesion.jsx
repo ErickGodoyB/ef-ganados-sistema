@@ -10,6 +10,7 @@
 import { Ban, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import ValorGmd from '../../componentes/ValorGmd'
+import ValorPesoAnterior from '../../componentes/ValorPesoAnterior'
 import { formatearPeso } from '../../utilidades/formato'
 import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
 import { motivoEsValido } from '../../utilidades/anulacion'
@@ -84,7 +85,13 @@ export default function TablaItemsSesion({
                 <td className="tabla-items-sesion-caravana">{item.caravana}</td>
                 <td>{item.razaDescripcion}</td>
                 <td>{formatearPeso(item.peso)}</td>
-                <td>{item.pesoAnterior == null ? '—' : formatearPeso(item.pesoAnterior)}</td>
+                <td>
+                  <ValorPesoAnterior
+                    pesoAnterior={item.pesoAnterior}
+                    pesoAnteriorEsIngreso={item.pesoAnteriorEsIngreso}
+                    fechaPesoAnterior={item.fechaPesoAnterior}
+                  />
+                </td>
                 <td>
                   <ValorGmd gmd={item.gmd} />
                 </td>

@@ -1,0 +1,12 @@
+/**
+ * Código de sesión (ver celdasSesion.jsx y utilidades/codigoSesion.js):
+ * monoespaciada y en texto secundario para que no compita visualmente con
+ * la fecha/lote (los identificadores "reales" de la sesión), y sin
+ * wrapping porque siempre tiene el mismo largo.
+ */
+.celda-codigo-sesion {
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  color: var(--texto-secundario);
+  white-space: nowrap;
+}

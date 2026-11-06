@@ -10,6 +10,7 @@
 export const COLUMNAS = [
   { clave: 'fecha', etiqueta: 'Fecha', campoOrden: 'fecha', obligatoria: true },
   { clave: 'lote', etiqueta: 'Lote', campoOrden: 'lote', obligatoria: true },
+  { clave: 'codigo', etiqueta: 'Sesión', campoOrden: 'codigo' },
   { clave: 'cantidad', etiqueta: 'Animales', campoOrden: 'cantidad' },
   { clave: 'promedio', etiqueta: 'Promedio', campoOrden: 'promedio' },
   { clave: 'minimo', etiqueta: 'Mínimo', campoOrden: 'minimo' },

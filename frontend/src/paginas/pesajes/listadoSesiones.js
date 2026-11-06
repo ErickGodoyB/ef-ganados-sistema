@@ -4,6 +4,8 @@
  * lógica sin depender de React, igual que listadoAnimales.js.
  */
 
+import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
+
 /**
  * Lotes distintos presentes en los datos (para las opciones del filtro),
  * identificados por subGrupoId (puede haber lotes con el mismo nombre en
@@ -32,6 +34,8 @@ function valorDeOrden(sesion, campo) {
       return sesion.fecha
     case 'lote':
       return sesion.subGrupoDescripcion?.toLowerCase() ?? null
+    case 'codigo':
+      return calcularCodigoSesion(sesion.fecha, sesion.subGrupoId)
     case 'cantidad':
       return sesion.cantidad
     case 'promedio':
@@ -76,11 +80,11 @@ function compararSesiones(a, b, campo, direccion) {
 }
 
 /**
- * Aplica, en orden, la búsqueda por lote o grupo (sin distinguir
- * mayúsculas), el filtro de lote (por subGrupoId; "sin-lote" filtra las
- * sesiones con subGrupoId null), el rango de fechas (desde/hasta, ambos
- * opcionales, inclusive) y finalmente el orden elegido. Devuelve un array
- * nuevo; no modifica "sesiones".
+ * Aplica, en orden, la búsqueda por lote, grupo o código de sesión (sin
+ * distinguir mayúsculas, parcial), el filtro de lote (por subGrupoId;
+ * "sin-lote" filtra las sesiones con subGrupoId null), el rango de fechas
+ * (desde/hasta, ambos opcionales, inclusive) y finalmente el orden
+ * elegido. Devuelve un array nuevo; no modifica "sesiones".
  */
 export function filtrarYOrdenarSesiones(sesiones, { busqueda, lote, desde, hasta, orden }) {
   const termino = busqueda.trim().toLowerCase()
@@ -89,7 +93,8 @@ export function filtrarYOrdenarSesiones(sesiones, { busqueda, lote, desde, hasta
     if (termino) {
       const coincideLote = sesion.subGrupoDescripcion?.toLowerCase().includes(termino)
       const coincideGrupo = sesion.grupoDescripcion?.toLowerCase().includes(termino)
-      if (!coincideLote && !coincideGrupo) {
+      const coincideCodigo = calcularCodigoSesion(sesion.fecha, sesion.subGrupoId).toLowerCase().includes(termino)
+      if (!coincideLote && !coincideGrupo && !coincideCodigo) {
         return false
       }
     }

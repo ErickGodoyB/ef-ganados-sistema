@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import Modal from '../../componentes/Modal'
 import ValorGmd from '../../componentes/ValorGmd'
+import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import { calcularGmdPromedioSesion, calcularResumenPesos } from '../../utilidades/resumenSesion'
 import AgregarAnimalSesion from './AgregarAnimalSesion'
@@ -40,16 +41,17 @@ import PanelCambiarFechaSesion from './PanelCambiarFechaSesion'
 import TablaItemsSesion from './TablaItemsSesion'
 import TarjetaItemSesion from './TarjetaItemSesion'
 
-/** "dd/mm/aaaa · Lote — Grupo" (o "Sin lote"), para el título del modal. */
+/** "dd/mm/aaaa · Lote — Grupo · S-AAAAMMDD-N" (o "Sin lote"), para el título del modal. */
 function tituloSesion(sesion, fecha) {
   const fechaFormateada = formatearFecha(fecha)
+  const codigo = calcularCodigoSesion(fecha, sesion.subGrupoId)
   if (!sesion.subGrupoDescripcion) {
-    return `${fechaFormateada} · Sin lote`
+    return `${fechaFormateada} · Sin lote · ${codigo}`
   }
   const lote = sesion.grupoDescripcion
     ? `${sesion.subGrupoDescripcion} — ${sesion.grupoDescripcion}`
     : sesion.subGrupoDescripcion
-  return `${fechaFormateada} · ${lote}`
+  return `${fechaFormateada} · ${lote} · ${codigo}`
 }
 
 export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQuedoSinAnimales, refDisparador }) {
@@ -323,7 +325,7 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
           <dd>
             <ValorGmd gmd={resumen.gmdPromedio} />
             <span className="resumen-sesion-auxiliar">
-              {resumen.conGmd} de {resumen.cantidad} animales con pesaje anterior
+              {resumen.conGmd} de {resumen.cantidad} animales con peso previo (incluye el peso de ingreso)
             </span>
           </dd>
         </div>

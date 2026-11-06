@@ -22,11 +22,13 @@ export function calcularResumenPesos(pesos) {
 }
 
 /**
- * GMD promedio de una sesión: solo cuenta los animales que ya tienen un
- * pesaje anterior (gmd no nula) -- el resto todavía no tiene con qué
- * calcularla, y promediar null como 0 inflaría el promedio hacia abajo sin
- * sentido. "conGmd" es el "n" de la leyenda "n de m animales con pesaje
- * anterior"; "total" es el "m".
+ * GMD promedio de una sesión: solo cuenta los animales que tienen gmd no
+ * nula -- el resto todavía no tiene con qué calcularla (un pesaje del
+ * mismo día del ingreso, sin ningún pesaje anterior; ver
+ * AnimalService.calcularGmdEntre en el backend), y promediar null como 0
+ * inflaría el promedio hacia abajo sin sentido. "conGmd" es el "n" de la
+ * leyenda "n de m animales con peso previo (incluye el peso de ingreso)";
+ * "total" es el "m".
  */
 export function calcularGmdPromedioSesion(gmds) {
   const validos = gmds.filter((gmd) => gmd != null)

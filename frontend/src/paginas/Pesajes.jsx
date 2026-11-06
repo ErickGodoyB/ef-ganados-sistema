@@ -207,7 +207,7 @@ export default function Pesajes() {
         <div className="pesajes-busqueda-fila">
           {vista === 'sesiones' && (
             <div className="campo-busqueda campo-busqueda--con-icono">
-              <label htmlFor="pesajes-busqueda">Buscar por lote o grupo</label>
+              <label htmlFor="pesajes-busqueda">Buscar por lote, grupo o código de sesión</label>
               <div className="campo-busqueda-entrada">
                 <Search aria-hidden="true" size={18} className="campo-busqueda-icono" />
                 <input
@@ -215,7 +215,7 @@ export default function Pesajes() {
                   type="search"
                   value={busqueda}
                   onChange={(evento) => setBusqueda(evento.target.value)}
-                  placeholder="Ej. Recría"
+                  placeholder="Ej. Recría o S-20261029-3"
                 />
               </div>
             </div>

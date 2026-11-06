@@ -6,7 +6,9 @@
  */
 
 import LoteInfo from '../../componentes/LoteInfo'
+import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
+import './celdasSesion.css'
 
 export function valorCelda(sesion, clave) {
   switch (clave) {
@@ -14,6 +16,8 @@ export function valorCelda(sesion, clave) {
       return formatearFecha(sesion.fecha)
     case 'lote':
       return <LoteInfo subGrupoDescripcion={sesion.subGrupoDescripcion} grupoDescripcion={sesion.grupoDescripcion} />
+    case 'codigo':
+      return <span className="celda-codigo-sesion">{calcularCodigoSesion(sesion.fecha, sesion.subGrupoId)}</span>
     case 'cantidad':
       return sesion.cantidad
     case 'promedio':
