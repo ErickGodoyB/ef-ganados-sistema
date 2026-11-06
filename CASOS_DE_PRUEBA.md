@@ -69,7 +69,7 @@ Nota sobre CP30: en AR-901 los dos pesajes tienen la misma fecha, así que cuál
 
 **Cambios posteriores que afectan a estos casos (2026-10-30/31):**
 - CP44 a CP46: el `DELETE` físico de pesajes se **eliminó**; lo reemplaza la anulación lógica (`PUT /api/pesajes/{id}/anular`), cubierta por pruebas automáticas.
-- CP21 a CP23, CP30 y CP35 (GMD): las expectativas de "GMD `null` con un solo pesaje" quedan **desactualizadas** cuando se construya la regla nueva (el peso inicial será el punto de partida del GMD; ver `CONTEXTO_PROYECTO.md`, sección 8). Hay que revalidarlas y actualizarlas entonces.
+- CP21 a CP23, CP30 y CP35 (GMD): las expectativas de "GMD `null` con un solo pesaje" (y otros valores calculados con la regla vieja) quedaron **desactualizadas** desde el 2026-11-05, cuando el peso inicial pasó a ser el punto de partida del GMD (ver `CONTEXTO_PROYECTO.md`, sección 8). Son resultados históricos; las pruebas automáticas ya validan la regla nueva. Si se necesitan como evidencia del informe, hay que repetirlas en Thunder Client.
 - CP33, CP36 y similares: ahora existe además la regla de **un pesaje activo por animal por día** (409).
 
 ## Casos nuevos cubiertos solo por pruebas automáticas (no probados en Thunder Client)
@@ -101,15 +101,20 @@ Hechas por el autor en PC (y celular Android) con los datos `TEST-xx`.
 | UI-07 | Buscadores: ícono de lupa sobre el texto de ejemplo | Aprobado tras corrección (la clase de padding estaba en el elemento equivocado) |
 | UI-08 | Mi cuenta: clave actual incorrecta | Aprobado: muestra el error y no cierra la sesión |
 | UI-09 | Mi cuenta: cambio real de clave (`admin`) e ingreso con la nueva | Aprobado |
-| UI-10 | Pestaña Individual: "Guardar y agregar otro" | Parcial: limpia animal y peso y conserva la fecha, pero no devolvía el foco al buscador; corregido por Claude Code el 2026-10-31 (falta verificar en pantalla) |
+| UI-10 | Pestaña Individual: "Guardar y agregar otro" | Aprobado tras corrección (2026-11-05): limpia animal y peso, conserva la fecha y devuelve el foco al buscador |
 | UI-11 | Pestaña Individual: animal que ya tiene pesaje ese día | Aprobado: avisa `El animal AR-001 ya tiene un pesaje activo el 30/10/2026...` y no deja cargar |
-| UI-12 | Alta rápida de animal desde el modal (caravana inexistente) | **Falla**: guarda el animal, pero al volver no quedan elegidos el lote ni el animal ni el foco en el peso. Cancelar sí vuelve sin cambios. Corrección pedida, pendiente |
+| UI-12 | Alta rápida de animal desde el modal (caravana inexistente) | Aprobado tras corrección (2026-11-06): el modal desmontaba la pestaña; ahora vuelve con lote, fecha y animal elegidos, el peso inicial precargado y el foco en "+ Agregar" (probado en Por lote e Individual) |
 | UI-13 | Animal con ingreso posterior a la fecha (TEST-25, fecha 2026-07-05) | Aprobado: explica que ingresó el 26/07/2026 y no ofrece registrar animal nuevo |
 | UI-14 | Peso menor al último del animal | Aprobado: avisa sin bloquear; diferencia y GMD negativos con ícono y texto |
 | UI-15 | GMD promedio en el detalle de una sesión | Aprobado |
 | UI-16 | Prueba en celular Android (modal, tarjetas, Intervalo, Mi cuenta) | Aprobado |
+| UI-17 | GMD con un solo pesaje (TEST-01, TEST-05, TEST-09) | Aprobado (2026-11-06): ahora muestra ganancia diaria calculada contra el peso y la fecha de ingreso; un animal sin pesajes sigue en "—" |
+| UI-18 | Detalle de sesión: primer pesaje de un animal | Aprobado: "Peso anterior" con etiqueta "ingreso" y GMD calculado |
+| UI-19 | Código de sesión (`S-AAMMDD-N`): chip en la primera columna y búsqueda parcial | Aprobado |
+| UI-20 | Alta de animal con peso inicial el día de hoy y pesaje del mismo peso el mismo día | Aprobado: se crea un pesaje real, diferencia 0,0 kg y GMD "—" (0 días desde el ingreso) |
+| UI-21 | Aviso de pesaje retroactivo (fecha anterior al último pesaje del animal) | **Parcial**: el aviso aparece, pero en la pestaña "Individual" no deja guardar (defecto abierto, por investigar). En "Por lote" los animales con ingreso posterior a la fecha no se ofrecen (comportamiento diseñado); el guardado retroactivo en esa pestaña no se llegó a probar |
 
-**Hallazgo (2026-10-31):** un animal con un solo pesaje no mostraba ganancia diaria porque el peso inicial no se consideraba punto de partida. Se decidió que el peso inicial a la fecha de ingreso sea el punto de partida del GMD (regla pendiente de construir).
+**Hallazgo (2026-10-31), resuelto el 2026-11-05:** un animal con un solo pesaje no mostraba ganancia diaria porque el peso inicial no se consideraba punto de partida. Ahora el peso inicial a la fecha de ingreso es el punto de partida del GMD (UI-17 y UI-18).
 
 Nota sobre CP13: el primer intento dio 405 (Method Not Allowed) porque la petición salió como POST
 en lugar de PUT (error del probador, no del sistema). Repetida con PUT, devolvió 200.
@@ -160,15 +165,15 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras las sesiones de pesaje (2026-10-28): 59 de 59 aprobadas, 0 fallos, 0 errores** (38 anteriores + 21 nuevas). Cubren: reglas de peso, fecha (futura, anterior al ingreso) y salida del animal; sesión todo o nada; animal repetido y sesión vacía; resumen de sesiones agrupado por fecha y lote (incluido "sin lote"); detalle con peso anterior y GMD; edición y borrado de pesajes; y `/api/auth/yo`. La prueba de atomicidad vive en su propia clase sin `@Transactional`, porque con la transacción de la prueba el "deshacer" no sería visible dentro del mismo método (en producción el rollback es inmediato).
 
-**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas**.
+**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100 aprobadas**.
 
-**Pruebas del frontend (Vitest, 2026-10-30): 135 de 135 aprobadas** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
+**Pruebas del frontend (Vitest): 135 el 2026-10-30, 146 el 2026-11-05 y 163 de 163 aprobadas el 2026-11-06** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
 
-La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalControllerTest` (22 tras las 4 nuevas) y la clase `PesajeAnulacionYFechaSesionControllerTest` (14, nueva). Las demás clases cambiaron de cantidad al adaptar los tests del `DELETE` y agregar los de anulación y clave; el desglose exacto se obtiene con `.\mvnw.cmd test`.
+La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalControllerTest` (23 tras las nuevas) y la clase `PesajeAnulacionYFechaSesionControllerTest` (14, nueva). Las demás clases cambiaron de cantidad al adaptar los tests del `DELETE` y agregar los de anulación y clave; el desglose exacto se obtiene con `.\mvnw.cmd test`.
 
 | Clase (`src/test/java/.../controller`) | Pruebas | Casos manuales que cubre |
 |---|---|---|
-| `AnimalControllerTest` | 22 | CP12 a CP17, CP19, CP20, listado (CP10), resumen (CP30) y resumen ampliado (CP31) |
+| `AnimalControllerTest` | 23 | CP12 a CP17, CP19, CP20, listado (CP10), resumen (CP30) y resumen ampliado (CP31) |
 | `PesajeControllerTest` | 3 | CP18 y registro de pesajes (201 y 404) |
 | `IndicadoresControllerTest` | 9 | CP08, CP09, CP11, CP21 a CP25, y valor límite (peso igual al objetivo) |
 | `AuthControllerTest` | 9 | CP26 a CP29 y validaciones: login correcto (200), contraseña incorrecta (401), falta `usuNombre` (400), falta `usuPassword` (400), endpoint protegido sin token (401) y con token (200), y que `usuPassword` no aparezca en la respuesta de usuarios |

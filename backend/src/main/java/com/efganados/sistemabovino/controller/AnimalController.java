@@ -202,7 +202,7 @@ public class AnimalController {
         Raza raza = animal.getRaza();
 
         Optional<Pesajes> ultimoPesaje = animalService.ultimoPesajeActivo(animal);
-        double pesoActual = ultimoPesaje.map(Pesajes::getPesaPeso).orElse(animal.getAniPesoInicial());
+        double pesoActual = ultimoPesaje.map(pesaje -> pesaje.getPesaPeso()).orElse(animal.getAniPesoInicial());
 
         return new AnimalResumen(
                 animal.getAniId(),
@@ -222,7 +222,7 @@ public class AnimalController {
                 pesoActual >= raza.getRzPesoObjetivoVenta(),
                 animal.getAniFechaIngreso(),
                 animal.getAniFechaEgreso(),
-                ultimoPesaje.map(Pesajes::getPesaFecha).orElse(null));
+                ultimoPesaje.map(pesaje -> pesaje.getPesaFecha()).orElse(null));
     }
 
     /**

@@ -52,7 +52,7 @@ public class AnimalService {
      * ningún pesaje, usa el peso inicial como mejor dato disponible.
      */
     public double pesoActual(Animal animal) {
-        return ultimoPesajeActivo(animal).map(Pesajes::getPesaPeso).orElse(animal.getAniPesoInicial());
+        return ultimoPesajeActivo(animal).map(pesaje -> pesaje.getPesaPeso()).orElse(animal.getAniPesoInicial());
     }
 
     /**
