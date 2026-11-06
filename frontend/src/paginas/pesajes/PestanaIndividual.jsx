@@ -8,8 +8,15 @@
  * buscador (vía el efecto que consume "pedidoFocoBuscador": enfocar en el
  * momento mismo de guardar no funciona porque el campo todavía tiene el
  * disabled viejo, de cuando guardando era true).
+ *
+ * Si la fecha elegida es anterior a fechaUltimoPesaje del animal (el
+ * resumen), se avisa (sin bloquear, ver avisoRetroactivo) en vez de
+ * comparar el peso contra el último registrado (avisoPesoMenor): ese
+ * "último" sería de una fecha posterior a la que se está cargando, así
+ * que la comparación no tendría sentido.
  */
 
+import { TriangleAlert } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import BuscadorAnimal from '../../componentes/BuscadorAnimal'
@@ -17,6 +24,7 @@ import { useAuth } from '../../auth/useAuth'
 import { motivoNoElegible } from '../../utilidades/elegibilidadPesaje'
 import { formatearPeso } from '../../utilidades/formato'
 import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
+import { avisoPesajeRetroactivo } from '../../utilidades/pesajeRetroactivo'
 import { useIdsYaPesadosEnFecha } from './useIdsYaPesadosEnFecha'
 import './PestanaIndividual.css'
 
@@ -79,15 +87,30 @@ export default function PestanaIndividual({
         caravana: animal.aniCaravana,
         lote: textoLoteDeAnimal(animal),
         pesoActual: animal.pesoActual,
+        fechaUltimoPesaje: animal.fechaUltimoPesaje,
+        subGrupoId: animal.subGrupoId,
       })
       setTexto(animal.aniCaravana)
-      // El siguiente dato que falta es el peso (la fecha ya estaba puesta
-      // de antes): a diferencia de "Por lote", acá no hay un botón
-      // "+ Agregar" al que mandar el foco si ya había un peso escrito.
+      // Si no había un peso ya escrito, se precarga con el peso inicial
+      // recién puesto en el alta rápida (editable); si ya había uno, se
+      // respeta (es justo lo que "salvo que el usuario ya hubiera escrito
+      // un peso antes" pide).
+      if (!peso.trim()) {
+        setPeso(String(animal.aniPesoInicial).replace('.', ','))
+      }
+      // El siguiente paso es revisar el peso (ya precargado) y guardar: a
+      // diferencia de "Por lote", acá "Guardar" dispara el POST real al
+      // toque, así que el foco va al peso (editable, sin riesgo) y no al
+      // botón -un Enter/espacio sin querer ahí ya guardaría de verdad-.
       refPeso.current?.focus()
       onConsumidaPreseleccion()
     }
     aplicarPreseleccion()
+    // "peso" se lee adentro (para no pisarlo si ya había algo escrito) pero
+    // a propósito no es una dependencia: el efecto solo tiene que correr
+    // cuando llega un animalParaPreseleccionar nuevo, nunca por el propio
+    // setPeso de acá arriba (eso lo reiniciaría en bucle).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animalParaPreseleccionar, onConsumidaPreseleccion])
 
   useEffect(() => {
@@ -107,6 +130,8 @@ export default function PestanaIndividual({
     caravana: animal.aniCaravana,
     lote: textoLoteDeAnimal(animal),
     pesoActual: animal.pesoActual,
+    fechaUltimoPesaje: animal.fechaUltimoPesaje,
+    subGrupoId: animal.subGrupoId,
   }))
 
   function elegir(opcion) {
@@ -130,8 +155,15 @@ export default function PestanaIndividual({
 
   const pesoNumero = parsearPeso(peso)
   const pesoValido = pesoTextoEsValido(peso)
+
+  // Si el pesaje es retroactivo, "pesoActual" es de una fecha posterior a
+  // la que se está cargando: compararlo contra el peso nuevo no tendría
+  // sentido, así que ese aviso se reemplaza por el retroactivo.
+  const avisoRetroactivo = animalElegido
+    ? avisoPesajeRetroactivo(animalElegido.caravana, fecha, animalElegido.fechaUltimoPesaje, animalElegido.subGrupoId)
+    : null
   const avisoPesoMenor =
-    animalElegido && pesoValido && pesoNumero < animalElegido.pesoActual
+    !avisoRetroactivo && animalElegido && pesoValido && pesoNumero < animalElegido.pesoActual
       ? `Es menor al último peso registrado (${formatearPeso(animalElegido.pesoActual)})`
       : ''
 
@@ -218,6 +250,13 @@ export default function PestanaIndividual({
               />
             </div>
           </div>
+
+          {avisoRetroactivo && (
+            <p className="pestana-individual-aviso-retroactivo" role="status">
+              <TriangleAlert aria-hidden="true" size={16} />
+              {avisoRetroactivo}
+            </p>
+          )}
 
           {avisoPesoMenor && (
             <p className="pestana-individual-aviso-peso" aria-live="polite">

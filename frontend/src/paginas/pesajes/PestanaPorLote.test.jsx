@@ -136,7 +136,7 @@ describe('PestanaPorLote', () => {
   })
 
   it(
-    'tras el alta rápida, sin un peso ya escrito, el animal queda elegido y el foco va al campo de peso',
+    'tras el alta rápida, sin un peso ya escrito, se precarga con el peso inicial recién puesto y el foco va a "Agregar"',
     async () => {
       const usuario = userEvent.setup()
       const onConsumidaPreseleccion = vi.fn()
@@ -156,49 +156,15 @@ describe('PestanaPorLote', () => {
       await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
       await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
 
-      const animalNuevo = { aniId: 99, aniCaravana: 'CAR-NUEVO', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, subGrupoId: 10, pesoActual: 150 }
-      rerender(
-        <PestanaPorLote
-          animales={[...ANIMALES, animalNuevo]}
-          cargandoAnimales={false}
-          errorAnimales=""
-          animalParaPreseleccionar={{ pestana: 'lote', animal: animalNuevo }}
-          onConsumidaPreseleccion={onConsumidaPreseleccion}
-          onRegistrarNuevo={vi.fn()}
-          onCerrar={vi.fn()}
-          onGuardado={vi.fn()}
-        />,
-      )
-
-      expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('CAR-NUEVO')
-      await waitFor(() => expect(screen.getByLabelText('Peso (kg)')).toHaveFocus())
-      expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
-    },
-  )
-
-  it(
-    'tras el alta rápida, con un peso ya escrito, el animal queda elegido, el peso se conserva y el foco va a "Agregar"',
-    async () => {
-      const usuario = userEvent.setup()
-      const onConsumidaPreseleccion = vi.fn()
-      configurarMock({})
-      const { rerender } = render(
-        <PestanaPorLote
-          animales={ANIMALES}
-          cargandoAnimales={false}
-          errorAnimales=""
-          animalParaPreseleccionar={null}
-          onConsumidaPreseleccion={onConsumidaPreseleccion}
-          onRegistrarNuevo={vi.fn()}
-          onCerrar={vi.fn()}
-          onGuardado={vi.fn()}
-        />,
-      )
-      await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
-      await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
-      await usuario.type(screen.getByLabelText('Peso (kg)'), '150')
-
-      const animalNuevo = { aniId: 99, aniCaravana: 'CAR-NUEVO', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, subGrupoId: 10, pesoActual: 150 }
+      const animalNuevo = {
+        aniId: 99,
+        aniCaravana: 'CAR-NUEVO',
+        aniFechaIngreso: '2026-01-01',
+        aniFechaEgreso: null,
+        subGrupoId: 10,
+        aniPesoInicial: 150,
+        pesoActual: 150,
+      }
       rerender(
         <PestanaPorLote
           animales={[...ANIMALES, animalNuevo]}
@@ -218,4 +184,102 @@ describe('PestanaPorLote', () => {
       expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
     },
   )
+
+  it(
+    'tras el alta rápida, con un peso ya escrito, el animal queda elegido, el peso se conserva (no se pisa con el inicial) y el foco va a "Agregar"',
+    async () => {
+      const usuario = userEvent.setup()
+      const onConsumidaPreseleccion = vi.fn()
+      configurarMock({})
+      const { rerender } = render(
+        <PestanaPorLote
+          animales={ANIMALES}
+          cargandoAnimales={false}
+          errorAnimales=""
+          animalParaPreseleccionar={null}
+          onConsumidaPreseleccion={onConsumidaPreseleccion}
+          onRegistrarNuevo={vi.fn()}
+          onCerrar={vi.fn()}
+          onGuardado={vi.fn()}
+        />,
+      )
+      await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
+      await usuario.type(screen.getByLabelText('Peso (kg)'), '175')
+
+      const animalNuevo = {
+        aniId: 99,
+        aniCaravana: 'CAR-NUEVO',
+        aniFechaIngreso: '2026-01-01',
+        aniFechaEgreso: null,
+        subGrupoId: 10,
+        aniPesoInicial: 150,
+        pesoActual: 150,
+      }
+      rerender(
+        <PestanaPorLote
+          animales={[...ANIMALES, animalNuevo]}
+          cargandoAnimales={false}
+          errorAnimales=""
+          animalParaPreseleccionar={{ pestana: 'lote', animal: animalNuevo }}
+          onConsumidaPreseleccion={onConsumidaPreseleccion}
+          onRegistrarNuevo={vi.fn()}
+          onCerrar={vi.fn()}
+          onGuardado={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('CAR-NUEVO')
+      expect(screen.getByLabelText('Peso (kg)')).toHaveValue('175')
+      await waitFor(() => expect(screen.getByRole('button', { name: /Agregar/ })).toHaveFocus())
+      expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it('avisa que el pesaje es retroactivo en la fila de la lista cuando la fecha es anterior a fechaUltimoPesaje del animal, y se actualiza si cambia la fecha', async () => {
+    const usuario = userEvent.setup()
+    const animalConPesajePosterior = {
+      aniId: 5,
+      aniCaravana: 'CAR-RETRO',
+      aniFechaIngreso: '2026-01-01',
+      aniFechaEgreso: null,
+      subGrupoId: 10,
+      pesoActual: 300,
+      fechaUltimoPesaje: '2026-02-10',
+    }
+    configurarMock({})
+    render(
+      <PestanaPorLote
+        animales={[...ANIMALES, animalConPesajePosterior]}
+        cargandoAnimales={false}
+        errorAnimales=""
+        animalParaPreseleccionar={null}
+        onConsumidaPreseleccion={vi.fn()}
+        onRegistrarNuevo={vi.fn()}
+        onCerrar={vi.fn()}
+        onGuardado={vi.fn()}
+      />,
+    )
+
+    await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
+    await usuario.clear(screen.getByLabelText('Fecha'))
+    await usuario.type(screen.getByLabelText('Fecha'), '2026-02-01')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
+
+    await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-RETRO')
+    await usuario.click(screen.getByRole('option', { name: /CAR-RETRO/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '310')
+    await usuario.click(screen.getByRole('button', { name: /Agregar/ }))
+
+    const mensaje =
+      'CAR-RETRO ya tiene un pesaje posterior (10/02/2026, sesión S-260210-10). ' +
+      'Este pesaje se guardará antes y recalculará la ganancia diaria de los posteriores.'
+    expect(screen.getAllByText(mensaje).length).toBeGreaterThan(0)
+
+    // Cambiamos la fecha a una posterior a fechaUltimoPesaje: ya no es retroactivo, el aviso desaparece.
+    await usuario.clear(screen.getByLabelText('Fecha'))
+    await usuario.type(screen.getByLabelText('Fecha'), '2026-03-01')
+
+    expect(screen.queryByText(mensaje)).not.toBeInTheDocument()
+  })
 })

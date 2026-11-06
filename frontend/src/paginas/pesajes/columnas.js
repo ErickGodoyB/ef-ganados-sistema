@@ -8,9 +8,12 @@
  */
 
 export const COLUMNAS = [
+  // "codigo" va primera a propósito (ver TablaSesiones.jsx/TarjetaSesion.jsx):
+  // el orden de este array es el orden real de columnas/datos, y el pedido
+  // fue que el código sea lo primero que se vea.
+  { clave: 'codigo', etiqueta: 'Sesión', campoOrden: 'codigo' },
   { clave: 'fecha', etiqueta: 'Fecha', campoOrden: 'fecha', obligatoria: true },
   { clave: 'lote', etiqueta: 'Lote', campoOrden: 'lote', obligatoria: true },
-  { clave: 'codigo', etiqueta: 'Sesión', campoOrden: 'codigo' },
   { clave: 'cantidad', etiqueta: 'Animales', campoOrden: 'cantidad' },
   { clave: 'promedio', etiqueta: 'Promedio', campoOrden: 'promedio' },
   { clave: 'minimo', etiqueta: 'Mínimo', campoOrden: 'minimo' },

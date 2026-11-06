@@ -1,11 +1,13 @@
 /**
  * Tabla semántica del listado de sesiones de pesaje (>= 768px, ver
- * TablaSesiones.css y la convención mobile-first de index.css). Las
- * columnas opcionales se muestran u ocultan según columnasVisibles;
- * "Fecha" y "Lote" son obligatorias y van primero. El encabezado de cada
- * columna es un botón: clic alterna ascendente/descendente y actualiza
- * aria-sort en el <th>, para que el estado del orden no dependa solo de un
- * ícono (mismo criterio que TablaAnimales.jsx).
+ * TablaSesiones.css y la convención mobile-first de index.css). El orden
+ * de las columnas sale directo de COLUMNAS (ver columnas.js: "código" va
+ * primera a propósito); "Fecha" y "Lote" son las únicas obligatorias (no
+ * se pueden ocultar desde el panel de opciones), el resto -"código"
+ * incluido- se muestra u oculta según columnasVisibles. El encabezado de
+ * cada columna es un botón: clic alterna ascendente/descendente y
+ * actualiza aria-sort en el <th>, para que el estado del orden no dependa
+ * solo de un ícono (mismo criterio que TablaAnimales.jsx).
  *
  * Cada fila abre el detalle de la sesión (ver ModalDetalleSesion.jsx) al
  * hacer clic en cualquier parte de ella. El <button> de la fecha es la

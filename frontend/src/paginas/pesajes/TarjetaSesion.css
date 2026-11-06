@@ -19,6 +19,13 @@
   background: var(--superficie-hover);
 }
 
+/* El chip en sí (.celda-codigo-sesion, ver celdasSesion.css) ya tiene su
+   propio ancho acotado; este div solo evita que ese chip se estire al
+   ancho completo de la tarjeta (es flex-direction: column). */
+.tarjeta-sesion-codigo {
+  align-self: flex-start;
+}
+
 .tarjeta-sesion-fecha {
   align-self: flex-start;
   font-size: 17px;

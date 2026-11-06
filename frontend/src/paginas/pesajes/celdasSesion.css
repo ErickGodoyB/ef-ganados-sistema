@@ -1,12 +1,22 @@
 /**
  * Código de sesión (ver celdasSesion.jsx y utilidades/codigoSesion.js):
- * monoespaciada y en texto secundario para que no compita visualmente con
- * la fecha/lote (los identificadores "reales" de la sesión), y sin
- * wrapping porque siempre tiene el mismo largo.
+ * chip chico, monoespaciado y de fondo apagado (mismo color que .badge en
+ * estilos/base.css, pero más compacto para caber como primera columna de
+ * la tabla o primer dato de la tarjeta sin competir visualmente con la
+ * fecha/lote). --texto-secundario sobre --superficie-hover da >= 5:1 de
+ * contraste en claro y oscuro (ver ValorPesoAnterior.css, que ya usa esta
+ * misma combinación).
  */
 .celda-codigo-sesion {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-family: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--texto-secundario);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
   white-space: nowrap;
 }

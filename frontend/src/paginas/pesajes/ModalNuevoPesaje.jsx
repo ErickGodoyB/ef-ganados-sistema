@@ -87,14 +87,21 @@ export default function ModalNuevoPesaje({ onCerrar, onGuardado, onGuardadoParci
   // Al volver a "tabs" con un animal para preseleccionar, el foco no es
   // cosa de este componente: la pestaña de destino lo manda a algo más
   // específico (el peso, o "+ Agregar" si ya había uno escrito; ver su
-  // propio efecto). Si este efecto enfocara la pestaña igual, ganaría la
-  // carrera (los efectos de este componente corren después que los de sus
-  // hijos) y pisaría ese foco más específico.
+  // propio efecto). "animalParaPreseleccionar" se lee (para no pisar ese
+  // foco más específico) pero A PROPÓSITO no es una dependencia: ese mismo
+  // objeto se vuelve null un instante después, cuando la pestaña avisa que
+  // ya lo consumió (onConsumidaPreseleccion) -si ese cambio también
+  // disparara este efecto, correría otra vez DESPUÉS del de la pestaña (los
+  // efectos de este componente corren después que los de sus hijos) y le
+  // robaría el foco al botón/campo que acababa de enfocar. Este efecto solo
+  // tiene que reaccionar a un cambio de pestaña o de vista en sí, nunca a
+  // que la preselección se haya terminado de consumir.
   useEffect(() => {
     if (vista === 'tabs' && animalParaPreseleccionar == null) {
       (pestanaActiva === 'lote' ? refTabLote : refTabIndividual).current?.focus()
     }
-  }, [vista, pestanaActiva, animalParaPreseleccionar])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vista, pestanaActiva])
 
   /** Flechas izquierda/derecha alternan entre las dos pestañas y mueven el foco con ellas (patrón ARIA tablist). */
   function manejarTeclaTab(evento) {

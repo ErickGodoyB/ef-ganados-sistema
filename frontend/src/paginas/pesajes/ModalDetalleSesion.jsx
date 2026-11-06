@@ -41,7 +41,7 @@ import PanelCambiarFechaSesion from './PanelCambiarFechaSesion'
 import TablaItemsSesion from './TablaItemsSesion'
 import TarjetaItemSesion from './TarjetaItemSesion'
 
-/** "dd/mm/aaaa · Lote — Grupo · S-AAAAMMDD-N" (o "Sin lote"), para el título del modal. */
+/** "dd/mm/aaaa · Lote — Grupo · S-AAMMDD-N" (o "Sin lote"), para el título del modal. */
 function tituloSesion(sesion, fecha) {
   const fechaFormateada = formatearFecha(fecha)
   const codigo = calcularCodigoSesion(fecha, sesion.subGrupoId)

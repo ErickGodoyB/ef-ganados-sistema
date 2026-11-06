@@ -117,9 +117,16 @@ describe('PestanaIndividual', () => {
     expect(screen.getByLabelText('Fecha')).toHaveValue(fechaPrevia)
   })
 
-  it('tras el alta rápida, el animal queda elegido en el buscador y el foco va al peso', () => {
+  it('tras el alta rápida, el animal queda elegido, el peso se precarga con el peso inicial recién puesto y el foco va al peso', () => {
     const onConsumidaPreseleccion = vi.fn()
-    const animalNuevo = { aniId: 99, aniCaravana: 'CAR-NUEVO', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, pesoActual: 180 }
+    const animalNuevo = {
+      aniId: 99,
+      aniCaravana: 'CAR-NUEVO',
+      aniFechaIngreso: '2026-01-01',
+      aniFechaEgreso: null,
+      aniPesoInicial: 180,
+      pesoActual: 180,
+    }
     const { rerender } = render(
       <PestanaIndividual
         animales={ANIMALES}
@@ -147,7 +154,88 @@ describe('PestanaIndividual', () => {
     )
 
     expect(screen.getByRole('combobox')).toHaveValue('CAR-NUEVO')
+    expect(screen.getByLabelText('Peso (kg)')).toHaveValue('180')
     expect(screen.getByLabelText('Peso (kg)')).toHaveFocus()
     expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
+  })
+
+  it('tras el alta rápida, si ya había un peso escrito antes, no se lo pisa con el peso inicial', async () => {
+    const usuario = userEvent.setup()
+    const onConsumidaPreseleccion = vi.fn()
+    const animalNuevo = {
+      aniId: 99,
+      aniCaravana: 'CAR-NUEVO',
+      aniFechaIngreso: '2026-01-01',
+      aniFechaEgreso: null,
+      aniPesoInicial: 180,
+      pesoActual: 180,
+    }
+    const { rerender } = render(
+      <PestanaIndividual
+        animales={ANIMALES}
+        cargandoAnimales={false}
+        errorAnimales=""
+        animalParaPreseleccionar={null}
+        onConsumidaPreseleccion={onConsumidaPreseleccion}
+        onRegistrarNuevo={vi.fn()}
+        onGuardado={vi.fn()}
+        onGuardadoParcial={vi.fn()}
+      />,
+    )
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '222')
+
+    rerender(
+      <PestanaIndividual
+        animales={[...ANIMALES, animalNuevo]}
+        cargandoAnimales={false}
+        errorAnimales=""
+        animalParaPreseleccionar={{ pestana: 'individual', animal: animalNuevo }}
+        onConsumidaPreseleccion={onConsumidaPreseleccion}
+        onRegistrarNuevo={vi.fn()}
+        onGuardado={vi.fn()}
+        onGuardadoParcial={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('Peso (kg)')).toHaveValue('222')
+  })
+
+  it('con una fecha anterior a fechaUltimoPesaje del animal, avisa que es retroactivo en vez de avisar peso menor', async () => {
+    const usuario = userEvent.setup()
+    const animalConPesajePosterior = {
+      aniId: 4,
+      aniCaravana: 'CAR-RETRO',
+      aniFechaIngreso: '2026-01-01',
+      aniFechaEgreso: null,
+      pesoActual: 300,
+      fechaUltimoPesaje: '2026-02-10',
+      subGrupoId: 3,
+    }
+    renderPestana({ animales: [...ANIMALES, animalConPesajePosterior] })
+
+    await usuario.clear(screen.getByLabelText('Fecha'))
+    await usuario.type(screen.getByLabelText('Fecha'), '2026-02-01')
+    await usuario.type(screen.getByRole('combobox'), 'CAR-RETRO')
+    await usuario.click(screen.getByRole('option', { name: /CAR-RETRO/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '250')
+
+    expect(
+      screen.getByText(
+        'CAR-RETRO ya tiene un pesaje posterior (10/02/2026, sesión S-260210-3). ' +
+          'Este pesaje se guardará antes y recalculará la ganancia diaria de los posteriores.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Es menor al último peso registrado/)).not.toBeInTheDocument()
+  })
+
+  it('si fechaUltimoPesaje no llega del backend, no avisa nada ni rompe', async () => {
+    const usuario = userEvent.setup()
+    renderPestana()
+
+    await usuario.type(screen.getByRole('combobox'), 'CAR-001')
+    await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '50')
+
+    expect(screen.getByText('Es menor al último peso registrado (200,0 kg)')).toBeInTheDocument()
   })
 })

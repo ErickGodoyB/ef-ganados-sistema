@@ -12,7 +12,10 @@
  * Cambiar el LOTE vacía la lista acumulada (pide confirmación, porque esos
  * animales pertenecían al lote anterior); cambiar la FECHA no la vacía,
  * pero puede sacar de ella -avisando cuáles- a los animales que dejaron de
- * servir para la fecha nueva (ver el efecto que verifica la sesión).
+ * servir para la fecha nueva (ver el efecto que verifica la sesión), y
+ * puede hacer que alguna fila ya cargada pase a ser retroactiva (ver
+ * avisoPesajeRetroactivo en el render de la lista: se recalcula solo, en
+ * cada render, contra la fecha vigente).
  *
  * Expone, vía ref, solicitarCierre(): mismo criterio que FormularioAnimal
  * (ver su JSDoc), para que el modal que la envuelve respete la misma
@@ -20,13 +23,14 @@
  */
 
 import { Plus, TriangleAlert, X } from 'lucide-react'
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { useAuth } from '../../auth/useAuth'
 import BuscadorAnimal from '../../componentes/BuscadorAnimal'
 import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
 import { motivoNoElegible } from '../../utilidades/elegibilidadPesaje'
 import { formatearPeso } from '../../utilidades/formato'
+import { avisoPesajeRetroactivo } from '../../utilidades/pesajeRetroactivo'
 import { calcularDiferenciaPeso, parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
 import { calcularResumenPesos } from '../../utilidades/resumenSesion'
 // Reutiliza ".resumen-sesion" (el resumen en vivo) y ".tabla-items-sesion"
@@ -174,11 +178,11 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   // El animal recién creado por alta rápida (ver ModalNuevoPesaje.jsx) se
   // preselecciona acá apenas vuelve a mostrarse esta pestaña;
   // "onConsumidaPreseleccion" evita volver a aplicarlo en cada re-render.
-  // El peso NO se toca (el formulario de alta rápida nunca lo tocó): si el
-  // usuario ya lo había escrito antes de pedir el alta, sigue ahí. El foco
-  // va al botón "+ Agregar" cuando ese peso ya es válido (ya se puede
-  // confirmar la fila tal cual) o al campo de peso si todavía falta
-  // completarlo.
+  // Si no había un peso ya escrito, se precarga con el peso inicial recién
+  // puesto en el alta rápida (editable); si ya había uno, se respeta. El
+  // foco va al botón "+ Agregar" cuando el peso (precargado o el que ya
+  // había) es válido -ya se puede confirmar la fila tal cual-, o al campo
+  // de peso si por algún motivo no lo es.
   useEffect(() => {
     function aplicarPreseleccion() {
       if (animalParaPreseleccionar?.pestana !== 'lote') {
@@ -187,7 +191,13 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
       const animal = animalParaPreseleccionar.animal
       setAnimalCarga({ id: animal.aniId, caravana: animal.aniCaravana, pesoActual: animal.pesoActual })
       setTextoCarga(animal.aniCaravana)
-      if (pesoTextoEsValido(pesoCarga)) {
+      // Se calcula el valor final del peso de una (en vez de leerlo del
+      // estado después de setPesoCarga) porque la validez de ESE valor es
+      // justo lo que decide a dónde va el foco, más abajo: leer "pesoCarga"
+      // acá daría el valor viejo, de antes de este mismo render.
+      const pesoFinal = pesoCarga.trim() ? pesoCarga : String(animal.aniPesoInicial).replace('.', ',')
+      setPesoCarga(pesoFinal)
+      if (pesoTextoEsValido(pesoFinal)) {
         // No se puede enfocar el botón acá todavía: su disabled depende de
         // animalCarga, que recién se acaba de pedir más arriba y todavía no
         // se renderizó (ver el efecto de abajo, que lo consume una vez que
@@ -199,7 +209,12 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
       onConsumidaPreseleccion()
     }
     aplicarPreseleccion()
-  }, [animalParaPreseleccionar, onConsumidaPreseleccion, pesoCarga])
+    // "pesoCarga" se lee adentro (para no pisarlo si ya había algo escrito)
+    // pero a propósito no es una dependencia: el efecto solo tiene que
+    // correr cuando llega un animalParaPreseleccionar nuevo, nunca por el
+    // propio setPesoCarga de acá arriba (eso lo reiniciaría en bucle).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animalParaPreseleccionar, onConsumidaPreseleccion])
 
   const animalesDelLote = useMemo(() => {
     if (!loteId) {
@@ -528,50 +543,77 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
                 </tr>
               </thead>
               <tbody>
-                {listaAcumulada.map((fila) => (
-                  <tr key={fila.animal.aniId}>
-                    <td className="tabla-items-sesion-caravana">{fila.animal.aniCaravana}</td>
-                    <td>{fila.animal.razaDescripcion}</td>
-                    <td>{formatearPeso(fila.animal.pesoActual)}</td>
-                    <td>
-                      <label className="visualmente-oculto" htmlFor={`fila-peso-${fila.animal.aniId}`}>
-                        Peso de {fila.animal.aniCaravana}
-                      </label>
-                      <input
-                        id={`fila-peso-${fila.animal.aniId}`}
-                        className="entrada"
-                        type="text"
-                        inputMode="decimal"
-                        value={fila.pesoTexto}
-                        onChange={(evento) => actualizarPesoFila(fila.animal.aniId, evento.target.value)}
-                        disabled={guardando}
-                        aria-invalid={!pesoFilaValido(fila)}
-                      />
-                    </td>
-                    <td>
-                      <ValorDiferenciaPeso
-                        diferencia={pesoFilaValido(fila) ? calcularDiferenciaPeso(parsearPeso(fila.pesoTexto), fila.animal.pesoActual) : null}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="boton-fantasma pestana-por-lote-boton-quitar"
-                        onClick={() => quitarFila(fila.animal.aniId)}
-                        disabled={guardando}
-                        aria-label={`Quitar a ${fila.animal.aniCaravana} de la lista`}
-                      >
-                        <X aria-hidden="true" size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {listaAcumulada.map((fila) => {
+                  const avisoRetroactivo = avisoPesajeRetroactivo(
+                    fila.animal.aniCaravana,
+                    fecha,
+                    fila.animal.fechaUltimoPesaje,
+                    fila.animal.subGrupoId,
+                  )
+                  return (
+                    <Fragment key={fila.animal.aniId}>
+                      <tr>
+                        <td className="tabla-items-sesion-caravana">{fila.animal.aniCaravana}</td>
+                        <td>{fila.animal.razaDescripcion}</td>
+                        <td>{formatearPeso(fila.animal.pesoActual)}</td>
+                        <td>
+                          <label className="visualmente-oculto" htmlFor={`fila-peso-${fila.animal.aniId}`}>
+                            Peso de {fila.animal.aniCaravana}
+                          </label>
+                          <input
+                            id={`fila-peso-${fila.animal.aniId}`}
+                            className="entrada"
+                            type="text"
+                            inputMode="decimal"
+                            value={fila.pesoTexto}
+                            onChange={(evento) => actualizarPesoFila(fila.animal.aniId, evento.target.value)}
+                            disabled={guardando}
+                            aria-invalid={!pesoFilaValido(fila)}
+                          />
+                        </td>
+                        <td>
+                          <ValorDiferenciaPeso
+                            diferencia={pesoFilaValido(fila) ? calcularDiferenciaPeso(parsearPeso(fila.pesoTexto), fila.animal.pesoActual) : null}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="boton-fantasma pestana-por-lote-boton-quitar"
+                            onClick={() => quitarFila(fila.animal.aniId)}
+                            disabled={guardando}
+                            aria-label={`Quitar a ${fila.animal.aniCaravana} de la lista`}
+                          >
+                            <X aria-hidden="true" size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                      {avisoRetroactivo && (
+                        <tr className="pestana-por-lote-fila-aviso">
+                          <td colSpan={6}>
+                            <p className="pestana-por-lote-aviso-retroactivo" role="status">
+                              <TriangleAlert aria-hidden="true" size={16} />
+                              {avisoRetroactivo}
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>
 
           <div className="pestana-por-lote-tarjetas-solo-movil">
-            {listaAcumulada.map((fila) => (
+            {listaAcumulada.map((fila) => {
+              const avisoRetroactivo = avisoPesajeRetroactivo(
+                fila.animal.aniCaravana,
+                fecha,
+                fila.animal.fechaUltimoPesaje,
+                fila.animal.subGrupoId,
+              )
+              return (
               <article key={fila.animal.aniId} className="pestana-por-lote-tarjeta tarjeta">
                 <div className="pestana-por-lote-tarjeta-encabezado">
                   <span className="pestana-por-lote-tarjeta-caravana">{fila.animal.aniCaravana}</span>
@@ -586,6 +628,12 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
                   </button>
                 </div>
                 <p className="pestana-por-lote-tarjeta-raza">{fila.animal.razaDescripcion}</p>
+                {avisoRetroactivo && (
+                  <p className="pestana-por-lote-aviso-retroactivo" role="status">
+                    <TriangleAlert aria-hidden="true" size={16} />
+                    {avisoRetroactivo}
+                  </p>
+                )}
                 <div className="campo">
                   <label htmlFor={`tarjeta-peso-${fila.animal.aniId}`}>Peso (kg)</label>
                   <input
@@ -613,7 +661,8 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
                   </div>
                 </dl>
               </article>
-            ))}
+              )
+            })}
           </div>
         </>
       )}

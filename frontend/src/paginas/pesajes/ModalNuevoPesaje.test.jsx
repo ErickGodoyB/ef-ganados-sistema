@@ -69,7 +69,9 @@ function configurarMock() {
         subGrupoId: creado.subGrupoId ?? null,
         subGrupoDescripcion: creado.subGrupoId ? LOTE_B.sbDescripcion : null,
         grupoDescripcion: null,
+        aniPesoInicial: creado.aniPesoInicial,
         pesoActual: creado.aniPesoInicial,
+        fechaUltimoPesaje: null,
         aniFechaIngreso: creado.aniFechaIngreso,
         aniFechaEgreso: null,
       })
@@ -123,11 +125,15 @@ describe('ModalNuevoPesaje - alta rápida de un animal', () => {
     await usuario.type(screen.getByLabelText('Peso inicial (kg)'), '180')
     await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
 
-    // Volvió a "Por lote": nada de lo elegido antes se perdió.
+    // Volvió a "Por lote": nada de lo elegido antes se perdió, el peso
+    // queda precargado con el peso inicial recién puesto en el alta
+    // rápida (180, no se había escrito nada antes) y el foco va a
+    // "+ Agregar" porque ese peso ya es válido.
     await waitFor(() => expect(screen.queryByLabelText('Caravana')).not.toBeInTheDocument())
     expect(panelActivo().getByLabelText('Lote')).toHaveValue('20')
     expect(panelActivo().getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('TEST-95')
-    await waitFor(() => expect(panelActivo().getByLabelText('Peso (kg)')).toHaveFocus())
+    expect(panelActivo().getByLabelText('Peso (kg)')).toHaveValue('180')
+    await waitFor(() => expect(panelActivo().getByRole('button', { name: /Agregar/ })).toHaveFocus())
   })
 
   it('en "Individual": tras registrar el animal nuevo, la fecha elegida no se pierde, y el animal queda elegido con foco en el peso', async () => {
@@ -155,10 +161,14 @@ describe('ModalNuevoPesaje - alta rápida de un animal', () => {
     await usuario.type(screen.getByLabelText('Peso inicial (kg)'), '150')
     await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
 
-    // Volvió a "Individual": la fecha elegida sigue siendo la misma.
+    // Volvió a "Individual": la fecha elegida sigue siendo la misma, el
+    // peso queda precargado con el peso inicial recién puesto en el alta
+    // rápida (150) y el foco va al peso (acá "Guardar" dispara el POST
+    // real, así que no conviene dejarlo ahí enfocado).
     await waitFor(() => expect(screen.queryByLabelText('Caravana')).not.toBeInTheDocument())
     expect(panelActivo().getByLabelText('Fecha')).toHaveValue('2026-01-15')
     expect(panelActivo().getByRole('combobox', { name: 'Buscar animal por caravana' })).toHaveValue('TEST-96')
+    expect(panelActivo().getByLabelText('Peso (kg)')).toHaveValue('150')
     await waitFor(() => expect(panelActivo().getByLabelText('Peso (kg)')).toHaveFocus())
   })
 })

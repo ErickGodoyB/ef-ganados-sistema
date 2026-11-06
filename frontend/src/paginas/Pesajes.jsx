@@ -215,7 +215,7 @@ export default function Pesajes() {
                   type="search"
                   value={busqueda}
                   onChange={(evento) => setBusqueda(evento.target.value)}
-                  placeholder="Ej. Recría o S-20261029-3"
+                  placeholder="Ej. Recría o S-261029-3"
                 />
               </div>
             </div>

@@ -24,6 +24,19 @@
   }
 }
 
+/* Mismo lenguaje visual que .pestana-por-lote-aviso-sesion (PestanaPorLote.css): informativo, no bloqueante. */
+.pestana-individual-aviso-retroactivo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -8px 0 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-acento-texto);
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-sm);
+}
+
 .pestana-individual-aviso-peso {
   margin: -8px 0 0;
   font-size: 13px;

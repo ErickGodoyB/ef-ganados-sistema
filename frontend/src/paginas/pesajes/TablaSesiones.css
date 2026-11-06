@@ -45,19 +45,15 @@
   background: var(--superficie-hover);
 }
 
-/* La fecha es siempre la primera columna (ver TablaSesiones.jsx): se
-   destaca en negrita porque es el identificador principal de la sesión. */
-.tabla-sesiones tbody td:first-child {
-  font-weight: 700;
-}
-
 /* Botón que abre el detalle de la sesión (ver TablaSesiones.jsx): sin
-   fondo ni borde propio, hereda la negrita de la celda; el clic en
-   cualquier otro punto de la fila hace lo mismo (burbujea hasta el onClick
-   de <tr>). */
+   fondo ni borde propio, en negrita propia porque es el identificador
+   principal de la sesión (antes salía de un ":first-child" en la celda,
+   pero la fecha ya no es necesariamente la primera columna ahora que
+   "código" puede ir antes, ver columnas.js). El clic en cualquier otro
+   punto de la fila hace lo mismo (burbujea hasta el onClick de <tr>). */
 .tabla-sesiones-boton-fecha {
   font: inherit;
-  font-weight: inherit;
+  font-weight: 700;
   color: var(--texto);
   background: none;
   border: none;

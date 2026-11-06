@@ -77,6 +77,26 @@
   color: var(--texto-secundario);
 }
 
+/* Aviso de pesaje retroactivo por fila (ver PestanaPorLote.jsx): mismo
+   lenguaje visual que .pestana-por-lote-aviso-sesion. En la tabla va en
+   una fila propia, debajo de la del animal (ver ese ".pestana-por-lote-
+   fila-aviso"); en la tarjeta, como un párrafo más dentro de ella. */
+.pestana-por-lote-aviso-retroactivo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-acento-texto);
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.pestana-por-lote-fila-aviso td {
+  padding-top: 0;
+}
+
 .pestana-por-lote-tabla-solo-escritorio {
   display: none;
 }
