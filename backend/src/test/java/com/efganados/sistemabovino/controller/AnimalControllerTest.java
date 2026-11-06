@@ -387,7 +387,7 @@ class AnimalControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
-    @DisplayName("El resumen de un animal sin pesajes usa el peso inicial, con GMD nula, no apto para venta y cantidadPesajes 0")
+    @DisplayName("El resumen de un animal sin pesajes usa el peso inicial, con GMD nula, no apto para venta, cantidadPesajes 0 y fechaUltimoPesaje nula")
     void resumenDeAnimalSinPesajesUsaPesoInicialYGmdNula() throws Exception {
         Persona duenio = crearPersona("Dueño-Resumen1");
         Raza raza = crearRaza("Raza-Resumen-SinPesajes", 450.0);
@@ -404,7 +404,8 @@ class AnimalControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$[0].pesoActual").value(200.0))
                 .andExpect(jsonPath("$[0].gmd").value(nullValue()))
                 .andExpect(jsonPath("$[0].aptoVenta").value(false))
-                .andExpect(jsonPath("$[0].cantidadPesajes").value(0));
+                .andExpect(jsonPath("$[0].cantidadPesajes").value(0))
+                .andExpect(jsonPath("$[0].fechaUltimoPesaje").value(nullValue()));
     }
 
     @Test
@@ -459,7 +460,7 @@ class AnimalControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
-    @DisplayName("El resumen de un animal con dos pesajes usa el más reciente como peso actual y calcula la GMD")
+    @DisplayName("El resumen de un animal con dos pesajes usa el más reciente como peso actual, fecha de último pesaje y calcula la GMD")
     void resumenDeAnimalConDosPesajesUsaElMasRecienteYCalculaGmd() throws Exception {
         Persona duenio = crearPersona("Dueño-Resumen2");
         Persona responsable = crearPersona("Responsable-Resumen2");
@@ -473,7 +474,27 @@ class AnimalControllerTest extends AutenticacionTestSupport {
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].pesoActual").value(245.0))
-                .andExpect(jsonPath("$[0].gmd").value(1.0));
+                .andExpect(jsonPath("$[0].gmd").value(1.0))
+                .andExpect(jsonPath("$[0].fechaUltimoPesaje").value("2026-09-14"));
+    }
+
+    @Test
+    @DisplayName("El resumen ignora el pesaje ACTIVO más reciente si está anulado: usa el activo anterior como fecha de último pesaje y peso actual")
+    void resumenConElPesajeMasRecienteAnuladoUsaElActivoAnterior() throws Exception {
+        Persona duenio = crearPersona("Dueño-Resumen-Anulado");
+        Persona responsable = crearPersona("Responsable-Resumen-Anulado");
+        Raza raza = crearRaza("Raza-Resumen-Anulado", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Resumen-Anulado");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-RES-ANU-001", 200.0);
+        registrarPesaje(animal, responsable, 215.0, LocalDate.of(2026, 8, 15));
+        // Anulado, y más reciente que el activo de arriba: no debe contar ni como peso actual ni como fecha de último pesaje.
+        registrarPesajeAnulado(animal, responsable, 999.0, LocalDate.of(2026, 9, 14));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoActual").value(215.0))
+                .andExpect(jsonPath("$[0].fechaUltimoPesaje").value("2026-08-15"));
     }
 
     @Test

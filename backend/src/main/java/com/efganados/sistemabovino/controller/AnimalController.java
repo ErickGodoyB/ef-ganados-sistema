@@ -2,6 +2,7 @@ package com.efganados.sistemabovino.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -186,16 +187,22 @@ public class AnimalController {
 
     /**
      * Arma el resumen de un animal usando los métodos ya existentes de
-     * {@code AnimalService} (pesoActual, calcularGMD, estaAptoParaVenta):
-     * no reimplementa ninguna regla de negocio, solo junta sus resultados
-     * con los datos del animal, su dueño, su raza y su lote (si tiene
-     * subgrupo).
+     * {@code AnimalService} (calcularGMD, ultimoPesajeActivo): no
+     * reimplementa ninguna regla de negocio, solo junta sus resultados con
+     * los datos del animal, su dueño, su raza y su lote (si tiene
+     * subgrupo). pesoActual y aptoVenta se calculan acá mismo a partir de
+     * ultimoPesajeActivo (en vez de llamar a AnimalService.pesoActual()/
+     * estaAptoParaVenta(), que harían la misma consulta por su cuenta) para
+     * poder compartirla con fechaUltimoPesaje sin repetirla.
      */
     private AnimalResumen aResumen(Animal animal) {
         SubGrupo subGrupo = animal.getSubGrupo();
         Grupo grupo = subGrupo != null ? subGrupo.getGrupo() : null;
         Persona duenio = animal.getDuenio();
         Raza raza = animal.getRaza();
+
+        Optional<Pesajes> ultimoPesaje = animalService.ultimoPesajeActivo(animal);
+        double pesoActual = ultimoPesaje.map(Pesajes::getPesaPeso).orElse(animal.getAniPesoInicial());
 
         return new AnimalResumen(
                 animal.getAniId(),
@@ -210,11 +217,12 @@ public class AnimalController {
                 animal.getAniPesoInicial(),
                 animal.getAniObservacion(),
                 pesajesRepository.countByAnimal_AniIdAndPesaEstado(animal.getAniId(), EstadoPesaje.ACTIVO),
-                animalService.pesoActual(animal),
+                pesoActual,
                 animalService.calcularGMD(animal),
-                animalService.estaAptoParaVenta(animal),
+                pesoActual >= raza.getRzPesoObjetivoVenta(),
                 animal.getAniFechaIngreso(),
-                animal.getAniFechaEgreso());
+                animal.getAniFechaEgreso(),
+                ultimoPesaje.map(Pesajes::getPesaFecha).orElse(null));
     }
 
     /**
@@ -299,11 +307,13 @@ public class AnimalController {
     /**
      * Resumen de un animal para el listado (RF010). Si el animal no tiene
      * subgrupo asignado, subGrupoId, subGrupoDescripcion y grupoDescripcion
-     * van en null.
+     * van en null. fechaUltimoPesaje es la fecha del pesaje ACTIVO más
+     * reciente (uno anulado no cuenta); null si el animal no tiene ningún
+     * pesaje activo.
      */
     public record AnimalResumen(Long aniId, String aniCaravana, Long duenioId, String duenioNombre, Long razaId,
             String razaDescripcion, Long subGrupoId, String subGrupoDescripcion, String grupoDescripcion,
             double aniPesoInicial, String aniObservacion, long cantidadPesajes, double pesoActual, Double gmd,
-            boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso) {
+            boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso, LocalDate fechaUltimoPesaje) {
     }
 }

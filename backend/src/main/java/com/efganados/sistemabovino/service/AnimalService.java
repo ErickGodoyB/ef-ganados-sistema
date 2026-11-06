@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -35,16 +36,23 @@ public class AnimalService {
     }
 
     /**
+     * El pesaje ACTIVO más reciente del animal, si tiene alguno. Es la base
+     * de {@link #pesoActual}; quien necesite tanto el peso actual como su
+     * fecha (ver AnimalController.aResumen y AnimalResumen.fechaUltimoPesaje)
+     * debería llamar a este método una sola vez en vez de pesoActual(), que
+     * dispara esta misma consulta por su cuenta, para no repetirla.
+     */
+    public Optional<Pesajes> ultimoPesajeActivo(Animal animal) {
+        return pesajesRepository.findTop2ByAnimal_AniIdAndPesaEstadoOrderByPesaFechaDesc(
+                animal.getAniId(), EstadoPesaje.ACTIVO).stream().findFirst();
+    }
+
+    /**
      * Devuelve el peso del pesaje más reciente del animal. Si todavía no tiene
      * ningún pesaje, usa el peso inicial como mejor dato disponible.
      */
     public double pesoActual(Animal animal) {
-        List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdAndPesaEstadoOrderByPesaFechaDesc(
-                animal.getAniId(), EstadoPesaje.ACTIVO);
-        if (!pesajes.isEmpty()) {
-            return pesajes.get(0).getPesaPeso();
-        }
-        return animal.getAniPesoInicial();
+        return ultimoPesajeActivo(animal).map(Pesajes::getPesaPeso).orElse(animal.getAniPesoInicial());
     }
 
     /**
