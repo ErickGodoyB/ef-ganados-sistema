@@ -439,20 +439,24 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
     // ---- GET /api/pesajes/sesiones/detalle ----
 
     @Test
-    @DisplayName("El detalle de una sesión trae pesoAnterior y GMD correctos (primer pesaje null, mismo día 0.0)")
+    @DisplayName("El detalle de una sesión trae pesoAnterior y GMD correctos (primero contra el ingreso, segundo contra el primero el mismo día)")
     void detalleDeSesionTraePesoAnteriorYGmdCorrectos() throws Exception {
         SubGrupo subGrupo = crearSubGrupo("Lote-Detalle", "Grupo-Detalle");
         LocalDate ingreso = LocalDate.of(2026, 1, 1);
-        LocalDate fecha = LocalDate.of(2026, 4, 1);
+        LocalDate fecha = LocalDate.of(2026, 1, 11);
 
+        // crearAnimal fija aniPesoInicial en 200.0.
         Animal animal1 = crearAnimal("CAR-DET-001", subGrupo, ingreso);
         Animal animal2 = crearAnimal("CAR-DET-002", subGrupo, ingreso);
 
-        // animal1: dos pesajes el mismo día (ej. corrección): el segundo usa el
-        // primero como anterior, con 0 días de diferencia -> gmd 0.0.
+        // animal1: dos pesajes el mismo día (ej. corrección). El primero no
+        // tiene un pesaje ACTIVO anterior, así que se calcula contra el
+        // ingreso (10 días antes): gmd = (200-200)/10 = 0.0. El segundo SÍ
+        // tiene uno (el primero, mismo día): sigue la regla de siempre
+        // (0 días de diferencia -> 0.0, no null).
         registrarPesajeDirecto(animal1, 200.0, fecha);
         registrarPesajeDirecto(animal1, 210.0, fecha);
-        // animal2: un único pesaje -> sin anterior.
+        // animal2: un único pesaje, también contra el ingreso: gmd = (300-200)/10 = 10.0.
         registrarPesajeDirecto(animal2, 300.0, fecha);
 
         mockMvc.perform(get("/api/pesajes/sesiones/detalle")
@@ -463,15 +467,40 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].animalId").value(animal1.getAniId()))
                 .andExpect(jsonPath("$[0].peso").value(200.0))
-                .andExpect(jsonPath("$[0].pesoAnterior").value(nullValue()))
-                .andExpect(jsonPath("$[0].gmd").value(nullValue()))
+                .andExpect(jsonPath("$[0].pesoAnterior").value(200.0))
+                .andExpect(jsonPath("$[0].gmd").value(0.0))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(true))
+                .andExpect(jsonPath("$[0].fechaPesoAnterior").value(ingreso.toString()))
                 .andExpect(jsonPath("$[1].animalId").value(animal1.getAniId()))
                 .andExpect(jsonPath("$[1].peso").value(210.0))
                 .andExpect(jsonPath("$[1].pesoAnterior").value(200.0))
                 .andExpect(jsonPath("$[1].gmd").value(0.0))
+                .andExpect(jsonPath("$[1].pesoAnteriorEsIngreso").value(false))
+                .andExpect(jsonPath("$[1].fechaPesoAnterior").value(fecha.toString()))
                 .andExpect(jsonPath("$[2].animalId").value(animal2.getAniId()))
-                .andExpect(jsonPath("$[2].pesoAnterior").value(nullValue()))
-                .andExpect(jsonPath("$[2].gmd").value(nullValue()));
+                .andExpect(jsonPath("$[2].pesoAnterior").value(200.0))
+                .andExpect(jsonPath("$[2].gmd").value(10.0))
+                .andExpect(jsonPath("$[2].pesoAnteriorEsIngreso").value(true))
+                .andExpect(jsonPath("$[2].fechaPesoAnterior").value(ingreso.toString()));
+    }
+
+    @Test
+    @DisplayName("El detalle de una sesión, con el pesaje el mismo día del ingreso y sin pesaje anterior, trae gmd null")
+    void detalleDeSesionConPesajeElMismoDiaDelIngresoTraeGmdNull() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-Detalle-Ingreso", "Grupo-Detalle-Ingreso");
+        LocalDate ingreso = LocalDate.of(2026, 1, 1);
+
+        Animal animal = crearAnimal("CAR-DET-ING-001", subGrupo, ingreso);
+        registrarPesajeDirecto(animal, 200.0, ingreso);
+
+        mockMvc.perform(get("/api/pesajes/sesiones/detalle")
+                        .header("Authorization", token)
+                        .param("fecha", ingreso.toString())
+                        .param("subGrupoId", subGrupo.getSbId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoAnterior").value(200.0))
+                .andExpect(jsonPath("$[0].gmd").value(nullValue()))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(true));
     }
 
     @Test
@@ -491,28 +520,33 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
-    @DisplayName("El detalle de una sesión no incluye pesajes anulados ni los usa como pesoAnterior")
+    @DisplayName("El detalle de una sesión no incluye pesajes anulados ni los usa como pesoAnterior (cae al ingreso)")
     void detalleDeSesionNoIncluyePesajesAnulados() throws Exception {
         SubGrupo subGrupo = crearSubGrupo("Lote-Detalle-Anulado", "Grupo-Detalle-Anulado");
         LocalDate ingreso = LocalDate.of(2026, 1, 1);
+        LocalDate fecha = LocalDate.of(2026, 1, 11);
 
+        // crearAnimal fija aniPesoInicial en 200.0.
         Animal animal = crearAnimal("CAR-DET-ANU-001", subGrupo, ingreso);
-        // Pesaje anulado antes, que no debe contarse como "anterior".
-        registrarPesajeAnuladoDirecto(animal, 150.0, LocalDate.of(2026, 3, 15));
-        Pesajes activo = registrarPesajeDirecto(animal, 200.0, LocalDate.of(2026, 4, 1));
+        // Pesaje anulado antes, que no debe contarse como "anterior": como
+        // si no existiera, el único activo cae al ingreso (10 días antes).
+        registrarPesajeAnuladoDirecto(animal, 150.0, LocalDate.of(2026, 1, 5));
+        Pesajes activo = registrarPesajeDirecto(animal, 210.0, fecha);
         // Pesaje anulado el mismo día de la sesión consultada: no debe aparecer en el detalle.
-        registrarPesajeAnuladoDirecto(animal, 999.0, LocalDate.of(2026, 4, 1));
+        registrarPesajeAnuladoDirecto(animal, 999.0, fecha);
 
         mockMvc.perform(get("/api/pesajes/sesiones/detalle")
                         .header("Authorization", token)
-                        .param("fecha", LocalDate.of(2026, 4, 1).toString())
+                        .param("fecha", fecha.toString())
                         .param("subGrupoId", subGrupo.getSbId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].animalId").value(animal.getAniId()))
-                .andExpect(jsonPath("$[0].peso").value(200.0))
-                .andExpect(jsonPath("$[0].pesoAnterior").value(nullValue()))
-                .andExpect(jsonPath("$[0].gmd").value(nullValue()));
+                .andExpect(jsonPath("$[0].peso").value(210.0))
+                .andExpect(jsonPath("$[0].pesoAnterior").value(200.0))
+                .andExpect(jsonPath("$[0].gmd").value(1.0))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(true))
+                .andExpect(jsonPath("$[0].fechaPesoAnterior").value(ingreso.toString()));
 
         // Confirmamos además que el pesaje anulado quedó conservado, no borrado.
         Assertions.assertEquals(3, pesajesRepository.count());
@@ -711,11 +745,14 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        // Sin el segundo pesaje (anulado), queda solo uno: sin GMD (null) y peso actual 200.0.
+        // Sin el segundo pesaje (anulado), queda solo uno: sin un pesaje
+        // ACTIVO anterior, la GMD se calcula contra el ingreso y el peso
+        // inicial (ambos 200.0, igual que el único pesaje que queda) ->
+        // (200-200)/10 días = 0.0, no null.
         mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(content().string(""));
+                .andExpect(content().string("0.0"));
 
         mockMvc.perform(get("/api/animales/resumen")
                         .header("Authorization", token))

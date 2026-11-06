@@ -48,24 +48,49 @@ public class AnimalService {
     }
 
     /**
-     * Calcula la Ganancia Media Diaria entre los dos pesajes más recientes,
-     * sin importar el intervalo entre ellos. Devuelve null si hay menos de dos
-     * pesajes. El peso inicial del animal no participa del cálculo porque es
-     * solo informativo; la GMD se basa únicamente en pesajes registrados.
+     * Calcula la Ganancia Media Diaria del pesaje ACTIVO más reciente del
+     * animal contra su "anterior": el segundo pesaje ACTIVO más reciente si
+     * existe, o si no (el animal solo tiene un pesaje) el peso inicial y la
+     * fecha de ingreso, que pasan a servir de punto de partida (ver
+     * {@link #calcularGmdEntre}). Devuelve null si el animal no tiene ningún
+     * pesaje ACTIVO.
      */
     public Double calcularGMD(Animal animal) {
         List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdAndPesaEstadoOrderByPesaFechaDesc(
                 animal.getAniId(), EstadoPesaje.ACTIVO);
-        if (pesajes.size() < 2) {
+        if (pesajes.isEmpty()) {
             return null;
         }
         Pesajes masReciente = pesajes.get(0);
-        Pesajes anterior = pesajes.get(1);
-        long dias = ChronoUnit.DAYS.between(anterior.getPesaFecha(), masReciente.getPesaFecha());
-        if (dias == 0) {
-            return 0.0;
+        if (pesajes.size() >= 2) {
+            Pesajes anterior = pesajes.get(1);
+            return calcularGmdEntre(masReciente.getPesaPeso(), masReciente.getPesaFecha(),
+                    anterior.getPesaPeso(), anterior.getPesaFecha(), false);
         }
-        return (masReciente.getPesaPeso() - anterior.getPesaPeso()) / dias;
+        return calcularGmdEntre(masReciente.getPesaPeso(), masReciente.getPesaFecha(),
+                animal.getAniPesoInicial(), animal.getAniFechaIngreso(), true);
+    }
+
+    /**
+     * GMD entre un peso/fecha y su "anterior" (ver {@link #calcularGMD} y
+     * {@code PesajeService.aItemSesionPesaje}, los dos lugares que la usan:
+     * el resumen del animal solo mira el pesaje más reciente contra el
+     * segundo más reciente o el ingreso; el detalle de una sesión la
+     * calcula así para CUALQUIER pesaje ACTIVO, no solo el más reciente).
+     * Si el anterior es un pesaje real, 0 días de diferencia (mismo día) da
+     * 0.0, como siempre. Si el anterior es el ingreso, 0 días significa que
+     * el pesaje es del mismo día que el ingreso: no pasó tiempo todavía
+     * contra el único dato que hay, así que no hay nada que calcular (null),
+     * a diferencia de dos pesajes reales el mismo día (que sí son dos
+     * medidas distintas, aunque su diferencia en el tiempo sea cero).
+     */
+    public static Double calcularGmdEntre(double peso, LocalDate fecha, double pesoAnterior, LocalDate fechaAnterior,
+            boolean anteriorEsIngreso) {
+        long dias = ChronoUnit.DAYS.between(fechaAnterior, fecha);
+        if (dias == 0) {
+            return anteriorEsIngreso ? null : 0.0;
+        }
+        return (peso - pesoAnterior) / dias;
     }
 
     /**

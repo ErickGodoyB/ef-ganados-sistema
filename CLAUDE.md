@@ -31,9 +31,16 @@ TFG "Sistema de gestión bovina" para EF Ganados (Curuguaty, Paraguay).
 - El peso actual **nunca** se guarda como campo en `Animal`: se calcula a
   partir del pesaje más reciente en `Pesajes` (o del peso inicial, si el
   animal todavía no tiene ningún pesaje registrado).
-- **GMD** = (peso más reciente − peso anterior) / días entre los dos
-  pesajes más recientes. Es `null` si hay menos de 2 pesajes. Es `0.0` si
-  los días entre ambos son 0.
+- **GMD** = (peso − peso anterior) / días entre la fecha anterior y la
+  fecha del pesaje. El "anterior" de un pesaje ACTIVO es el pesaje ACTIVO
+  inmediatamente previo del mismo animal si tiene uno; si no (es su primer
+  pesaje activo), el anterior es el peso inicial y la fecha de ingreso del
+  animal. Si el anterior es un pesaje real, 0 días de diferencia da `0.0`
+  (como siempre). Si el anterior es el ingreso, 0 días da `null` (el
+  pesaje es del mismo día que el ingreso: no hay nada contra qué medir
+  todavía). La GMD del animal en el resumen es la de su pesaje ACTIVO más
+  reciente contra el anterior de ese pesaje; es `null` solo si el animal
+  no tiene ningún pesaje ACTIVO.
 - **Apto para venta**: peso actual >= `Raza.rzPesoObjetivoVenta`.
 - Los pesajes nunca se sobrescriben ni se borran en cascada.
 - No implementar lógica de negocio por cuenta propia: pedir las reglas
@@ -84,7 +91,7 @@ las del resto de la app).
 ## Pruebas
 
 - Antes de dar por terminado un cambio de **backend**, ejecutar
-  `.\mvnw.cmd test` desde `backend/` (hoy son 96 pruebas; todas deben
+  `.\mvnw.cmd test` desde `backend/` (hoy son 99 pruebas; todas deben
   pasar).
 - Antes de dar por terminado un cambio de **frontend**, ejecutar
   `npm run lint` y `npm run build` desde `frontend/`.

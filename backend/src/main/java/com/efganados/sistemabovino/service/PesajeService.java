@@ -3,7 +3,6 @@ package com.efganados.sistemabovino.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -96,8 +95,9 @@ public class PesajeService {
      * sesión "Sin lote"), solo pesajes ACTIVOS: un ítem por animal pesado
      * ese día en ese lote, con el peso anterior y la GMD calculados contra
      * el pesaje ACTIVO inmediatamente previo de cada animal (sin importar
-     * en qué sesión se haya registrado ese pesaje anterior), ordenado por
-     * caravana.
+     * en qué sesión se haya registrado ese pesaje anterior), o -si el
+     * animal no tiene uno- contra su peso inicial y fecha de ingreso (ver
+     * AnimalService.calcularGmdEntre), ordenado por caravana.
      */
     public List<ItemSesionPesaje> obtenerDetalleSesion(LocalDate fecha, Long subGrupoId) {
         List<Pesajes> pesajesDeLaSesion = obtenerPesajesActivosDeSesion(fecha, subGrupoId);
@@ -123,14 +123,21 @@ public class PesajeService {
         List<Pesajes> anteriores = pesajesRepository.buscarAnterioresA(
                 animal.getAniId(), pesaje.getPesaFecha(), pesaje.getPesaId(), EstadoPesaje.ACTIVO, PageRequest.of(0, 1));
 
-        Double pesoAnterior = null;
-        Double gmd = null;
+        double pesoAnterior;
+        LocalDate fechaPesoAnterior;
+        boolean pesoAnteriorEsIngreso;
         if (!anteriores.isEmpty()) {
             Pesajes anterior = anteriores.get(0);
             pesoAnterior = anterior.getPesaPeso();
-            long dias = ChronoUnit.DAYS.between(anterior.getPesaFecha(), pesaje.getPesaFecha());
-            gmd = dias == 0 ? 0.0 : (pesaje.getPesaPeso() - pesoAnterior) / dias;
+            fechaPesoAnterior = anterior.getPesaFecha();
+            pesoAnteriorEsIngreso = false;
+        } else {
+            pesoAnterior = animal.getAniPesoInicial();
+            fechaPesoAnterior = animal.getAniFechaIngreso();
+            pesoAnteriorEsIngreso = true;
         }
+        Double gmd = AnimalService.calcularGmdEntre(
+                pesaje.getPesaPeso(), pesaje.getPesaFecha(), pesoAnterior, fechaPesoAnterior, pesoAnteriorEsIngreso);
 
         Persona responsable = pesaje.getResponsable();
         return new ItemSesionPesaje(
@@ -141,6 +148,8 @@ public class PesajeService {
                 pesaje.getPesaPeso(),
                 pesoAnterior,
                 gmd,
+                pesoAnteriorEsIngreso,
+                fechaPesoAnterior,
                 responsable != null ? nombreCompleto(responsable) : null,
                 pesaje.getPesaObservaciones());
     }

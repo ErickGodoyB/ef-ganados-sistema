@@ -15,6 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.model.Animal;
+import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
@@ -132,15 +133,50 @@ class IndicadoresControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
-    @DisplayName("GMD con un solo pesaje devuelve 200 con cuerpo vacío")
-    void gmdConUnPesajeDevuelve200ConCuerpoVacio() throws Exception {
+    @DisplayName("GMD con un solo pesaje lo calcula contra el peso inicial y la fecha de ingreso (2026-01-01)")
+    void gmdConUnPesajeCalculaContraElIngresoYElPesoInicial() throws Exception {
+        // crearAnimal fija el ingreso en 2026-01-01; diez días después, con
+        // 200 de inicial y 210 de pesaje, la GMD es 1.0 (mismo caso que el
+        // ejemplo de la regla: sin pesaje anterior, el punto de partida es
+        // el ingreso).
         Animal animal = crearAnimal("CAR-GMD-002", 200.0);
-        registrarPesaje(animal, 210.0, LocalDate.of(2026, 2, 1));
+        registrarPesaje(animal, 210.0, LocalDate.of(2026, 1, 11));
+
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("1.0"));
+    }
+
+    @Test
+    @DisplayName("GMD con un solo pesaje el mismo día del ingreso devuelve 200 con cuerpo vacío (sin tiempo transcurrido)")
+    void gmdConUnPesajeElMismoDiaDelIngresoDevuelve200ConCuerpoVacio() throws Exception {
+        Animal animal = crearAnimal("CAR-GMD-002B", 200.0);
+        registrarPesaje(animal, 210.0, LocalDate.of(2026, 1, 1));
 
         mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
+    }
+
+    @Test
+    @DisplayName("GMD con un pesaje anulado antes del único activo lo sigue calculando contra el ingreso (el anulado no cuenta)")
+    void gmdConPesajeAnuladoAntesDelUnicoActivoCalculaContraElIngreso() throws Exception {
+        Animal animal = crearAnimal("CAR-GMD-002C", 200.0);
+        Pesajes anulado = new Pesajes();
+        anulado.setAnimal(animal);
+        anulado.setResponsable(crearPersona("Responsable-anulado"));
+        anulado.setPesaFecha(LocalDate.of(2026, 1, 5));
+        anulado.setPesaPeso(999.0);
+        anulado.setPesaEstado(EstadoPesaje.ANULADO);
+        pesajesRepository.save(anulado);
+        registrarPesaje(animal, 210.0, LocalDate.of(2026, 1, 11));
+
+        mockMvc.perform(get("/api/animales/{id}/gmd", animal.getAniId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("1.0"));
     }
 
     @Test
