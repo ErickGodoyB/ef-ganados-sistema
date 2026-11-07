@@ -83,6 +83,7 @@ Nota sobre CP30: en AR-901 los dos pesajes tienen la misma fecha, así que cuál
 | `PUT /api/pesajes/{id}` sobre un pesaje anulado | 409 |
 | `POST /api/pesajes/sesion` y `POST /api/animales/{id}/pesajes` | 409 `El animal <caravana> ya tiene un pesaje activo el dd/MM/yyyy...`; fecha anterior al ingreso 400 (verificado) |
 | Consultas de peso actual, GMD, resumen, listados | Los pesajes anulados no cuentan |
+| `GET /api/animales/{id}/pesajes` | Historial ordenado por fecha con peso anterior y GMD (misma lógica que el detalle de sesión); `incluirAnulados` lista los anulados sin que cuenten como anterior; 404 si el animal no existe |
 | `PUT /api/auth/clave` | 204 con datos correctos; clave actual incorrecta 400 (no 401); clave igual a la actual o demasiado corta 400 |
 | `POST` y `PUT /api/animales` | 400 si `aniFechaIngreso` es posterior al primer pesaje activo; los anulados no cuentan; animal sin pesajes sin restricción |
 
@@ -112,7 +113,13 @@ Hechas por el autor en PC (y celular Android) con los datos `TEST-xx`.
 | UI-18 | Detalle de sesión: primer pesaje de un animal | Aprobado: "Peso anterior" con etiqueta "ingreso" y GMD calculado |
 | UI-19 | Código de sesión (`S-AAMMDD-N`): chip en la primera columna y búsqueda parcial | Aprobado |
 | UI-20 | Alta de animal con peso inicial el día de hoy y pesaje del mismo peso el mismo día | Aprobado: se crea un pesaje real, diferencia 0,0 kg y GMD "—" (0 días desde el ingreso) |
-| UI-21 | Aviso de pesaje retroactivo (fecha anterior al último pesaje del animal) | **Parcial**: el aviso aparece, pero en la pestaña "Individual" no deja guardar (defecto abierto, por investigar). En "Por lote" los animales con ingreso posterior a la fecha no se ofrecen (comportamiento diseñado); el guardado retroactivo en esa pestaña no se llegó a probar |
+| UI-21 | Aviso de pesaje retroactivo (fecha anterior al último pesaje del animal) | Aprobado (2026-11-06): con TEST-01 y fecha 10/07/2026 aparece "ya tiene un pesaje posterior (30/10/2026, sesión S-261030-1)...", se guarda y el pesaje posterior recalcula su peso anterior. El bloqueo reportado antes no se pudo reproducir (dos tests de regresión agregados) |
+| UI-22 | Historial de pesajes en el detalle del animal (TEST-01) | Aprobado (2026-11-07): fila de ingreso y pesajes del más reciente al más antiguo, con valores coherentes con el detalle de sesión |
+| UI-23 | "Ver sesión" desde el historial | Aprobado: lleva a Pesajes con el código escrito en el buscador y el listado filtrado |
+| UI-24 | Historial de un animal sin pesajes | Aprobado: muestra "Este animal todavía no tiene pesajes" |
+| UI-25 | Selector de Responsable en Nuevo pesaje y su aparición en el detalle de sesión | Aprobado |
+| UI-26 | Botón "+" junto a Lote en "Por lote": crear un lote de prueba | Aprobado: queda seleccionado y, con animales cargados, pide la confirmación de cambio de lote |
+| UI-27 | Historial del animal en el celular | Aprobado |
 
 **Hallazgo (2026-10-31), resuelto el 2026-11-05:** un animal con un solo pesaje no mostraba ganancia diaria porque el peso inicial no se consideraba punto de partida. Ahora el peso inicial a la fecha de ingreso es el punto de partida del GMD (UI-17 y UI-18).
 
@@ -165,9 +172,9 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras las sesiones de pesaje (2026-10-28): 59 de 59 aprobadas, 0 fallos, 0 errores** (38 anteriores + 21 nuevas). Cubren: reglas de peso, fecha (futura, anterior al ingreso) y salida del animal; sesión todo o nada; animal repetido y sesión vacía; resumen de sesiones agrupado por fecha y lote (incluido "sin lote"); detalle con peso anterior y GMD; edición y borrado de pesajes; y `/api/auth/yo`. La prueba de atomicidad vive en su propia clase sin `@Transactional`, porque con la transacción de la prueba el "deshacer" no sería visible dentro del mismo método (en producción el rollback es inmediato).
 
-**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100 aprobadas**.
+**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100.** **Tras el historial de pesajes por animal (2026-11-07): 105 de 105 aprobadas**.
 
-**Pruebas del frontend (Vitest): 135 el 2026-10-30, 146 el 2026-11-05 y 163 de 163 aprobadas el 2026-11-06** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
+**Pruebas del frontend (Vitest): 135 el 2026-10-30, 146 el 2026-11-05, 163 el 2026-11-06 y 171 de 171 aprobadas el 2026-11-07** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
 
 La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalControllerTest` (23 tras las nuevas) y la clase `PesajeAnulacionYFechaSesionControllerTest` (14, nueva). Las demás clases cambiaron de cantidad al adaptar los tests del `DELETE` y agregar los de anulación y clave; el desglose exacto se obtiene con `.\mvnw.cmd test`.
 
@@ -180,6 +187,7 @@ La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalC
 | `PesajeSesionControllerTest` | 18 | CP33 a CP46 (sesión, errores, resumen, detalle, edición y borrado) |
 | `PesajeSesionAtomicidadTest` | 1 | CP36 (todo o nada, sin `@Transactional`) |
 | `PesajeAnulacionYFechaSesionControllerTest` | 14 | Anular sesión, cambio de fecha de sesión y listado de anulados (sin caso manual) |
+| `HistorialPesajesControllerTest` | 5 | `GET /api/animales/{id}/pesajes`: valores y orden, primer pesaje contra el ingreso, animal sin pesajes, animal inexistente (404), anulados excluidos o incluidos sin afectar al anterior (sin caso manual) |
 | `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
 
 Las pruebas manuales (CP01 a CP25) quedan como evidencia de la verificación con una herramienta
