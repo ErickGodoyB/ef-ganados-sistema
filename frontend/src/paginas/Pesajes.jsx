@@ -14,6 +14,7 @@
 
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import Intervalo from '../componentes/Intervalo'
 import Paginacion from '../componentes/Paginacion'
@@ -46,7 +47,12 @@ export default function Pesajes() {
   const refTabSesiones = useRef(null)
   const refTabAnulados = useRef(null)
 
-  const [busqueda, setBusqueda] = useState('')
+  // Si se llegó acá desde "Ver sesión" (HistorialPesajesAnimal.jsx), el
+  // código de sesión viene en la URL y precarga la búsqueda; es solo un
+  // valor inicial (no se vuelve a sincronizar con la URL después), así que
+  // alcanza con leerlo una vez al montar.
+  const [searchParams] = useSearchParams()
+  const [busqueda, setBusqueda] = useState(() => searchParams.get('codigo') ?? '')
   const [lote, setLote] = useState('todos')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')

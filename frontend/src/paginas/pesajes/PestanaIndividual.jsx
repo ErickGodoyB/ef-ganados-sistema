@@ -14,6 +14,10 @@
  * comparar el peso contra el último registrado (avisoPesoMenor): ese
  * "último" sería de una fecha posterior a la que se está cargando, así
  * que la comparación no tendría sentido.
+ *
+ * El responsable (ver CampoResponsable/usePersonasResponsable) arranca
+ * preseleccionado con la persona del usuario actual, pero es elegible:
+ * "responsableId" (no "personaId" directo) es lo que se manda en el POST.
  */
 
 import { TriangleAlert } from 'lucide-react'
@@ -25,7 +29,9 @@ import { motivoNoElegible } from '../../utilidades/elegibilidadPesaje'
 import { formatearPeso } from '../../utilidades/formato'
 import { parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
 import { avisoPesajeRetroactivo } from '../../utilidades/pesajeRetroactivo'
+import CampoResponsable from './CampoResponsable'
 import { useIdsYaPesadosEnFecha } from './useIdsYaPesadosEnFecha'
+import { usePersonasResponsable } from './usePersonasResponsable'
 import './PestanaIndividual.css'
 
 /** Fecha de hoy en formato aaaa-mm-dd, en hora local. */
@@ -55,12 +61,14 @@ export default function PestanaIndividual({
   onGuardado,
   onGuardadoParcial,
 }) {
-  const { personaId, cargandoYo, errorYo } = useAuth()
+  const { personaId, personaNombre, cargandoYo, errorYo } = useAuth()
+  const { personas, cargandoPersonas, errorPersonas } = usePersonasResponsable()
 
   const [texto, setTexto] = useState('')
   const [animalElegido, setAnimalElegido] = useState(null)
   const [fecha, setFecha] = useState(obtenerFechaHoyIso())
   const [peso, setPeso] = useState('')
+  const [responsableId, setResponsableId] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [accionEnCurso, setAccionEnCurso] = useState(null)
   const [errorGuardar, setErrorGuardar] = useState('')
@@ -120,6 +128,15 @@ export default function PestanaIndividual({
     }
   }, [guardando])
 
+  // Preselecciona el responsable con la persona actual apenas se conoce
+  // (useAuth es async); no lo pisa si el usuario ya había elegido otro.
+  useEffect(() => {
+    if (personaId != null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResponsableId((actual) => actual ?? personaId)
+    }
+  }, [personaId])
+
   const elegibles = useMemo(
     () => animales.filter((animal) => motivoNoElegible(animal, fecha, idsYaPesadosHoy) == null),
     [animales, fecha, idsYaPesadosHoy],
@@ -167,8 +184,10 @@ export default function PestanaIndividual({
       ? `Es menor al último peso registrado (${formatearPeso(animalElegido.pesoActual)})`
       : ''
 
+  const responsableIdEfectivo = responsableId ?? personaId
+
   async function guardar(continuar) {
-    if (!animalElegido || !pesoValido || !fecha || personaId == null) {
+    if (!animalElegido || !pesoValido || !fecha || responsableIdEfectivo == null) {
       return
     }
     setGuardando(true)
@@ -177,7 +196,7 @@ export default function PestanaIndividual({
     try {
       await peticionProtegida(`/api/animales/${animalElegido.id}/pesajes`, {
         method: 'POST',
-        body: JSON.stringify({ peso: pesoNumero, fecha, responsableId: personaId }),
+        body: JSON.stringify({ peso: pesoNumero, fecha, responsableId: responsableIdEfectivo }),
       })
       const mensaje = `Pesaje de ${animalElegido.caravana} guardado`
       if (continuar) {
@@ -249,6 +268,18 @@ export default function PestanaIndividual({
                 disabled={guardando}
               />
             </div>
+
+            <CampoResponsable
+              id="nuevo-pesaje-individual-responsable"
+              personas={personas}
+              cargando={cargandoPersonas}
+              error={errorPersonas}
+              personaActualId={personaId}
+              personaActualNombre={personaNombre}
+              valor={responsableId}
+              onCambiar={setResponsableId}
+              disabled={guardando}
+            />
           </div>
 
           {avisoRetroactivo && (
@@ -286,7 +317,7 @@ export default function PestanaIndividual({
           type="button"
           className="boton-secundario"
           onClick={() => guardar(true)}
-          disabled={guardando || !animalElegido || !pesoValido || personaId == null}
+          disabled={guardando || !animalElegido || !pesoValido || responsableIdEfectivo == null}
         >
           {accionEnCurso === 'agregarOtro' ? 'Guardando...' : 'Guardar y agregar otro'}
         </button>
@@ -294,7 +325,7 @@ export default function PestanaIndividual({
           type="button"
           className="boton-primario"
           onClick={() => guardar(false)}
-          disabled={guardando || !animalElegido || !pesoValido || personaId == null}
+          disabled={guardando || !animalElegido || !pesoValido || responsableIdEfectivo == null}
         >
           {accionEnCurso === 'guardar' ? 'Guardando...' : 'Guardar'}
         </button>

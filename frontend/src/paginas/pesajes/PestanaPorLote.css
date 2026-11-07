@@ -22,9 +22,30 @@
     flex-direction: row;
   }
 
+  /* min-width: 0 para que ningún campo (ahora Lote, Fecha y Responsable)
+     se desborde del panel: un ítem flex nunca se achica por debajo del
+     ancho de su contenido si no se lo dice explícitamente (mismo motivo
+     que Intervalo.css). */
   .pestana-por-lote-campos .campo {
     flex: 1 1 0;
+    min-width: 0;
   }
+}
+
+/* Fila select + botón "+" de alta rápida de lote (ver AltaRapidaLote):
+   mismo criterio que ".campo-con-alta-rapida" de FormularioAnimal.css,
+   duplicado acá (en vez de importar ese archivo) para no acoplar esta
+   pestaña a la pantalla de Animales. */
+.campo-con-alta-rapida {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campo-con-alta-rapida select {
+  flex: 1;
+  min-width: 0;
 }
 
 .pestana-por-lote-aviso-sesion {

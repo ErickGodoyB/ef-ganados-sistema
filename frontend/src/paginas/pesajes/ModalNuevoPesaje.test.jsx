@@ -154,7 +154,7 @@ describe('ModalNuevoPesaje - alta rápida de un animal', () => {
     expect(panelActivo().getByLabelText('Lote')).toHaveValue('20')
     expect(panelActivo().getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('TEST-95')
     expect(panelActivo().getByLabelText('Peso (kg)')).toHaveValue('180')
-    await waitFor(() => expect(panelActivo().getByRole('button', { name: /Agregar/ })).toHaveFocus())
+    await waitFor(() => expect(panelActivo().getByRole('button', { name: 'Agregar' })).toHaveFocus())
   })
 
   it('en "Individual": tras registrar el animal nuevo, la fecha elegida no se pierde, y el animal queda elegido con foco en el peso', async () => {

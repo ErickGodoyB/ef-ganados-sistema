@@ -19,8 +19,11 @@
     flex-direction: row;
   }
 
+  /* min-width: 0 para que ningún campo (ahora Fecha, Peso y Responsable)
+     se desborde del panel (mismo motivo que Intervalo.css). */
   .pestana-individual-campos .campo {
     flex: 1 1 0;
+    min-width: 0;
   }
 }
 

@@ -1,11 +1,14 @@
 /**
  * Modal de detalle de un animal (RF010 ampliado): muestra sus datos
- * completos y, desde el mismo <Modal> (sin apilar varios), permite pasar a
- * "Editar" (reutiliza FormularioAnimal en modo "editar") o a "Eliminar"
+ * completos, su historial de pesajes (ver HistorialPesajesAnimal.jsx) y,
+ * desde el mismo <Modal> (sin apilar varios), permite pasar a "Editar"
+ * (reutiliza FormularioAnimal en modo "editar") o a "Eliminar"
  * (confirmación chica dentro del mismo panel). Un solo Modal montado para
  * las tres vistas evita que, si hubiera dos <Modal> apilados, ambos
  * reaccionen al mismo Escape (cada uno agrega su propio listener de
- * teclado al document) o compitan por la trampa de foco.
+ * teclado al document) o compitan por la trampa de foco. La vista
+ * "detalle" usa tamano="grande" (tiene la tabla del historial, que
+ * necesita más lugar); "editar"/"eliminar" siguen con el tamaño normal.
  */
 
 import { Pencil, Trash2 } from 'lucide-react'
@@ -16,6 +19,7 @@ import ValorGmd from '../../componentes/ValorGmd'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import EstadoBadge from './EstadoBadge'
 import FormularioAnimal from './FormularioAnimal'
+import HistorialPesajesAnimal from './HistorialPesajesAnimal'
 import './ModalDetalleAnimal.css'
 
 const TITULOS = {
@@ -92,7 +96,7 @@ export default function ModalDetalleAnimal({ animal, onCerrar, onActualizado, on
   const avisoNoEliminable = `Tiene ${animal.cantidadPesajes} pesajes registrados: no se puede eliminar`
 
   return (
-    <Modal titulo={TITULOS[vista]} onCerrar={manejarCierre} refDisparador={refDisparador}>
+    <Modal titulo={TITULOS[vista]} onCerrar={manejarCierre} refDisparador={refDisparador} tamano={vista === 'detalle' ? 'grande' : 'normal'}>
       {vista === 'detalle' && (
         <>
           <dl className="detalle-animal-datos">
@@ -163,6 +167,8 @@ export default function ModalDetalleAnimal({ animal, onCerrar, onActualizado, on
             </button>
           </div>
           {!sinPesajes && <p className="detalle-animal-aviso-pesajes">{avisoNoEliminable}</p>}
+
+          <HistorialPesajesAnimal animal={animal} />
         </>
       )}
 

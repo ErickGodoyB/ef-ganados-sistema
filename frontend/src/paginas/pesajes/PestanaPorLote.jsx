@@ -20,19 +20,31 @@
  * Expone, vía ref, solicitarCierre(): mismo criterio que FormularioAnimal
  * (ver su JSDoc), para que el modal que la envuelve respete la misma
  * confirmación por datos sin guardar al cerrar con Escape o el fondo.
+ *
+ * El botón "+" junto a Lote reutiliza AltaRapidaLote (el mismo componente
+ * del formulario de animales): al crear un lote, se recarga la lista de
+ * lotes y se lo selecciona con cambiarLote, que ya sabe pedir la misma
+ * confirmación que un cambio de lote manual si había animales cargados.
+ *
+ * El responsable (ver CampoResponsable/usePersonasResponsable) arranca
+ * preseleccionado con la persona del usuario actual, pero es elegible:
+ * "responsableId" (no "personaId" directo) es lo que se manda en el POST
+ * de la sesión.
  */
 
 import { Plus, TriangleAlert, X } from 'lucide-react'
-import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { Fragment, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { useAuth } from '../../auth/useAuth'
 import BuscadorAnimal from '../../componentes/BuscadorAnimal'
 import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
+import AltaRapidaLote from '../animales/AltaRapidaLote'
 import { motivoNoElegible } from '../../utilidades/elegibilidadPesaje'
 import { formatearPeso } from '../../utilidades/formato'
 import { avisoPesajeRetroactivo } from '../../utilidades/pesajeRetroactivo'
 import { calcularDiferenciaPeso, parsearPeso, pesoTextoEsValido } from '../../utilidades/peso'
 import { calcularResumenPesos } from '../../utilidades/resumenSesion'
+import CampoResponsable from './CampoResponsable'
 // Reutiliza ".resumen-sesion" (el resumen en vivo) y ".tabla-items-sesion"
 // (la tabla de animales) de ModalDetalleSesion.jsx/TablaItemsSesion.jsx:
 // mismo lenguaje visual, acá con una lista local en vez de una ya guardada.
@@ -41,6 +53,7 @@ import { calcularResumenPesos } from '../../utilidades/resumenSesion'
 import './ModalDetalleSesion.css'
 import './PestanaPorLote.css'
 import './TablaItemsSesion.css'
+import { usePersonasResponsable } from './usePersonasResponsable'
 
 /** Fecha de hoy en formato aaaa-mm-dd, en hora local. */
 function obtenerFechaHoyIso() {
@@ -59,7 +72,8 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   { animales, cargandoAnimales, errorAnimales, animalParaPreseleccionar, onConsumidaPreseleccion, onRegistrarNuevo, onCerrar, onGuardado },
   ref,
 ) {
-  const { personaId, cargandoYo, errorYo } = useAuth()
+  const { personaId, personaNombre, cargandoYo, errorYo } = useAuth()
+  const { personas, cargandoPersonas, errorPersonas } = usePersonasResponsable()
 
   const [subGrupos, setSubGrupos] = useState([])
   const [cargandoSubGrupos, setCargandoSubGrupos] = useState(true)
@@ -67,6 +81,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
 
   const [loteId, setLoteId] = useState('')
   const [fecha, setFecha] = useState(obtenerFechaHoyIso())
+  const [responsableId, setResponsableId] = useState(null)
 
   const [sesionExistente, setSesionExistente] = useState(false)
   const [idsYaPesadosHoy, setIdsYaPesadosHoy] = useState(new Set())
@@ -94,31 +109,25 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   // pedido ya atendido.
   const refPedidoFocoBoton = useRef(false)
 
-  useEffect(() => {
-    let cancelado = false
-    async function cargar() {
-      setCargandoSubGrupos(true)
-      setErrorSubGrupos('')
-      try {
-        const datos = await peticionProtegida('/api/subgrupos')
-        if (!cancelado) {
-          setSubGrupos(datos ?? [])
-        }
-      } catch {
-        if (!cancelado) {
-          setErrorSubGrupos('No se pudieron cargar los lotes.')
-        }
-      } finally {
-        if (!cancelado) {
-          setCargandoSubGrupos(false)
-        }
-      }
-    }
-    cargar()
-    return () => {
-      cancelado = true
+  /** Trae los lotes (subgrupos); se reutiliza al abrir la pestaña y tras crear uno por alta rápida (ver alCrearLote). */
+  const cargarLotes = useCallback(async () => {
+    setCargandoSubGrupos(true)
+    setErrorSubGrupos('')
+    try {
+      const datos = await peticionProtegida('/api/subgrupos')
+      setSubGrupos(datos ?? [])
+      return datos ?? []
+    } catch {
+      setErrorSubGrupos('No se pudieron cargar los lotes.')
+      return null
+    } finally {
+      setCargandoSubGrupos(false)
     }
   }, [])
+
+  useEffect(() => {
+    cargarLotes()
+  }, [cargarLotes])
 
   // Al tener lote y fecha, se fija si ya hay una sesión de ese lote ese día
   // (para avisar, sin bloquear) y qué animales ya se pesaron (para no
@@ -260,6 +269,12 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
     setErrorCarga('')
   }
 
+  /** El lote recién creado por alta rápida: se recarga la lista de lotes y se lo selecciona, con la misma confirmación que cambiarLote si ya había animales cargados. */
+  async function alCrearLote(subGrupoCreado) {
+    await cargarLotes()
+    cambiarLote(String(subGrupoCreado.sbId))
+  }
+
   /**
    * Cambiar la fecha NO vacía la lista acumulada (a diferencia de cambiar
    * de lote): el efecto que vuelve a consultar la sesión de la fecha nueva
@@ -297,6 +312,14 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
       refPedidoFocoBoton.current = false
     }
   }, [animalCarga, pesoCargaValido, guardando])
+
+  // Preselecciona el responsable con la persona actual apenas se conoce
+  // (useAuth es async); no lo pisa si el usuario ya había elegido otro.
+  useEffect(() => {
+    if (personaId != null) {
+      setResponsableId((actual) => actual ?? personaId)
+    }
+  }, [personaId])
 
   /** Agrega el animal elegido con el peso escrito a la lista local (nada se guarda todavía) y devuelve el foco al buscador. */
   function agregarALaLista() {
@@ -337,9 +360,10 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   }, [listaAcumulada])
 
   const todosLosPesosValidos = listaAcumulada.length > 0 && listaAcumulada.every(pesoFilaValido)
+  const responsableIdEfectivo = responsableId ?? personaId
 
   async function guardar() {
-    if (!todosLosPesosValidos || personaId == null) {
+    if (!todosLosPesosValidos || responsableIdEfectivo == null) {
       return
     }
     setGuardando(true)
@@ -349,7 +373,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
         method: 'POST',
         body: JSON.stringify({
           fecha,
-          responsableId: personaId,
+          responsableId: responsableIdEfectivo,
           items: listaAcumulada.map((fila) => ({ animalId: fila.animal.aniId, peso: parsearPeso(fila.pesoTexto) })),
         }),
       })
@@ -387,16 +411,19 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
               {errorSubGrupos}
             </p>
           ) : (
-            <select id="nuevo-pesaje-lote" value={loteId} onChange={(evento) => cambiarLote(evento.target.value)} disabled={guardando}>
-              <option value="">Elegí un lote</option>
-              <option value="sin-lote">Sin lote</option>
-              {subGrupos.map((subGrupo) => (
-                <option key={subGrupo.sbId} value={subGrupo.sbId}>
-                  {subGrupo.sbDescripcion}
-                  {subGrupo.grupo ? ` — ${subGrupo.grupo.grpDescripcion}` : ''}
-                </option>
-              ))}
-            </select>
+            <div className="campo-con-alta-rapida">
+              <select id="nuevo-pesaje-lote" value={loteId} onChange={(evento) => cambiarLote(evento.target.value)} disabled={guardando}>
+                <option value="">Elegí un lote</option>
+                <option value="sin-lote">Sin lote</option>
+                {subGrupos.map((subGrupo) => (
+                  <option key={subGrupo.sbId} value={subGrupo.sbId}>
+                    {subGrupo.sbDescripcion}
+                    {subGrupo.grupo ? ` — ${subGrupo.grupo.grpDescripcion}` : ''}
+                  </option>
+                ))}
+              </select>
+              <AltaRapidaLote subGrupos={subGrupos} onCreado={alCrearLote} />
+            </div>
           )}
         </div>
 
@@ -411,6 +438,18 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
             disabled={guardando}
           />
         </div>
+
+        <CampoResponsable
+          id="nuevo-pesaje-lote-responsable"
+          personas={personas}
+          cargando={cargandoPersonas}
+          error={errorPersonas}
+          personaActualId={personaId}
+          personaActualNombre={personaNombre}
+          valor={responsableId}
+          onCambiar={setResponsableId}
+          disabled={guardando}
+        />
       </div>
 
       {sesionExistente && (
@@ -690,7 +729,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
           type="button"
           className="boton-primario"
           onClick={guardar}
-          disabled={guardando || !todosLosPesosValidos || personaId == null}
+          disabled={guardando || !todosLosPesosValidos || responsableIdEfectivo == null}
         >
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>

@@ -28,6 +28,32 @@
   border: 1px solid var(--color-error);
 }
 
+/* Toggle de la columna/dato opcional "Responsable" (ver
+   TablaItemsSesion/TarjetaItemSesion.jsx); mismo criterio que
+   .panel-opciones-columna (PanelOpciones.css), duplicado acá porque este
+   interruptor vive en el modal, no en ese panel. */
+.detalle-sesion-toggle-responsable {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.detalle-sesion-toggle-responsable input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.detalle-sesion-toggle-responsable input:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
 .panel-sesion-texto {
   margin: 0;
 }

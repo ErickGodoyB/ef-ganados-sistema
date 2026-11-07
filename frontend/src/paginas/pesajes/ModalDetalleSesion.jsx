@@ -60,6 +60,12 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
   // padre vuelva a pasar un "sesion" distinto.
   const [fechaActual, setFechaActual] = useState(sesion.fecha)
 
+  // Columna/dato opcional (ver TablaItemsSesion/TarjetaItemSesion): no se
+  // persiste entre aperturas, a diferencia de las columnas opcionales del
+  // listado de sesiones (ver usePreferenciasListadoPesajes), porque acá es
+  // un detalle chico del modal, no una preferencia de toda la pantalla.
+  const [mostrarResponsable, setMostrarResponsable] = useState(true)
+
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -352,10 +358,20 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
 
       {!cargando && !error && items.length > 0 && (
         <>
+          <label className="detalle-sesion-toggle-responsable">
+            <input
+              type="checkbox"
+              checked={mostrarResponsable}
+              onChange={(evento) => setMostrarResponsable(evento.target.checked)}
+            />
+            Mostrar responsable
+          </label>
+
           <div className="detalle-sesion-tabla-solo-escritorio">
             <TablaItemsSesion
               items={items}
               fecha={formatearFecha(fechaActual)}
+              mostrarResponsable={mostrarResponsable}
               accionActiva={accionActiva}
               guardando={guardandoAccion}
               errorAccion={errorAccion}
@@ -373,6 +389,7 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
                 key={item.pesaId}
                 item={item}
                 fecha={formatearFecha(fechaActual)}
+                mostrarResponsable={mostrarResponsable}
                 activa={accionActiva?.pesaId === item.pesaId}
                 tipoAccion={accionActiva?.pesaId === item.pesaId ? accionActiva.tipo : null}
                 deshabilitada={accionActiva != null && accionActiva.pesaId !== item.pesaId}

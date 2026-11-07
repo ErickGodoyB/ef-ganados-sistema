@@ -1,0 +1,139 @@
+/**
+ * Historial de pesajes del detalle de animal (ver
+ * HistorialPesajesAnimal.jsx). Mismo lenguaje visual que TablaItemsSesion/
+ * TarjetaItemSesion.css (tabla desde 768px, tarjetas en celular), con
+ * nombres propios para no acoplar esta pantalla a la de Pesajes.
+ */
+
+.historial-pesajes {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde);
+}
+
+.historial-pesajes-titulo {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.historial-pesajes-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+/* Chip "Ingreso" y código de sesión: mismo lenguaje visual que
+   .celda-codigo-sesion (celdasSesion.css), duplicado acá para no acoplar
+   esta pantalla a la de Pesajes. */
+.historial-pesajes-etiqueta-ingreso,
+.historial-pesajes-codigo {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-secundario);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.historial-pesajes-etiqueta-ingreso {
+  font-family: inherit;
+}
+
+.historial-pesajes-tabla-solo-escritorio {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .historial-pesajes-tabla-solo-escritorio {
+    display: block;
+    overflow-x: auto;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+  }
+
+  .historial-pesajes-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.tabla-historial-pesajes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-historial-pesajes th,
+.tabla-historial-pesajes td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.tabla-historial-pesajes thead th {
+  background: var(--superficie-hover);
+}
+
+.tabla-historial-pesajes tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.historial-pesajes-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historial-pesajes-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.historial-pesajes-tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.historial-pesajes-tarjeta-peso {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.historial-pesajes-tarjeta-fecha {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.historial-pesajes-tarjeta-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.historial-pesajes-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.historial-pesajes-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}

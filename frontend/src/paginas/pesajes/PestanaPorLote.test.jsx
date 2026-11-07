@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { peticionProtegida } from '../../api/cliente'
@@ -20,11 +20,32 @@ const ANIMALES = [
   { aniId: 2, aniCaravana: 'CAR-002', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, subGrupoId: 10, pesoActual: 210 },
 ]
 
-/** Configura el mock de peticionProtegida: subgrupos siempre disponibles; el detalle de sesión, según lo que se pase; el POST de la sesión, siempre exitoso. */
+const GRUPO_A = { grpId: 100, grpDescripcion: 'Grupo A' }
+
+/**
+ * Configura el mock de peticionProtegida: subgrupos siempre disponibles
+ * (más los creados por alta rápida, ver POST /api/subgrupos); el detalle
+ * de sesión, según lo que se pase; personas vacío por defecto (no hace
+ * falta para la mayoría de estas pruebas); el POST de la sesión, siempre
+ * exitoso.
+ */
 function configurarMock(detallePorFecha) {
+  const subGruposCreados = []
   peticionProtegida.mockImplementation(async (ruta, opciones) => {
+    if (ruta === '/api/subgrupos' && opciones?.method === 'POST') {
+      const cuerpo = JSON.parse(opciones.body)
+      const creado = { sbId: 200 + subGruposCreados.length, sbDescripcion: cuerpo.sbDescripcion, grupo: GRUPO_A }
+      subGruposCreados.push(creado)
+      return creado
+    }
     if (ruta === '/api/subgrupos') {
-      return [LOTE_A]
+      return [LOTE_A, ...subGruposCreados]
+    }
+    if (ruta === '/api/personas') {
+      return []
+    }
+    if (ruta === '/api/grupos') {
+      return [GRUPO_A]
     }
     if (ruta.startsWith('/api/pesajes/sesiones/detalle')) {
       const parametros = new URLSearchParams(ruta.split('?')[1])
@@ -34,7 +55,7 @@ function configurarMock(detallePorFecha) {
     if (ruta === '/api/pesajes/sesion' && opciones?.method === 'POST') {
       return JSON.parse(opciones.body).items.map((item, indice) => ({ pesaId: indice + 1, ...item }))
     }
-    throw new Error(`Ruta no mockeada: ${ruta}`)
+    throw new Error(`Ruta no mockeada: ${ruta} ${opciones?.method ?? 'GET'}`)
   })
 }
 
@@ -71,7 +92,7 @@ describe('PestanaPorLote', () => {
     await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-001')
     await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '210')
-    await usuario.click(screen.getByRole('button', { name: /Agregar/ }))
+    await usuario.click(screen.getByRole('button', { name: 'Agregar' }))
 
     expect(screen.getAllByText('CAR-001').length).toBeGreaterThan(0)
 
@@ -101,7 +122,7 @@ describe('PestanaPorLote', () => {
     await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-001')
     await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '210')
-    await usuario.click(screen.getByRole('button', { name: /Agregar/ }))
+    await usuario.click(screen.getByRole('button', { name: 'Agregar' }))
     expect(screen.getAllByText('CAR-001').length).toBeGreaterThan(0)
 
     await usuario.selectOptions(screen.getByLabelText('Lote'), 'sin-lote')
@@ -183,7 +204,7 @@ describe('PestanaPorLote', () => {
 
       expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('CAR-NUEVO')
       expect(screen.getByLabelText('Peso (kg)')).toHaveValue('150')
-      await waitFor(() => expect(screen.getByRole('button', { name: /Agregar/ })).toHaveFocus())
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Agregar' })).toHaveFocus())
       expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
     },
   )
@@ -234,7 +255,7 @@ describe('PestanaPorLote', () => {
 
       expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).toHaveValue('CAR-NUEVO')
       expect(screen.getByLabelText('Peso (kg)')).toHaveValue('175')
-      await waitFor(() => expect(screen.getByRole('button', { name: /Agregar/ })).toHaveFocus())
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Agregar' })).toHaveFocus())
       expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
     },
   )
@@ -272,7 +293,7 @@ describe('PestanaPorLote', () => {
     await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-RETRO')
     await usuario.click(screen.getByRole('option', { name: /CAR-RETRO/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '310')
-    await usuario.click(screen.getByRole('button', { name: /Agregar/ }))
+    await usuario.click(screen.getByRole('button', { name: 'Agregar' }))
 
     const mensaje =
       'CAR-RETRO ya tiene un pesaje posterior (10/02/2026, sesión S-260210-10). ' +
@@ -319,7 +340,7 @@ describe('PestanaPorLote', () => {
     await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-RETRO')
     await usuario.click(screen.getByRole('option', { name: /CAR-RETRO/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '310')
-    await usuario.click(screen.getByRole('button', { name: /Agregar/ }))
+    await usuario.click(screen.getByRole('button', { name: 'Agregar' }))
 
     // El aviso está, pero el botón "Guardar" de la sesión sigue habilitado.
     expect(screen.getAllByText(/ya tiene un pesaje posterior/).length).toBeGreaterThan(0)
@@ -334,5 +355,33 @@ describe('PestanaPorLote', () => {
         expect.objectContaining({ method: 'POST' }),
       ),
     )
+  })
+
+  it('al crear un lote por alta rápida, se recarga la lista, queda seleccionado y pide la misma confirmación que cambiar de lote si había animales cargados', async () => {
+    const usuario = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderPestana({})
+
+    await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
+    await usuario.clear(screen.getByLabelText('Fecha'))
+    await usuario.type(screen.getByLabelText('Fecha'), '2026-07-05')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
+
+    await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-001')
+    await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '210')
+    await usuario.click(screen.getByRole('button', { name: 'Agregar' }))
+    expect(screen.getAllByText('CAR-001').length).toBeGreaterThan(0)
+
+    await usuario.click(screen.getByRole('button', { name: 'Agregar lote nuevo' }))
+    await usuario.type(await screen.findByLabelText('Nombre del lote'), 'Lote Nuevo')
+    await usuario.selectOptions(screen.getByLabelText('Grupo'), String(GRUPO_A.grpId))
+
+    const miniFormulario = screen.getByLabelText('Nombre del lote').closest('.alta-rapida-mini-formulario')
+    await usuario.click(within(miniFormulario).getByRole('button', { name: 'Guardar' }))
+
+    expect(confirmSpy).toHaveBeenCalledWith('Los animales cargados pertenecen al lote anterior. ¿Cambiar igual?')
+    await waitFor(() => expect(screen.getByLabelText('Lote')).toHaveValue('200'))
+    expect(screen.queryByText('CAR-001')).not.toBeInTheDocument()
   })
 })

@@ -60,7 +60,7 @@ describe('PestanaIndividual', () => {
       await usuario.clear(screen.getByLabelText('Fecha'))
       await usuario.type(screen.getByLabelText('Fecha'), '2026-07-05')
 
-      await usuario.type(screen.getByRole('combobox'), 'TEST-25')
+      await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'TEST-25')
 
       expect(screen.queryByRole('option', { name: /TEST-25/ })).not.toBeInTheDocument()
       expect(screen.queryByText(/Registrar animal nuevo/)).not.toBeInTheDocument()
@@ -74,7 +74,7 @@ describe('PestanaIndividual', () => {
 
     await usuario.clear(screen.getByLabelText('Fecha'))
     await usuario.type(screen.getByLabelText('Fecha'), '2026-08-01')
-    await usuario.type(screen.getByRole('combobox'), 'TEST-25')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'TEST-25')
 
     expect(screen.getByRole('option', { name: /TEST-25/ })).toBeInTheDocument()
   })
@@ -83,7 +83,7 @@ describe('PestanaIndividual', () => {
     const usuario = userEvent.setup()
     renderPestana()
 
-    await usuario.type(screen.getByRole('combobox'), 'CAR-VENDIDO')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'CAR-VENDIDO')
 
     expect(screen.queryByRole('option', { name: /CAR-VENDIDO/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/Registrar animal nuevo/)).not.toBeInTheDocument()
@@ -94,7 +94,7 @@ describe('PestanaIndividual', () => {
     const usuario = userEvent.setup()
     renderPestana()
 
-    await usuario.type(screen.getByRole('combobox'), 'NUEVO-123')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'NUEVO-123')
 
     expect(screen.getByText(/Registrar animal nuevo «NUEVO-123»/)).toBeInTheDocument()
   })
@@ -104,15 +104,15 @@ describe('PestanaIndividual', () => {
     const usuario = userEvent.setup()
     renderPestana()
 
-    await usuario.type(screen.getByRole('combobox'), 'CAR-001')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'CAR-001')
     await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '210')
     const fechaPrevia = screen.getByLabelText('Fecha').value
 
     await usuario.click(screen.getByRole('button', { name: 'Guardar y agregar otro' }))
 
-    await waitFor(() => expect(screen.getByRole('combobox')).toHaveFocus())
-    expect(screen.getByRole('combobox')).toHaveValue('')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Buscar animal por caravana' })).toHaveFocus())
+    expect(screen.getByRole('combobox', { name: 'Buscar animal por caravana' })).toHaveValue('')
     expect(screen.getByLabelText('Peso (kg)')).toHaveValue('')
     expect(screen.getByLabelText('Fecha')).toHaveValue(fechaPrevia)
   })
@@ -153,7 +153,7 @@ describe('PestanaIndividual', () => {
       />,
     )
 
-    expect(screen.getByRole('combobox')).toHaveValue('CAR-NUEVO')
+    expect(screen.getByRole('combobox', { name: 'Buscar animal por caravana' })).toHaveValue('CAR-NUEVO')
     expect(screen.getByLabelText('Peso (kg)')).toHaveValue('180')
     expect(screen.getByLabelText('Peso (kg)')).toHaveFocus()
     expect(onConsumidaPreseleccion).toHaveBeenCalledTimes(1)
@@ -215,7 +215,7 @@ describe('PestanaIndividual', () => {
 
     await usuario.clear(screen.getByLabelText('Fecha'))
     await usuario.type(screen.getByLabelText('Fecha'), '2026-02-01')
-    await usuario.type(screen.getByRole('combobox'), 'CAR-RETRO')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'CAR-RETRO')
     await usuario.click(screen.getByRole('option', { name: /CAR-RETRO/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '250')
 
@@ -232,10 +232,43 @@ describe('PestanaIndividual', () => {
     const usuario = userEvent.setup()
     renderPestana()
 
-    await usuario.type(screen.getByRole('combobox'), 'CAR-001')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'CAR-001')
     await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
     await usuario.type(screen.getByLabelText('Peso (kg)'), '50')
 
     expect(screen.getByText('Es menor al último peso registrado (200,0 kg)')).toBeInTheDocument()
+  })
+
+  it('el responsable queda preseleccionado con la persona actual y, si se elige otra, se manda esa en el POST', async () => {
+    const usuario = userEvent.setup()
+    peticionProtegida.mockImplementation(async (ruta, opciones) => {
+      if (ruta === '/api/personas') {
+        return [
+          { perId: 1, perNombre: 'Ana', perApellido: 'Pérez' },
+          { perId: 2, perNombre: 'Beto', perApellido: 'Gómez' },
+        ]
+      }
+      if (ruta === '/api/animales/1/pesajes' && opciones?.method === 'POST') {
+        return {}
+      }
+      throw new Error(`Ruta no mockeada: ${ruta}`)
+    })
+    renderPestana()
+
+    // Preseleccionado con la persona actual (personaId: 1, mockeado en useAuth).
+    await waitFor(() => expect(screen.getByLabelText('Responsable')).toHaveValue('1'))
+
+    await usuario.selectOptions(screen.getByLabelText('Responsable'), '2')
+    await usuario.type(screen.getByRole('combobox', { name: 'Buscar animal por caravana' }), 'CAR-001')
+    await usuario.click(screen.getByRole('option', { name: /CAR-001/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '210')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() =>
+      expect(peticionProtegida).toHaveBeenCalledWith(
+        '/api/animales/1/pesajes',
+        expect.objectContaining({ body: JSON.stringify({ peso: 210, fecha: screen.getByLabelText('Fecha').value, responsableId: 2 }) }),
+      ),
+    )
   })
 })

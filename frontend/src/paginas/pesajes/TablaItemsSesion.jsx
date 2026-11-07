@@ -20,6 +20,7 @@ import './TablaItemsSesion.css'
 export default function TablaItemsSesion({
   items,
   fecha,
+  mostrarResponsable = true,
   accionActiva,
   guardando,
   errorAccion,
@@ -40,7 +41,7 @@ export default function TablaItemsSesion({
             <th scope="col">Peso</th>
             <th scope="col">Peso anterior</th>
             <th scope="col">GMD</th>
-            <th scope="col">Responsable</th>
+            {mostrarResponsable && <th scope="col">Responsable</th>}
             <th scope="col">Observación</th>
             <th scope="col">
               <span className="visualmente-oculto">Acciones</span>
@@ -58,6 +59,7 @@ export default function TablaItemsSesion({
                 <FilaEdicion
                   key={item.pesaId}
                   item={item}
+                  mostrarResponsable={mostrarResponsable}
                   guardando={guardando}
                   error={errorAccion}
                   onGuardar={(peso, observaciones) => onGuardarEdicion(item, peso, observaciones)}
@@ -72,6 +74,7 @@ export default function TablaItemsSesion({
                   key={item.pesaId}
                   item={item}
                   fecha={fecha}
+                  mostrarResponsable={mostrarResponsable}
                   guardando={guardando}
                   error={errorAccion}
                   onCancelar={onCancelar}
@@ -95,7 +98,7 @@ export default function TablaItemsSesion({
                 <td>
                   <ValorGmd gmd={item.gmd} />
                 </td>
-                <td>{item.responsableNombre || 'Sin datos'}</td>
+                {mostrarResponsable && <td>{item.responsableNombre || 'Sin datos'}</td>}
                 <td className="tabla-items-sesion-observacion">{item.observaciones || '—'}</td>
                 <td>
                   <div className="tabla-items-sesion-acciones">
@@ -129,7 +132,7 @@ export default function TablaItemsSesion({
 }
 
 /** Fila de edición: solo peso y observación son editables; el resto se muestra fijo. */
-function FilaEdicion({ item, guardando, error, onGuardar, onCancelar }) {
+function FilaEdicion({ item, mostrarResponsable, guardando, error, onGuardar, onCancelar }) {
   const [peso, setPeso] = useState(String(item.peso).replace('.', ','))
   const [observaciones, setObservaciones] = useState(item.observaciones ?? '')
   const [errorLocal, setErrorLocal] = useState('')
@@ -166,7 +169,7 @@ function FilaEdicion({ item, guardando, error, onGuardar, onCancelar }) {
       <td>
         <ValorGmd gmd={item.gmd} />
       </td>
-      <td>{item.responsableNombre || 'Sin datos'}</td>
+      {mostrarResponsable && <td>{item.responsableNombre || 'Sin datos'}</td>}
       <td>
         <label className="visualmente-oculto" htmlFor={`edicion-observacion-${item.pesaId}`}>
           Observación de {item.caravana}
@@ -200,7 +203,7 @@ function FilaEdicion({ item, guardando, error, onGuardar, onCancelar }) {
 }
 
 /** Fila de confirmación de anulación: pide el motivo (chips + texto) y reemplaza las acciones por Cancelar/Anular. */
-function FilaConfirmarAnular({ item, fecha, guardando, error, onCancelar, onConfirmar }) {
+function FilaConfirmarAnular({ item, fecha, mostrarResponsable, guardando, error, onCancelar, onConfirmar }) {
   const [motivo, setMotivo] = useState('')
   const [errorLocal, setErrorLocal] = useState('')
 
@@ -213,9 +216,12 @@ function FilaConfirmarAnular({ item, fecha, guardando, error, onCancelar, onConf
     onConfirmar(motivo)
   }
 
+  // El mensaje+motivo ocupa todas las columnas salvo las dos últimas
+  // (Observación y Acciones, donde van Cancelar/Anular); si "Responsable"
+  // está oculta, hay una columna menos que cubrir.
   return (
     <tr className="tabla-items-sesion-fila-anular">
-      <td colSpan={6}>
+      <td colSpan={mostrarResponsable ? 6 : 5}>
         <p className="tabla-items-sesion-anular-texto">
           ¿Anular el pesaje de {item.caravana} del {fecha}? El pesaje deja de contar en reportes y se conserva en
           Anulados.

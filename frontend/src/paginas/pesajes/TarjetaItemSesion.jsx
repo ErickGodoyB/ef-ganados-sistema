@@ -20,6 +20,7 @@ import './TarjetaItemSesion.css'
 export default function TarjetaItemSesion({
   item,
   fecha,
+  mostrarResponsable = true,
   activa,
   tipoAccion,
   deshabilitada,
@@ -78,10 +79,12 @@ export default function TarjetaItemSesion({
             <ValorGmd gmd={item.gmd} />
           </dd>
         </div>
-        <div className="tarjeta-item-sesion-dato">
-          <dt>Responsable</dt>
-          <dd>{item.responsableNombre || 'Sin datos'}</dd>
-        </div>
+        {mostrarResponsable && (
+          <div className="tarjeta-item-sesion-dato">
+            <dt>Responsable</dt>
+            <dd>{item.responsableNombre || 'Sin datos'}</dd>
+          </div>
+        )}
         <div className="tarjeta-item-sesion-dato tarjeta-item-sesion-dato--ancho">
           <dt>Observación</dt>
           <dd>{item.observaciones || 'Sin observaciones'}</dd>
