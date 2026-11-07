@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.efganados.sistemabovino.dto.ItemAnuladoPesaje;
+import com.efganados.sistemabovino.dto.ItemHistorialPesaje;
 import com.efganados.sistemabovino.dto.ItemSesionPesaje;
 import com.efganados.sistemabovino.dto.SesionPesajeResumen;
 import com.efganados.sistemabovino.exception.ConflictoException;
@@ -33,10 +34,10 @@ import com.efganados.sistemabovino.repository.PesajesRepository;
  * {@code AnimalService.registrarPesaje} para cada uno (así las reglas de
  * negocio son las mismas que al registrar un pesaje individual), y las
  * operaciones sobre pesajes ya existentes (resumen y detalle de sesiones,
- * edición y anulación de un pesaje puntual o de una sesión completa, cambio
- * de fecha de una sesión, listado de anulados) que no encajan en
- * {@code AnimalService} porque no giran alrededor de un {@link Animal} sino
- * de los pesajes en sí.
+ * historial de pesajes de un animal, edición y anulación de un pesaje
+ * puntual o de una sesión completa, cambio de fecha de una sesión, listado
+ * de anulados) que no encajan en {@code AnimalService} porque no giran
+ * alrededor de un {@link Animal} sino de los pesajes en sí.
  */
 @Service
 public class PesajeService {
@@ -120,24 +121,9 @@ public class PesajeService {
 
     private ItemSesionPesaje aItemSesionPesaje(Pesajes pesaje) {
         Animal animal = pesaje.getAnimal();
-        List<Pesajes> anteriores = pesajesRepository.buscarAnterioresA(
-                animal.getAniId(), pesaje.getPesaFecha(), pesaje.getPesaId(), EstadoPesaje.ACTIVO, PageRequest.of(0, 1));
-
-        double pesoAnterior;
-        LocalDate fechaPesoAnterior;
-        boolean pesoAnteriorEsIngreso;
-        if (!anteriores.isEmpty()) {
-            Pesajes anterior = anteriores.get(0);
-            pesoAnterior = anterior.getPesaPeso();
-            fechaPesoAnterior = anterior.getPesaFecha();
-            pesoAnteriorEsIngreso = false;
-        } else {
-            pesoAnterior = animal.getAniPesoInicial();
-            fechaPesoAnterior = animal.getAniFechaIngreso();
-            pesoAnteriorEsIngreso = true;
-        }
-        Double gmd = AnimalService.calcularGmdEntre(
-                pesaje.getPesaPeso(), pesaje.getPesaFecha(), pesoAnterior, fechaPesoAnterior, pesoAnteriorEsIngreso);
+        Anterior anterior = calcularAnterior(pesaje);
+        Double gmd = AnimalService.calcularGmdEntre(pesaje.getPesaPeso(), pesaje.getPesaFecha(), anterior.peso(),
+                anterior.fecha(), anterior.esIngreso());
 
         Persona responsable = pesaje.getResponsable();
         return new ItemSesionPesaje(
@@ -146,12 +132,79 @@ public class PesajeService {
                 animal.getAniCaravana(),
                 animal.getRaza().getRzDescripcion(),
                 pesaje.getPesaPeso(),
-                pesoAnterior,
+                anterior.peso(),
                 gmd,
-                pesoAnteriorEsIngreso,
-                fechaPesoAnterior,
+                anterior.esIngreso(),
+                anterior.fecha(),
                 responsable != null ? nombreCompleto(responsable) : null,
                 pesaje.getPesaObservaciones());
+    }
+
+    /**
+     * Historial completo de pesajes de un animal (orden cronológico,
+     * desempate por id), con el mismo peso anterior y GMD que el detalle de
+     * sesión (ver {@link #calcularAnterior}, para que los dos siempre
+     * coincidan). Por defecto solo trae los ACTIVOS; con incluirAnulados
+     * también trae los anulados (con sus propios datos de anulación), pero
+     * un pesaje anulado nunca cuenta como "anterior" de otro, se incluya o
+     * no en esta lista (ver {@link #calcularAnterior}, que solo busca entre
+     * ACTIVOS). 404 si el animal no existe (mismo criterio que el resto de
+     * los endpoints de {@code AnimalController}).
+     */
+    public List<ItemHistorialPesaje> obtenerHistorialAnimal(Long animalId, boolean incluirAnulados) {
+        animalService.buscarPorId(animalId);
+        List<Pesajes> pesajes = incluirAnulados
+                ? pesajesRepository.findByAnimal_AniIdOrderByPesaFechaAscPesaIdAsc(animalId)
+                : pesajesRepository.findByAnimal_AniIdAndPesaEstadoOrderByPesaFechaAscPesaIdAsc(animalId, EstadoPesaje.ACTIVO);
+        return pesajes.stream().map(this::aItemHistorialPesaje).toList();
+    }
+
+    private ItemHistorialPesaje aItemHistorialPesaje(Pesajes pesaje) {
+        Anterior anterior = calcularAnterior(pesaje);
+        Double gmd = AnimalService.calcularGmdEntre(pesaje.getPesaPeso(), pesaje.getPesaFecha(), anterior.peso(),
+                anterior.fecha(), anterior.esIngreso());
+
+        boolean anulado = pesaje.getPesaEstado() == EstadoPesaje.ANULADO;
+        Persona responsable = pesaje.getResponsable();
+        Persona anulador = pesaje.getAnuladoPor();
+        return new ItemHistorialPesaje(
+                pesaje.getPesaId(),
+                pesaje.getPesaFecha(),
+                pesaje.getPesaPeso(),
+                anterior.peso(),
+                anterior.esIngreso(),
+                anterior.fecha(),
+                gmd,
+                responsable != null ? nombreCompleto(responsable) : null,
+                pesaje.getPesaObservaciones(),
+                pesaje.getPesaEstado(),
+                anulado ? pesaje.getPesaMotivoAnulacion() : null,
+                anulado ? pesaje.getPesaAnuladoEn() : null,
+                anulado && anulador != null ? nombreCompleto(anulador) : null);
+    }
+
+    /**
+     * El "anterior" de un pesaje para la GMD (ver
+     * {@code AnimalService.calcularGmdEntre}): el pesaje ACTIVO
+     * inmediatamente previo del mismo animal (sin importar en qué sesión se
+     * registró), o -si no tiene ninguno- el peso inicial y la fecha de
+     * ingreso del animal. Comparten este cálculo {@link #aItemSesionPesaje}
+     * y {@link #aItemHistorialPesaje}, para que el detalle de sesión y el
+     * historial de un animal siempre coincidan.
+     */
+    private Anterior calcularAnterior(Pesajes pesaje) {
+        Animal animal = pesaje.getAnimal();
+        List<Pesajes> anteriores = pesajesRepository.buscarAnterioresA(
+                animal.getAniId(), pesaje.getPesaFecha(), pesaje.getPesaId(), EstadoPesaje.ACTIVO, PageRequest.of(0, 1));
+        if (!anteriores.isEmpty()) {
+            Pesajes anterior = anteriores.get(0);
+            return new Anterior(anterior.getPesaPeso(), anterior.getPesaFecha(), false);
+        }
+        return new Anterior(animal.getAniPesoInicial(), animal.getAniFechaIngreso(), true);
+    }
+
+    /** El peso/fecha "anterior" de un pesaje para la GMD, y si ese anterior es el ingreso del animal (ver {@link #calcularAnterior}). */
+    private record Anterior(double peso, LocalDate fecha, boolean esIngreso) {
     }
 
     /** Actualiza solo el peso y las observaciones de un pesaje ACTIVO (no la fecha ni el animal). 409 si está anulado. */

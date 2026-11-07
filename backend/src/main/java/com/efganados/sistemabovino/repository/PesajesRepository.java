@@ -46,6 +46,21 @@ public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
     Optional<Pesajes> findFirstByAnimal_AniIdAndPesaEstadoOrderByPesaFechaAsc(Long aniId, EstadoPesaje estado);
 
     /**
+     * Historial de pesajes ACTIVOS del animal, en orden cronológico
+     * (desempate por id, igual criterio que buscarAnterioresA); ver
+     * PesajeService.obtenerHistorialAnimal con incluirAnulados=false (el
+     * valor por defecto).
+     */
+    List<Pesajes> findByAnimal_AniIdAndPesaEstadoOrderByPesaFechaAscPesaIdAsc(Long aniId, EstadoPesaje estado);
+
+    /**
+     * Historial completo de pesajes del animal (ACTIVOS y ANULADOS), mismo
+     * orden que el de arriba; ver PesajeService.obtenerHistorialAnimal con
+     * incluirAnulados=true.
+     */
+    List<Pesajes> findByAnimal_AniIdOrderByPesaFechaAscPesaIdAsc(Long aniId);
+
+    /**
      * Pesajes de una sesión con lote (misma fecha + mismo subgrupo) en el
      * estado dado, ordenados por caravana y, a igual caravana (un mismo
      * animal pesado más de una vez el mismo día), por pesaId: así el orden

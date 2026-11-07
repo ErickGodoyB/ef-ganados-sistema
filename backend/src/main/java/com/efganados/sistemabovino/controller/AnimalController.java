@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.efganados.sistemabovino.dto.ItemHistorialPesaje;
 import com.efganados.sistemabovino.model.Animal;
 import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
@@ -28,11 +30,12 @@ import com.efganados.sistemabovino.repository.PesajesRepository;
 import com.efganados.sistemabovino.repository.RazaRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
 import com.efganados.sistemabovino.service.AnimalService;
+import com.efganados.sistemabovino.service.PesajeService;
 
 /**
  * CRUD REST para la entidad {@link Animal}, más los endpoints derivados
- * (GMD, aptitud para venta y registro de pesajes) que delegan en
- * {@link AnimalService}.
+ * (GMD, aptitud para venta, registro e historial de pesajes) que delegan
+ * en {@link AnimalService} y {@link PesajeService}.
  */
 @RestController
 @RequestMapping("/api/animales")
@@ -40,16 +43,18 @@ public class AnimalController {
 
     private final AnimalRepository animalRepository;
     private final AnimalService animalService;
+    private final PesajeService pesajeService;
     private final PersonaRepository personaRepository;
     private final RazaRepository razaRepository;
     private final SubGrupoRepository subGrupoRepository;
     private final PesajesRepository pesajesRepository;
 
     public AnimalController(AnimalRepository animalRepository, AnimalService animalService,
-            PersonaRepository personaRepository, RazaRepository razaRepository,
+            PesajeService pesajeService, PersonaRepository personaRepository, RazaRepository razaRepository,
             SubGrupoRepository subGrupoRepository, PesajesRepository pesajesRepository) {
         this.animalRepository = animalRepository;
         this.animalService = animalService;
+        this.pesajeService = pesajeService;
         this.personaRepository = personaRepository;
         this.razaRepository = razaRepository;
         this.subGrupoRepository = subGrupoRepository;
@@ -271,6 +276,20 @@ public class AnimalController {
     public ResponseEntity<Boolean> aptoVenta(@PathVariable Long id) {
         Animal animal = animalService.buscarPorId(id);
         return ResponseEntity.ok(animalService.estaAptoParaVenta(animal));
+    }
+
+    /**
+     * Historial de pesajes del animal, en orden cronológico. Por defecto
+     * solo trae los ACTIVOS; con incluirAnulados=true también trae los
+     * anulados (con sus propios datos de anulación), sin que eso cambie
+     * cuál es el "anterior" de ningún pesaje (ver
+     * {@code PesajeService.obtenerHistorialAnimal}). 404 si el animal no
+     * existe.
+     */
+    @GetMapping("/{id}/pesajes")
+    public List<ItemHistorialPesaje> historialPesajes(@PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean incluirAnulados) {
+        return pesajeService.obtenerHistorialAnimal(id, incluirAnulados);
     }
 
     /**
