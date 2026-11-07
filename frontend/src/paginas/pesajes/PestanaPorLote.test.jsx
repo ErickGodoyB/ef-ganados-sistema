@@ -20,9 +20,9 @@ const ANIMALES = [
   { aniId: 2, aniCaravana: 'CAR-002', aniFechaIngreso: '2026-01-01', aniFechaEgreso: null, subGrupoId: 10, pesoActual: 210 },
 ]
 
-/** Configura el mock de peticionProtegida: subgrupos siempre disponibles; el detalle de sesión, según lo que se pase. */
+/** Configura el mock de peticionProtegida: subgrupos siempre disponibles; el detalle de sesión, según lo que se pase; el POST de la sesión, siempre exitoso. */
 function configurarMock(detallePorFecha) {
-  peticionProtegida.mockImplementation(async (ruta) => {
+  peticionProtegida.mockImplementation(async (ruta, opciones) => {
     if (ruta === '/api/subgrupos') {
       return [LOTE_A]
     }
@@ -30,6 +30,9 @@ function configurarMock(detallePorFecha) {
       const parametros = new URLSearchParams(ruta.split('?')[1])
       const fecha = parametros.get('fecha')
       return detallePorFecha[fecha] ?? []
+    }
+    if (ruta === '/api/pesajes/sesion' && opciones?.method === 'POST') {
+      return JSON.parse(opciones.body).items.map((item, indice) => ({ pesaId: indice + 1, ...item }))
     }
     throw new Error(`Ruta no mockeada: ${ruta}`)
   })
@@ -281,5 +284,55 @@ describe('PestanaPorLote', () => {
     await usuario.type(screen.getByLabelText('Fecha'), '2026-03-01')
 
     expect(screen.queryByText(mensaje)).not.toBeInTheDocument()
+  })
+
+  it('un pesaje retroactivo en la lista no bloquea "Guardar": el aviso es informativo, el POST de la sesión se envía igual', async () => {
+    const usuario = userEvent.setup()
+    const animalConPesajePosterior = {
+      aniId: 5,
+      aniCaravana: 'CAR-RETRO',
+      aniFechaIngreso: '2026-01-01',
+      aniFechaEgreso: null,
+      subGrupoId: 10,
+      pesoActual: 300,
+      fechaUltimoPesaje: '2026-02-10',
+    }
+    configurarMock({})
+    render(
+      <PestanaPorLote
+        animales={[...ANIMALES, animalConPesajePosterior]}
+        cargandoAnimales={false}
+        errorAnimales=""
+        animalParaPreseleccionar={null}
+        onConsumidaPreseleccion={vi.fn()}
+        onRegistrarNuevo={vi.fn()}
+        onCerrar={vi.fn()}
+        onGuardado={vi.fn()}
+      />,
+    )
+
+    await usuario.selectOptions(await screen.findByLabelText('Lote'), '10')
+    await usuario.clear(screen.getByLabelText('Fecha'))
+    await usuario.type(screen.getByLabelText('Fecha'), '2026-02-01')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Agregar animal del lote' })).not.toBeDisabled())
+
+    await usuario.type(screen.getByRole('combobox', { name: 'Agregar animal del lote' }), 'CAR-RETRO')
+    await usuario.click(screen.getByRole('option', { name: /CAR-RETRO/ }))
+    await usuario.type(screen.getByLabelText('Peso (kg)'), '310')
+    await usuario.click(screen.getByRole('button', { name: /Agregar/ }))
+
+    // El aviso está, pero el botón "Guardar" de la sesión sigue habilitado.
+    expect(screen.getAllByText(/ya tiene un pesaje posterior/).length).toBeGreaterThan(0)
+    const botonGuardar = screen.getByRole('button', { name: 'Guardar' })
+    expect(botonGuardar).not.toBeDisabled()
+
+    await usuario.click(botonGuardar)
+
+    await waitFor(() =>
+      expect(peticionProtegida).toHaveBeenCalledWith(
+        '/api/pesajes/sesion',
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    )
   })
 })

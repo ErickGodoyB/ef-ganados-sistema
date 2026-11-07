@@ -38,14 +38,29 @@ const LOTE_B = { sbId: 20, sbDescripcion: 'Lote B', grupo: null }
 const RAZA_X = { rzId: 5, rzDescripcion: 'Raza X' }
 const DUENIO_X = { perId: 7, perNombre: 'Due', perApellido: 'Ño', perTipo: 'PROPIETARIO' }
 
-/** Configura el mock de peticionProtegida para todo lo que necesita el modal completo (animales, lotes, razas, personas, detalle de sesión y el alta del animal). */
-function configurarMock() {
+/** Animal ya existente (no creado por alta rápida) con un pesaje posterior a la fecha que se va a probar: el caso de "pesaje retroactivo". */
+const CAR_RETRO = {
+  aniId: 50,
+  aniCaravana: 'CAR-RETRO',
+  razaDescripcion: RAZA_X.rzDescripcion,
+  subGrupoId: null,
+  subGrupoDescripcion: null,
+  grupoDescripcion: null,
+  aniPesoInicial: 200,
+  pesoActual: 300,
+  fechaUltimoPesaje: '2026-03-01',
+  aniFechaIngreso: '2026-01-01',
+  aniFechaEgreso: null,
+}
+
+/** Configura el mock de peticionProtegida para todo lo que necesita el modal completo (animales, lotes, razas, personas, detalle de sesión, el alta del animal y el registro de un pesaje). */
+function configurarMock({ animalesExistentes = [] } = {}) {
   const animalesCreados = []
   let proximoId = 900
 
   peticionProtegida.mockImplementation(async (ruta, opciones) => {
     if (ruta === '/api/animales/resumen') {
-      return [...animalesCreados]
+      return [...animalesExistentes, ...animalesCreados]
     }
     if (ruta === '/api/subgrupos') {
       return [LOTE_B]
@@ -57,6 +72,9 @@ function configurarMock() {
       return [DUENIO_X]
     }
     if (ruta.startsWith('/api/pesajes/sesiones/detalle')) {
+      return []
+    }
+    if (ruta === '/api/pesajes/sesiones') {
       return []
     }
     if (ruta === '/api/animales' && opciones?.method === 'POST') {
@@ -77,12 +95,15 @@ function configurarMock() {
       })
       return creado
     }
+    if (/^\/api\/animales\/\d+\/pesajes$/.test(ruta) && opciones?.method === 'POST') {
+      return { pesaId: 1234, ...JSON.parse(opciones.body) }
+    }
     throw new Error(`Ruta no mockeada: ${ruta} ${opciones?.method ?? 'GET'}`)
   })
 }
 
-function renderModal(props = {}) {
-  configurarMock()
+function renderModal(props = {}, mockOpciones = {}) {
+  configurarMock(mockOpciones)
   return render(
     <ModalNuevoPesaje
       onCerrar={vi.fn()}
@@ -170,5 +191,41 @@ describe('ModalNuevoPesaje - alta rápida de un animal', () => {
     expect(panelActivo().getByRole('combobox', { name: 'Buscar animal por caravana' })).toHaveValue('TEST-96')
     expect(panelActivo().getByLabelText('Peso (kg)')).toHaveValue('150')
     await waitFor(() => expect(panelActivo().getByLabelText('Peso (kg)')).toHaveFocus())
+  })
+
+  it('en "Individual": un pesaje retroactivo (fecha anterior a fechaUltimoPesaje) muestra el aviso pero NO bloquea el guardado', async () => {
+    const usuario = userEvent.setup()
+    renderModal({}, { animalesExistentes: [CAR_RETRO] })
+
+    await usuario.click(screen.getByRole('tab', { name: 'Individual' }))
+    await usuario.type(await panelActivo().findByRole('combobox', { name: 'Buscar animal por caravana' }), 'CAR-RETRO')
+    await usuario.click(await screen.findByRole('option', { name: /CAR-RETRO/ }))
+
+    const campoFecha = panelActivo().getByLabelText('Fecha')
+    await usuario.clear(campoFecha)
+    await usuario.type(campoFecha, '2026-02-01')
+    await usuario.type(panelActivo().getByLabelText('Peso (kg)'), '250')
+
+    // El aviso retroactivo está (y no el de "peso menor", que acá no tendría sentido).
+    expect(
+      screen.getByText(
+        'CAR-RETRO ya tiene un pesaje posterior (01/03/2026, sesión S-260301-0). ' +
+          'Este pesaje se guardará antes y recalculará la ganancia diaria de los posteriores.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Es menor al último peso registrado/)).not.toBeInTheDocument()
+
+    // El aviso es informativo: no bloquea ninguno de los dos botones.
+    expect(panelActivo().getByRole('button', { name: 'Guardar' })).not.toBeDisabled()
+    expect(panelActivo().getByRole('button', { name: 'Guardar y agregar otro' })).not.toBeDisabled()
+
+    await usuario.click(panelActivo().getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() =>
+      expect(peticionProtegida).toHaveBeenCalledWith(
+        '/api/animales/50/pesajes',
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    )
   })
 })
