@@ -116,4 +116,14 @@ public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
             + "AND (:hasta IS NULL OR p.pesaFecha <= :hasta) "
             + "ORDER BY p.pesaAnuladoEn DESC")
     List<Pesajes> buscarAnulados(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
+
+    /**
+     * Cuenta los pesajes en los que la persona figura, como responsable o
+     * como quien anuló el pesaje, en cualquier estado (ver PersonaService:
+     * una persona que figura en algún pesaje no se puede eliminar). Un
+     * pesaje donde la misma persona es ambas cosas a la vez cuenta una sola
+     * vez (el OR va sobre la misma fila, no sobre dos consultas separadas).
+     */
+    @Query("SELECT COUNT(p) FROM Pesajes p WHERE p.responsable.perId = :personaId OR p.anuladoPor.perId = :personaId")
+    long countByResponsableOAnuladoPor(@Param("personaId") Long personaId);
 }

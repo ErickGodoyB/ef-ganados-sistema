@@ -35,4 +35,11 @@ public interface AnimalRepository extends JpaRepository<Animal, Long> {
 
     /** Cuenta los animales ACTIVOS (sin salida registrada) de un lote, para el resumen de su grupo. */
     long countBySubGrupo_SbIdAndAniFechaEgresoIsNull(Long subGrupoId);
+
+    /**
+     * Cuenta todos los animales de los que la persona es dueña, sin importar
+     * si tienen salida registrada (ver PersonaService: una persona que es
+     * dueña de algún animal no se puede eliminar).
+     */
+    long countByDuenio_PerId(Long perId);
 }

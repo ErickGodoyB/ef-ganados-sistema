@@ -91,7 +91,7 @@ las del resto de la app).
 ## Pruebas
 
 - Antes de dar por terminado un cambio de **backend**, ejecutar
-  `.\mvnw.cmd test` desde `backend/` (hoy son 147 pruebas; todas deben
+  `.\mvnw.cmd test` desde `backend/` (hoy son 170 pruebas; todas deben
   pasar).
 - Antes de dar por terminado un cambio de **frontend**, ejecutar
   `npm run lint` y `npm run build` desde `frontend/`.
