@@ -14,6 +14,7 @@ import Animales from './paginas/Animales'
 import Cuenta from './paginas/Cuenta'
 import Login from './paginas/Login'
 import Pesajes from './paginas/Pesajes'
+import Razas from './paginas/Razas'
 import Reportes from './paginas/Reportes'
 import { TemaProvider } from './tema/TemaContext'
 
@@ -41,6 +42,7 @@ function App() {
               <Route index element={<Navigate to="/animales" replace />} />
               <Route path="animales" element={<Animales />} />
               <Route path="pesajes" element={<Pesajes />} />
+              <Route path="catalogos/razas" element={<Razas />} />
               <Route path="reportes" element={<Reportes />} />
               <Route path="cuenta" element={<Cuenta />} />
             </Route>

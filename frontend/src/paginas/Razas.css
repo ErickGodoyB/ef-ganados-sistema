@@ -1,0 +1,134 @@
+/**
+ * Estilos de la página de Razas (catálogo). Mobile-first, igual criterio
+ * que Animales.css: controles apilados por defecto y en fila desde 768px;
+ * la tabla (TablaRazas) y las tarjetas (TarjetaRaza) conviven en el DOM,
+ * pero solo una se ve a la vez según el ancho.
+ *
+ * Los inputs/botones/estados vacíos ya salen de .campo-busqueda,
+ * .estado-mensaje y .tarjeta de src/estilos/base.css; .razas-boton-nuevo
+ * se duplica a propósito del mismo estilo que .animales-boton-nuevo (ver
+ * el criterio de no cruzar imports entre pantallas en AltaRapida.css).
+ */
+
+.razas-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.razas-controles {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .razas-controles {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .razas-controles .campo-busqueda {
+    flex: 1 1 260px;
+  }
+}
+
+.razas-boton-nuevo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-boton-nuevo-texto);
+  background: var(--color-boton-nuevo-fondo);
+  border: 1px solid var(--color-boton-nuevo-texto);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter var(--transicion-rapida);
+}
+
+.razas-boton-nuevo:hover {
+  filter: brightness(1.05);
+}
+
+.razas-boton-nuevo:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.razas-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.razas-tabla-solo-escritorio {
+  display: none;
+}
+
+.razas-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .razas-tabla-solo-escritorio {
+    display: block;
+  }
+
+  .razas-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+/* Formulario de alta/edición y confirmación (ver ModalFormularioRaza.jsx/
+   ModalEliminarRaza.jsx): mismo criterio que FormularioAnimal.css/
+   ModalDetalleAnimal.css. */
+.formulario-raza {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formulario-raza .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formulario-raza .campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.formulario-raza-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (min-width: 480px) {
+  .formulario-raza-acciones {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+.formulario-raza-confirmar p {
+  margin: 0 0 16px;
+  color: var(--texto);
+}

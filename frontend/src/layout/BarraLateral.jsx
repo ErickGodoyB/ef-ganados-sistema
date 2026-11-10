@@ -9,11 +9,19 @@
  * quien decide si está "abierta", oscurece el fondo y maneja el foco; este
  * componente solo expone su nodo raíz vía ref para que esa trampa de foco
  * pueda encontrar sus elementos enfocables.
+ *
+ * "Catálogos" (con Razas adentro) es un desplegable aparte, no un acceso
+ * más de ACCESOS: agrupa pantallas de catálogo (hoy solo Razas) separadas
+ * de las secciones principales. Se abre solo al entrar a una ruta
+ * /catalogos/* (ver el ajuste durante el render más abajo, mismo patrón
+ * que el de Animales.jsx para "reiniciar estado cuando cambia otra
+ * cosa"), pero no se fuerza a cerrar al salir de esa ruta, por si la
+ * persona lo había abierto a mano.
  */
 
-import { Beef, ChartColumn, LogOut, Scale } from 'lucide-react'
+import { Beef, ChartColumn, ChevronDown, LogOut, Scale, Tags } from 'lucide-react'
 import { forwardRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { MARCA } from '../configuracion/marca'
 import BotonTema from '../tema/BotonTema'
@@ -25,9 +33,22 @@ const ACCESOS = [
   { ruta: '/reportes', etiqueta: 'Reportes', Icono: ChartColumn },
 ]
 
+const CATALOGOS = [{ ruta: '/catalogos/razas', etiqueta: 'Razas' }]
+
 const BarraLateral = forwardRef(function BarraLateral({ abierta, onNavegar }, ref) {
   const { usuario, cerrarSesion } = useAuth()
   const [logoFallo, setLogoFallo] = useState(false)
+  const location = useLocation()
+
+  const dentroDeCatalogos = location.pathname.startsWith('/catalogos')
+  const [catalogosAbierto, setCatalogosAbierto] = useState(dentroDeCatalogos)
+  const [rutaPrevia, setRutaPrevia] = useState(location.pathname)
+  if (location.pathname !== rutaPrevia) {
+    setRutaPrevia(location.pathname)
+    if (dentroDeCatalogos) {
+      setCatalogosAbierto(true)
+    }
+  }
 
   const inicialUsuario = usuario?.usuNombre?.trim().charAt(0).toUpperCase() || '?'
 
@@ -77,6 +98,37 @@ const BarraLateral = forwardRef(function BarraLateral({ abierta, onNavegar }, re
               </NavLink>
             </li>
           ))}
+
+          <li>
+            <button
+              type="button"
+              className="barra-lateral-enlace barra-lateral-desplegable"
+              aria-expanded={catalogosAbierto}
+              aria-controls="barra-lateral-catalogos-lista"
+              onClick={() => setCatalogosAbierto((valor) => !valor)}
+            >
+              <Tags aria-hidden="true" size={20} />
+              Catálogos
+              <ChevronDown aria-hidden="true" size={16} className="barra-lateral-desplegable-icono" />
+            </button>
+            {catalogosAbierto && (
+              <ul id="barra-lateral-catalogos-lista" className="barra-lateral-sublista">
+                {CATALOGOS.map((acceso) => (
+                  <li key={acceso.ruta}>
+                    <NavLink
+                      to={acceso.ruta}
+                      className={({ isActive }) =>
+                        `barra-lateral-enlace${isActive ? ' barra-lateral-enlace--activo' : ''}`
+                      }
+                      onClick={onNavegar}
+                    >
+                      {acceso.etiqueta}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
         </ul>
       </nav>
 

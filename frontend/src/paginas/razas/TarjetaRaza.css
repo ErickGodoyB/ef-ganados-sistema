@@ -1,0 +1,59 @@
+/**
+ * Tarjeta de una raza para pantallas chicas (ver Razas.css: solo se muestra
+ * por debajo de 768px). El fondo/borde/radio/sombra salen de la clase
+ * compartida ".tarjeta" (src/estilos/base.css); acá solo queda el layout
+ * propio de esta tarjeta.
+ */
+
+.tarjeta-raza {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.tarjeta-raza-descripcion {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tarjeta-raza-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.tarjeta-raza-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarjeta-raza-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-raza-dato dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-raza-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tarjeta-raza-aviso {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-secundario);
+}

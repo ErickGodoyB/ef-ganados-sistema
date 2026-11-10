@@ -1,0 +1,56 @@
+/**
+ * Tabla del catálogo de razas (>= 768px, ver Razas.css). Mismo criterio de
+ * scroll horizontal contenido que TablaAnimales.css.
+ */
+
+.tabla-razas-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tabla-razas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-razas th,
+.tabla-razas td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla-razas thead th {
+  background: var(--superficie-hover);
+  white-space: nowrap;
+}
+
+.tabla-razas tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-razas-descripcion {
+  font-weight: 700;
+}
+
+.tabla-razas-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabla-razas-accion-eliminar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tabla-razas-aviso {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
