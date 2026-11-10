@@ -14,6 +14,7 @@ import Animales from './paginas/Animales'
 import Cuenta from './paginas/Cuenta'
 import GruposYLotes from './paginas/GruposYLotes'
 import Login from './paginas/Login'
+import Personas from './paginas/Personas'
 import Pesajes from './paginas/Pesajes'
 import Razas from './paginas/Razas'
 import Reportes from './paginas/Reportes'
@@ -45,6 +46,7 @@ function App() {
               <Route path="pesajes" element={<Pesajes />} />
               <Route path="catalogos/razas" element={<Razas />} />
               <Route path="catalogos/grupos-y-lotes" element={<GruposYLotes />} />
+              <Route path="catalogos/personas" element={<Personas />} />
               <Route path="reportes" element={<Reportes />} />
               <Route path="cuenta" element={<Cuenta />} />
             </Route>

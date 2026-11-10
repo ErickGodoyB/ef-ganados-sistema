@@ -1,0 +1,171 @@
+/**
+ * Estilos de la página de Personas. Mismo criterio mobile-first que
+ * Animales.css/Razas.css: controles apilados por defecto y en fila desde
+ * 768px; tabla (TablaPersonas) y tarjetas (TarjetaPersona) conviven en el
+ * DOM, pero solo una se ve a la vez según el ancho.
+ */
+
+.personas-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.personas-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .personas-controles {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .personas-controles .campo-busqueda {
+    flex: 1 1 220px;
+  }
+
+  .personas-controles .campo-filtro {
+    flex: 0 0 auto;
+  }
+}
+
+.personas-boton-nuevo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-boton-nuevo-texto);
+  background: var(--color-boton-nuevo-fondo);
+  border: 1px solid var(--color-boton-nuevo-texto);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter var(--transicion-rapida);
+}
+
+.personas-boton-nuevo:hover {
+  filter: brightness(1.05);
+}
+
+.personas-boton-nuevo:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.personas-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.personas-orden-movil {
+  display: flex;
+}
+
+@media (min-width: 768px) {
+  .personas-orden-movil {
+    display: none;
+  }
+}
+
+.personas-tabla-solo-escritorio {
+  display: none;
+}
+
+.personas-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .personas-tabla-solo-escritorio {
+    display: block;
+  }
+
+  .personas-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+/* ---- Formulario del modal de alta/edición (ver ModalFormularioPersona.jsx) ---- */
+
+.formulario-persona {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formulario-persona .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 100%;
+}
+
+.formulario-persona .campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+/* Nombre+Apellido y CI+RUC y Teléfono+Correo van de a pares, uno abajo
+   del otro en celular y en la misma fila desde 480px. */
+.formulario-persona-fila {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 480px) {
+  .formulario-persona-fila {
+    flex-direction: row;
+  }
+
+  .formulario-persona-fila .campo {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+.formulario-persona-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (min-width: 480px) {
+  .formulario-persona-acciones {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* ---- Confirmación de borrado (ver ModalEliminarPersona.jsx) ---- */
+
+.confirmar-eliminar-persona p {
+  margin: 0 0 16px;
+  color: var(--texto);
+}
+
+.confirmar-eliminar-persona-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}

@@ -1,0 +1,92 @@
+/**
+ * Tabla del listado de personas (>= 768px, ver Personas.css). Mismo
+ * criterio de scroll horizontal contenido que TablaAnimales.css.
+ */
+
+.tabla-personas-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.tabla-personas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-personas th,
+.tabla-personas td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.tabla-personas thead th {
+  background: var(--superficie-hover);
+}
+
+.tabla-personas tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-personas tbody tr:hover {
+  background: var(--superficie-hover);
+}
+
+.tabla-personas-nombre {
+  font-weight: 700;
+}
+
+.tabla-personas-orden {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--texto);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tabla-personas-orden:hover {
+  color: var(--color-foco);
+}
+
+.tabla-personas-orden:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+th[aria-sort='ascending'] .tabla-personas-orden::after {
+  content: ' \2191';
+}
+
+th[aria-sort='descending'] .tabla-personas-orden::after {
+  content: ' \2193';
+}
+
+.personas-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+.personas-accion-eliminar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.personas-aviso-cantidad {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-secundario);
+  white-space: normal;
+}

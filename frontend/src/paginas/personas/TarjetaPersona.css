@@ -1,0 +1,67 @@
+/**
+ * Tarjeta de una persona para pantallas chicas (ver Personas.css: solo se
+ * muestra por debajo de 768px). El fondo/borde/radio/sombra salen de la
+ * clase compartida ".tarjeta" (src/estilos/base.css); acá solo queda el
+ * layout propio de esta tarjeta.
+ */
+
+.tarjeta-persona {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.tarjeta-persona-encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tarjeta-persona-nombre {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-persona-datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.tarjeta-persona-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarjeta-persona-dato dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-persona-dato dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-persona-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tarjeta-persona-aviso {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
