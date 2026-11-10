@@ -24,4 +24,15 @@ public interface AnimalRepository extends JpaRepository<Animal, Long> {
      * eliminar, aunque esos animales ya no sean productivos).
      */
     long countByRaza_RzId(Long razaId);
+
+    /**
+     * Cuenta todos los animales de un lote, sin importar si tienen salida
+     * registrada (ver GrupoService.obtenerResumen y SubGrupoService.eliminar:
+     * un lote con historial no se puede eliminar, aunque esos animales ya no
+     * sean productivos).
+     */
+    long countBySubGrupo_SbId(Long subGrupoId);
+
+    /** Cuenta los animales ACTIVOS (sin salida registrada) de un lote, para el resumen de su grupo. */
+    long countBySubGrupo_SbIdAndAniFechaEgresoIsNull(Long subGrupoId);
 }
