@@ -17,4 +17,11 @@ public interface AnimalRepository extends JpaRepository<Animal, Long> {
      * validar unicidad al actualizar sin rechazar la propia caravana del animal.
      */
     boolean existsByAniCaravanaAndAniIdNot(String aniCaravana, Long aniId);
+
+    /**
+     * Cuenta todos los animales de una raza, sin importar si tienen salida
+     * registrada (ver RazaService: una raza con historial no se puede
+     * eliminar, aunque esos animales ya no sean productivos).
+     */
+    long countByRaza_RzId(Long razaId);
 }
