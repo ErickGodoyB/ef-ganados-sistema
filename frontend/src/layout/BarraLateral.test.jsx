@@ -37,12 +37,21 @@ describe('BarraLateral: desplegable Catálogos', () => {
     expect(screen.queryByRole('link', { name: 'Razas' })).not.toBeInTheDocument()
   })
 
-  it('se abre solo cuando la ruta actual está dentro de /catalogos', () => {
+  it('se abre solo cuando la ruta actual está dentro de /catalogos, y lista Razas y Grupos y lotes', () => {
     renderBarraLateral('/catalogos/razas')
 
     const boton = screen.getByRole('button', { name: 'Catálogos' })
     expect(boton).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('link', { name: 'Razas' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Grupos y lotes' })).toBeInTheDocument()
+  })
+
+  it('también se abre solo al entrar directo a /catalogos/grupos-y-lotes', () => {
+    renderBarraLateral('/catalogos/grupos-y-lotes')
+
+    const boton = screen.getByRole('button', { name: 'Catálogos' })
+    expect(boton).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('link', { name: 'Grupos y lotes' })).toBeInTheDocument()
   })
 
   it('un clic lo abre (y muestra el enlace a Razas); otro clic lo cierra', async () => {

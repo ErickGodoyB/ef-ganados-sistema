@@ -1,0 +1,289 @@
+/**
+ * Estilos de la página de Grupos y lotes. Mobile-first, igual criterio
+ * que Razas.css: controles apilados por defecto y en fila desde 768px. A
+ * diferencia de Animales/Razas, no hay tabla/tarjetas duales: cada grupo
+ * es una única tarjeta desplegable (TarjetaGrupo.jsx) cuyo encabezado y
+ * filas de lote van apilados en celular y alineados en fila desde 768px
+ * (sin tablas anchas, como pide la consigna).
+ *
+ * Los inputs/botones/estados vacíos ya salen de .campo-busqueda,
+ * .estado-mensaje y .tarjeta de src/estilos/base.css; .grupos-boton-nuevo
+ * se duplica a propósito del mismo estilo que .animales-boton-nuevo/
+ * .razas-boton-nuevo (ver el criterio de no cruzar imports entre
+ * pantallas en AltaRapida.css).
+ */
+
+.grupos-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grupos-controles {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .grupos-controles {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .grupos-controles .campo-busqueda {
+    flex: 1 1 260px;
+  }
+}
+
+.grupos-boton-nuevo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-boton-nuevo-texto);
+  background: var(--color-boton-nuevo-fondo);
+  border: 1px solid var(--color-boton-nuevo-texto);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter var(--transicion-rapida);
+}
+
+.grupos-boton-nuevo:hover {
+  filter: brightness(1.05);
+}
+
+.grupos-boton-nuevo:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.grupos-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.grupos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- Tarjeta de grupo (ver TarjetaGrupo.jsx) ---- */
+
+.tarjeta-grupo {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-grupo-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .tarjeta-grupo-encabezado {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+.tarjeta-grupo-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--texto);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .tarjeta-grupo-disclosure {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.tarjeta-grupo-disclosure:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.tarjeta-grupo-icono-chevron {
+  flex-shrink: 0;
+  transition: transform var(--transicion-rapida);
+}
+
+.tarjeta-grupo-disclosure--abierto .tarjeta-grupo-icono-chevron {
+  transform: rotate(180deg);
+}
+
+.tarjeta-grupo-nombre {
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-grupo-resumen-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-grupo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tarjeta-grupo-lotes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--borde);
+  padding-top: 10px;
+}
+
+.tarjeta-grupo-lotes-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+/* ---- Fila de lote dentro de la tarjeta ---- */
+
+.fila-lote {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--superficie-hover);
+  border-radius: var(--radio-sm);
+}
+
+@media (min-width: 768px) {
+  .fila-lote {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+.fila-lote-nombre {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .fila-lote-nombre {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+}
+
+.fila-lote-datos {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.fila-lote-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Compartido entre la tarjeta de grupo y la fila de lote ---- */
+
+.accion-eliminar-con-aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aviso-cantidad {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
+
+/* ---- Formularios de los modales (ver ModalFormularioGrupo.jsx/ModalFormularioLote.jsx) ---- */
+
+.formulario-grupo,
+.formulario-lote {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formulario-grupo .campo,
+.formulario-lote .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formulario-grupo .campo label,
+.formulario-lote .campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.formulario-grupo-acciones,
+.formulario-lote-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (min-width: 480px) {
+  .formulario-grupo-acciones,
+  .formulario-lote-acciones {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* ---- Confirmación de borrado (ver ModalEliminarGrupo.jsx/ModalEliminarLote.jsx) ---- */
+
+.confirmar-eliminar p {
+  margin: 0 0 16px;
+  color: var(--texto);
+}
+
+.confirmar-eliminar-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}

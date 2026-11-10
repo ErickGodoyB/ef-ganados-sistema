@@ -33,7 +33,10 @@ const ACCESOS = [
   { ruta: '/reportes', etiqueta: 'Reportes', Icono: ChartColumn },
 ]
 
-const CATALOGOS = [{ ruta: '/catalogos/razas', etiqueta: 'Razas' }]
+const CATALOGOS = [
+  { ruta: '/catalogos/razas', etiqueta: 'Razas' },
+  { ruta: '/catalogos/grupos-y-lotes', etiqueta: 'Grupos y lotes' },
+]
 
 const BarraLateral = forwardRef(function BarraLateral({ abierta, onNavegar }, ref) {
   const { usuario, cerrarSesion } = useAuth()

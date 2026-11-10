@@ -12,6 +12,7 @@ import { useAuth } from './auth/useAuth'
 import LayoutPrincipal from './layout/LayoutPrincipal'
 import Animales from './paginas/Animales'
 import Cuenta from './paginas/Cuenta'
+import GruposYLotes from './paginas/GruposYLotes'
 import Login from './paginas/Login'
 import Pesajes from './paginas/Pesajes'
 import Razas from './paginas/Razas'
@@ -43,6 +44,7 @@ function App() {
               <Route path="animales" element={<Animales />} />
               <Route path="pesajes" element={<Pesajes />} />
               <Route path="catalogos/razas" element={<Razas />} />
+              <Route path="catalogos/grupos-y-lotes" element={<GruposYLotes />} />
               <Route path="reportes" element={<Reportes />} />
               <Route path="cuenta" element={<Cuenta />} />
             </Route>
