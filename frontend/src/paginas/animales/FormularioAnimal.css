@@ -47,6 +47,13 @@
   color: var(--color-error);
 }
 
+/* Texto de ayuda bajo un campo (ej. el límite mínimo de la fecha de salida, ver FormularioSalidaAnimal.jsx): no es un error. */
+.campo-ayuda {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
 .formulario-animal-error-general {
   margin: 0;
   padding: 10px 12px;

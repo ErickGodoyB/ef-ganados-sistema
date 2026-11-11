@@ -21,3 +21,12 @@
   color: var(--color-exito-texto);
   background: var(--color-exito-fondo);
 }
+
+/* "Salió" (ver EstadoBadge.jsx): variante neutra, igual look que el badge
+   genérico de base.css (ej. "Con acceso" en Personas), no un color de
+   marca propio: no es ni un estado positivo ni uno negativo. */
+.estado-badge--salio {
+  color: var(--texto);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+}

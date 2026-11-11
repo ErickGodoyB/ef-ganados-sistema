@@ -82,11 +82,12 @@ function compararAnimales(a, b, campo, direccion) {
 /**
  * Aplica, en orden, la búsqueda por caravana (sin distinguir mayúsculas,
  * ignorando espacios en los extremos), los filtros de lote (por
- * subGrupoId; "sin-lote" filtra los que tienen subGrupoId null) y estado,
- * y finalmente el orden elegido. Devuelve un array nuevo; no modifica
+ * subGrupoId; "sin-lote" filtra los que tienen subGrupoId null), estado
+ * (apto/no apto para venta) y estado de salida (activos/salidos), y
+ * finalmente el orden elegido. Devuelve un array nuevo; no modifica
  * "animales".
  */
-export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, orden }) {
+export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, estadoSalida, orden }) {
   const termino = busqueda.trim().toLowerCase()
 
   const filtrados = animales.filter((animal) => {
@@ -103,6 +104,12 @@ export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, orde
       return false
     }
     if (estado === 'no-aptos' && animal.aptoVenta) {
+      return false
+    }
+    if (estadoSalida === 'activos' && animal.aniFechaEgreso != null) {
+      return false
+    }
+    if (estadoSalida === 'salidos' && animal.aniFechaEgreso == null) {
       return false
     }
     return true

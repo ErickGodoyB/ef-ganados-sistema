@@ -23,7 +23,7 @@ export function valorCelda(animal, clave) {
     case 'gmd':
       return <ValorGmd gmd={animal.gmd} />
     case 'estado':
-      return <EstadoBadge apto={animal.aptoVenta} />
+      return <EstadoBadge animal={animal} />
     case 'fechaIngreso':
       return formatearFecha(animal.aniFechaIngreso)
     default:

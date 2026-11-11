@@ -27,7 +27,7 @@ export default function TarjetaAnimal({ animal, columnasVisibles, onAbrirDetalle
         <button type="button" className="tarjeta-animal-caravana" aria-label={`Ver detalle de ${animal.aniCaravana}`}>
           {animal.aniCaravana}
         </button>
-        {columnasVisibles.estado && <EstadoBadge apto={animal.aptoVenta} />}
+        {columnasVisibles.estado && <EstadoBadge animal={animal} />}
       </div>
 
       {campos.length > 0 && (

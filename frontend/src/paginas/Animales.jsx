@@ -1,16 +1,22 @@
 /**
  * Listado de animales (RF010): trae el resumen desde el backend
  * (GET /api/animales/resumen) y permite buscar por caravana, filtrar por
- * lote (por subGrupoId; ver listadoAnimales.js) y por estado, ordenar por
- * cualquier columna, paginar en el cliente, y elegir qué columnas
- * opcionales mostrar (preferencia que se recuerda en localStorage, ver
+ * lote (por subGrupoId; ver listadoAnimales.js), por estado (apto/no apto
+ * para venta) y por estado de salida (Activos por defecto/Salidos/Todos,
+ * un filtro aparte del de apto/no apto), ordenar por cualquier columna,
+ * paginar en el cliente, y elegir qué columnas opcionales mostrar
+ * (preferencia que se recuerda en localStorage, ver
  * usePreferenciasListadoAnimales). El botón "+ Nuevo animal" (RF001) abre
  * ModalNuevoAnimal; tocar una fila/tarjeta abre ModalDetalleAnimal (ver
- * ese archivo), desde donde se puede editar o eliminar. En los tres casos,
- * al guardar/editar/eliminar se recarga el listado sin perder búsqueda,
- * filtros, orden ni página (son estados propios de esta pantalla, ajenos a
- * la recarga; si la página actual queda vacía, paginaActual ya se recorta
- * sola más abajo) y se muestra un aviso breve.
+ * ese archivo), desde donde se puede editar, eliminar, registrar la
+ * salida o reactivar un animal que ya salió. Editar/eliminar recargan el
+ * listado y cierran el modal; registrar salida/reactivar también
+ * recargan, pero dejan el modal abierto mostrando el detalle actualizado
+ * (ver alRegistrarSalida/alReactivarAnimal). En todos los casos se
+ * conserva la búsqueda, los filtros, el orden y la página (son estados
+ * propios de esta pantalla, ajenos a la recarga; si la página actual
+ * queda vacía, paginaActual ya se recorta sola más abajo) y se muestra un
+ * aviso breve.
  */
 
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
@@ -36,6 +42,15 @@ const ESTADOS_FILTRO = [
   { valor: 'no-aptos', etiqueta: 'No aptos' },
 ]
 
+// "Activos" por defecto: un animal con salida registrada ya no es
+// productivo, así que no tiene sentido verlo mezclado con el resto salvo
+// que se lo pida explícitamente (ver listadoAnimales.js).
+const ESTADOS_SALIDA_FILTRO = [
+  { valor: 'activos', etiqueta: 'Activos' },
+  { valor: 'salidos', etiqueta: 'Salidos' },
+  { valor: 'todos', etiqueta: 'Todos' },
+]
+
 export default function Animales() {
   const { animales, cargando, error, recargar } = useAnimalesResumen()
   const { columnasVisibles, filasPorPagina, cambiarColumnaVisible, cambiarFilasPorPagina, restablecer } =
@@ -44,6 +59,7 @@ export default function Animales() {
   const [busqueda, setBusqueda] = useState('')
   const [lote, setLote] = useState('todos')
   const [estado, setEstado] = useState('todos')
+  const [estadoSalida, setEstadoSalida] = useState('activos')
   const [orden, setOrden] = useState({ campo: 'aniCaravana', direccion: 'asc' })
   const [pagina, setPagina] = useState(1)
 
@@ -59,22 +75,23 @@ export default function Animales() {
   // durante el render en vez de en un useEffect: es el patrón que React
   // recomienda para "reiniciar estado cuando cambia otra cosa" (evita un
   // re-render extra y el aviso de set-state-in-effect).
-  const [filtrosPrevios, setFiltrosPrevios] = useState({ busqueda, lote, estado, orden })
+  const [filtrosPrevios, setFiltrosPrevios] = useState({ busqueda, lote, estado, estadoSalida, orden })
   if (
     filtrosPrevios.busqueda !== busqueda ||
     filtrosPrevios.lote !== lote ||
     filtrosPrevios.estado !== estado ||
+    filtrosPrevios.estadoSalida !== estadoSalida ||
     filtrosPrevios.orden !== orden
   ) {
-    setFiltrosPrevios({ busqueda, lote, estado, orden })
+    setFiltrosPrevios({ busqueda, lote, estado, estadoSalida, orden })
     setPagina(1)
   }
 
   const lotesDisponibles = useMemo(() => obtenerLotesDisponibles(animales), [animales])
 
   const resultado = useMemo(
-    () => filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, orden }),
-    [animales, busqueda, lote, estado, orden],
+    () => filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, estadoSalida, orden }),
+    [animales, busqueda, lote, estado, estadoSalida, orden],
   )
 
   const totalPaginas = Math.max(1, Math.ceil(resultado.length / filasPorPagina))
@@ -88,6 +105,7 @@ export default function Animales() {
     setBusqueda('')
     setLote('todos')
     setEstado('todos')
+    setEstadoSalida('activos')
   }
 
   function alOrdenar(campo) {
@@ -141,6 +159,27 @@ export default function Animales() {
     setAnimalSeleccionado(null)
     recargar()
     mostrarAviso('Ese animal ya no existía: se actualizó el listado')
+  }
+
+  /**
+   * Tras registrar la salida de un animal: a diferencia de editar/eliminar,
+   * el modal NO se cierra (sigue en la vista de detalle, que ya volvió a
+   * "detalle" antes de llamar a esto, ver ModalDetalleAnimal.jsx) para que
+   * se vea de una el resultado; "animalSeleccionado" se reemplaza por los
+   * datos nuevos para que el detalle ya abierto los muestre sin esperar a
+   * la recarga del listado de atrás.
+   */
+  function alRegistrarSalida(animalActualizado) {
+    setAnimalSeleccionado(animalActualizado)
+    recargar()
+    mostrarAviso(`Salida registrada para ${animalActualizado.aniCaravana}`)
+  }
+
+  /** Tras reactivar un animal: mismo criterio que alRegistrarSalida (el modal queda abierto, mostrando el detalle ya reactivado). */
+  function alReactivarAnimal(animalActualizado) {
+    setAnimalSeleccionado(animalActualizado)
+    recargar()
+    mostrarAviso(`Animal ${animalActualizado.aniCaravana} reactivado`)
   }
 
   const sinAnimales = !cargando && !error && animales.length === 0
@@ -205,6 +244,21 @@ export default function Animales() {
           <label htmlFor="animales-filtro-estado">Estado</label>
           <select id="animales-filtro-estado" value={estado} onChange={(evento) => setEstado(evento.target.value)}>
             {ESTADOS_FILTRO.map((opcion) => (
+              <option key={opcion.valor} value={opcion.valor}>
+                {opcion.etiqueta}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="campo-filtro">
+          <label htmlFor="animales-filtro-estado-salida">Estado de salida</label>
+          <select
+            id="animales-filtro-estado-salida"
+            value={estadoSalida}
+            onChange={(evento) => setEstadoSalida(evento.target.value)}
+          >
+            {ESTADOS_SALIDA_FILTRO.map((opcion) => (
               <option key={opcion.valor} value={opcion.valor}>
                 {opcion.etiqueta}
               </option>
@@ -319,6 +373,8 @@ export default function Animales() {
           onActualizado={alActualizarAnimal}
           onEliminado={alEliminarAnimal}
           onYaNoExiste={alAnimalYaNoExiste}
+          onSalidaRegistrada={alRegistrarSalida}
+          onReactivado={alReactivarAnimal}
           refDisparador={refDisparadorDetalle}
         />
       )}
