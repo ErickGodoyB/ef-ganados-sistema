@@ -1,6 +1,8 @@
 package com.efganados.sistemabovino.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -15,6 +17,7 @@ import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.model.Pesajes;
 import com.efganados.sistemabovino.repository.AnimalRepository;
+import com.efganados.sistemabovino.repository.PersonaRepository;
 import com.efganados.sistemabovino.repository.PesajesRepository;
 
 /**
@@ -27,12 +30,27 @@ public class AnimalService {
 
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    /** Motivos de salida permitidos, en un solo lugar (ver PersonaService.TIPOS_PERMITIDOS para el mismo criterio). */
+    private static final List<String> MOTIVOS_SALIDA_PERMITIDOS = List.of("VENTA", "MUERTE", "OTRO");
+
+    private static final int LARGO_MAXIMO_NOTA_SALIDA = 255;
+
     private final AnimalRepository animalRepository;
     private final PesajesRepository pesajesRepository;
+    private final PersonaRepository personaRepository;
+    private final Clock clock;
 
-    public AnimalService(AnimalRepository animalRepository, PesajesRepository pesajesRepository) {
+    public AnimalService(AnimalRepository animalRepository, PesajesRepository pesajesRepository,
+            PersonaRepository personaRepository, Clock clock) {
         this.animalRepository = animalRepository;
         this.pesajesRepository = pesajesRepository;
+        this.personaRepository = personaRepository;
+        this.clock = clock;
+    }
+
+    /** El momento actual (fecha y hora), en la zona horaria del {@link Clock} inyectado; ver Animal.aniFechaRegistro. */
+    public LocalDateTime momentoActual() {
+        return LocalDateTime.now(clock);
     }
 
     /**
@@ -179,6 +197,123 @@ public class AnimalService {
                                 + primerPesaje.getPesaFecha().format(FORMATO_FECHA) + ")");
                     }
                 });
+    }
+
+    /**
+     * Registra la salida del animal (venta, muerte u otro motivo). 409 si
+     * el animal ya tenía una salida registrada (para cambiarla hay que
+     * reactivarlo primero, ver {@link #reactivar}); 400 si la fecha o el
+     * motivo faltan o no son válidos, o si viene un comprador con un
+     * motivo distinto de VENTA; 404 si el comprador indicado no existe.
+     */
+    public Animal registrarSalida(Long animalId, LocalDate fecha, String motivo, String nota, Long compradorId) {
+        Animal animal = buscarPorId(animalId);
+        if (animal.getAniFechaEgreso() != null) {
+            throw new ConflictoException("El animal " + animal.getAniCaravana() + " ya tiene una salida registrada");
+        }
+
+        validarFechaSalida(animal, fecha);
+        String motivoValidado = validarMotivoSalida(motivo);
+        String notaValidada = validarNotaSalida(motivoValidado, nota);
+        Persona comprador = validarComprador(motivoValidado, compradorId);
+
+        animal.setAniFechaEgreso(fecha);
+        animal.setAniMotivoSalida(motivoValidado);
+        animal.setAniNotaSalida(notaValidada);
+        animal.setComprador(comprador);
+        return animalRepository.save(animal);
+    }
+
+    /**
+     * Fecha de salida obligatoria, no futura, no anterior al ingreso del
+     * animal, y no anterior a la fecha de su último pesaje ACTIVO (no tiene
+     * sentido que el animal haya "salido" antes de la última vez que se lo
+     * pesó, mientras seguía en el campo).
+     */
+    private void validarFechaSalida(Animal animal, LocalDate fecha) {
+        if (fecha == null) {
+            throw new ValidacionException("Falta el campo fecha");
+        }
+        if (fecha.isAfter(LocalDate.now(clock))) {
+            throw new ValidacionException("La fecha de salida no puede ser futura");
+        }
+        if (fecha.isBefore(animal.getAniFechaIngreso())) {
+            throw new ValidacionException("La fecha de salida no puede ser anterior al ingreso del animal ("
+                    + animal.getAniCaravana() + ": " + animal.getAniFechaIngreso() + ")");
+        }
+        Optional<Pesajes> ultimoPesaje = ultimoPesajeActivo(animal);
+        if (ultimoPesaje.isPresent() && fecha.isBefore(ultimoPesaje.get().getPesaFecha())) {
+            throw new ValidacionException("La fecha de salida no puede ser anterior al último pesaje del animal ("
+                    + animal.getAniCaravana() + ": " + ultimoPesaje.get().getPesaFecha().format(FORMATO_FECHA) + ")");
+        }
+    }
+
+    /** Valida que el motivo no falte y sea uno de los permitidos (ver MOTIVOS_SALIDA_PERMITIDOS), y lo devuelve recortado. */
+    private String validarMotivoSalida(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new ValidacionException("Falta el campo motivo");
+        }
+        String motivoRecortado = motivo.trim();
+        if (!MOTIVOS_SALIDA_PERMITIDOS.contains(motivoRecortado)) {
+            throw new ValidacionException("El motivo debe ser " + String.join(", ", MOTIVOS_SALIDA_PERMITIDOS));
+        }
+        return motivoRecortado;
+    }
+
+    /**
+     * La nota es obligatoria si el motivo es OTRO (no hay otra forma de
+     * saber qué pasó); opcional en los demás casos. Cuando viene vacía o de
+     * solo espacios se guarda como null, igual que el resto de los campos
+     * de texto opcionales del sistema (ver PersonaService.aNuloSiVacio).
+     */
+    private String validarNotaSalida(String motivoValidado, String nota) {
+        String notaRecortada = nota == null || nota.isBlank() ? null : nota.trim();
+        if ("OTRO".equals(motivoValidado) && notaRecortada == null) {
+            throw new ValidacionException("Falta el campo nota");
+        }
+        if (notaRecortada != null && notaRecortada.length() > LARGO_MAXIMO_NOTA_SALIDA) {
+            throw new ValidacionException("La nota no puede tener más de " + LARGO_MAXIMO_NOTA_SALIDA + " caracteres");
+        }
+        return notaRecortada;
+    }
+
+    /** El comprador solo tiene sentido si el motivo es VENTA; si viene, la persona debe existir. */
+    private Persona validarComprador(String motivoValidado, Long compradorId) {
+        if (compradorId == null) {
+            return null;
+        }
+        if (!"VENTA".equals(motivoValidado)) {
+            throw new ValidacionException("El comprador solo se puede indicar cuando el motivo es VENTA");
+        }
+        return personaRepository.findById(compradorId)
+                .orElseThrow(() -> new IllegalArgumentException("Persona no encontrada con id: " + compradorId));
+    }
+
+    /**
+     * Reactiva un animal con salida registrada: borra la fecha de salida,
+     * el motivo, la nota y el comprador, dejándolo otra vez productivo. 409
+     * si el animal no tenía una salida registrada; 409 si quedó algún
+     * pesaje ACTIVO posterior a esa fecha de salida (ej. por un cambio de
+     * fecha de sesión posterior, ver {@code PesajeService.cambiarFechaSesion}):
+     * reactivarlo en ese estado dejaría un pesaje "después de la salida",
+     * así que hay que resolver ese pesaje primero.
+     */
+    public Animal reactivar(Long animalId) {
+        Animal animal = buscarPorId(animalId);
+        LocalDate fechaSalida = animal.getAniFechaEgreso();
+        if (fechaSalida == null) {
+            throw new ConflictoException("El animal " + animal.getAniCaravana() + " no tiene una salida registrada");
+        }
+        if (pesajesRepository.existsByAnimal_AniIdAndPesaEstadoAndPesaFechaAfter(animalId, EstadoPesaje.ACTIVO, fechaSalida)) {
+            throw new ConflictoException("No se puede reactivar el animal " + animal.getAniCaravana()
+                    + ": tiene un pesaje activo posterior a su salida");
+        }
+
+        animal.setAniFechaEgreso(null);
+        animal.setAniMotivoSalida(null);
+        animal.setAniNotaSalida(null);
+        animal.setComprador(null);
+        return animalRepository.save(animal);
     }
 
     /**

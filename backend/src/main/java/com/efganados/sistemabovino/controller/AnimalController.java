@@ -1,6 +1,7 @@
 package com.efganados.sistemabovino.controller;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,6 +111,9 @@ public class AnimalController {
         animalService.validarFechaIngreso(null, request.aniFechaIngreso());
         Animal animal = new Animal();
         aplicarDatos(animal, request);
+        // Solo al crear: los animales existentes antes de este campo quedan
+        // en null a propósito (ver el Javadoc de Animal.aniFechaRegistro).
+        animal.setAniFechaRegistro(animalService.momentoActual());
         Animal guardado = animalRepository.save(animal);
         return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
     }
@@ -167,7 +171,13 @@ public class AnimalController {
     /**
      * Resuelve los IDs del request contra sus repositorios (lanzando
      * IllegalArgumentException, convertida en 404, si alguno no existe) y
-     * copia todos los datos del request sobre el animal dado.
+     * copia los datos del request sobre el animal dado. La salida
+     * (aniFechaEgreso, motivo, nota, comprador) nunca se toca acá: se
+     * maneja solo con PUT /{id}/salida y PUT /{id}/reactivar (ver
+     * AnimalService), así que request.aniFechaEgreso() se ignora a
+     * propósito (sigue aceptándose en el cuerpo por compatibilidad con el
+     * frontend actual, que todavía lo reenvía) y, al actualizar, la salida
+     * que ya tuviera el animal queda intacta porque nunca se la pisa.
      */
     private void aplicarDatos(Animal animal, AnimalRequest request) {
         Persona duenio = personaRepository.findById(request.duenioId())
@@ -186,7 +196,6 @@ public class AnimalController {
         animal.setAniCaravana(request.aniCaravana());
         animal.setAniFechaIngreso(request.aniFechaIngreso());
         animal.setAniPesoInicial(request.aniPesoInicial());
-        animal.setAniFechaEgreso(request.aniFechaEgreso());
         animal.setAniObservacion(request.aniObservacion());
     }
 
@@ -208,6 +217,7 @@ public class AnimalController {
 
         Optional<Pesajes> ultimoPesaje = animalService.ultimoPesajeActivo(animal);
         double pesoActual = ultimoPesaje.map(pesaje -> pesaje.getPesaPeso()).orElse(animal.getAniPesoInicial());
+        Persona comprador = animal.getComprador();
 
         return new AnimalResumen(
                 animal.getAniId(),
@@ -227,7 +237,12 @@ public class AnimalController {
                 pesoActual >= raza.getRzPesoObjetivoVenta(),
                 animal.getAniFechaIngreso(),
                 animal.getAniFechaEgreso(),
-                ultimoPesaje.map(pesaje -> pesaje.getPesaFecha()).orElse(null));
+                ultimoPesaje.map(pesaje -> pesaje.getPesaFecha()).orElse(null),
+                animal.getAniMotivoSalida(),
+                animal.getAniNotaSalida(),
+                comprador != null ? comprador.getPerId() : null,
+                comprador != null ? nombreCompleto(comprador) : null,
+                animal.getAniFechaRegistro());
     }
 
     /**
@@ -317,7 +332,10 @@ public class AnimalController {
     /**
      * Datos de entrada para crear o actualizar un animal: referencia a sus
      * relaciones (dueño, raza, subgrupo) solo por ID, en vez de objetos
-     * anidados completos.
+     * anidados completos. aniFechaEgreso se sigue aceptando por
+     * compatibilidad con el frontend actual (que todavía lo reenvía al
+     * editar), pero {@code aplicarDatos} lo ignora a propósito: la salida
+     * de un animal solo se maneja con PUT /{id}/salida y /{id}/reactivar.
      */
     public record AnimalRequest(Long duenioId, Long razaId, Long subGrupoId, String aniCaravana,
             LocalDate aniFechaIngreso, Double aniPesoInicial, LocalDate aniFechaEgreso, String aniObservacion) {
@@ -328,11 +346,49 @@ public class AnimalController {
      * subgrupo asignado, subGrupoId, subGrupoDescripcion y grupoDescripcion
      * van en null. fechaUltimoPesaje es la fecha del pesaje ACTIVO más
      * reciente (uno anulado no cuenta); null si el animal no tiene ningún
-     * pesaje activo.
+     * pesaje activo. aniMotivoSalida/aniNotaSalida/compradorId/
+     * compradorNombre van en null mientras el animal no tenga salida
+     * registrada (o, para el comprador, mientras el motivo no sea VENTA).
+     * aniFechaRegistro es null para los animales que ya existían antes de
+     * ese campo (no se completa retroactivamente, ver su Javadoc en Animal).
      */
     public record AnimalResumen(Long aniId, String aniCaravana, Long duenioId, String duenioNombre, Long razaId,
             String razaDescripcion, Long subGrupoId, String subGrupoDescripcion, String grupoDescripcion,
             double aniPesoInicial, String aniObservacion, long cantidadPesajes, double pesoActual, Double gmd,
-            boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso, LocalDate fechaUltimoPesaje) {
+            boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso, LocalDate fechaUltimoPesaje,
+            String aniMotivoSalida, String aniNotaSalida, Long compradorId, String compradorNombre,
+            LocalDateTime aniFechaRegistro) {
+    }
+
+    /**
+     * Registra la salida del animal (venta, muerte u otro motivo). 400 si
+     * falta o no es válida la fecha o el motivo, si falta la nota con
+     * motivo OTRO, o si viene un comprador con un motivo distinto de
+     * VENTA; 404 si el animal o el comprador no existen; 409 si el animal
+     * ya tenía una salida registrada (ver {@code AnimalService.registrarSalida}).
+     * Devuelve el animal con el mismo formato que el resumen (RF010).
+     */
+    @PutMapping("/{id}/salida")
+    public ResponseEntity<AnimalResumen> registrarSalida(@PathVariable Long id, @RequestBody SalidaRequest request) {
+        Animal animal = animalService.registrarSalida(id, request.fecha(), request.motivo(), request.nota(),
+                request.compradorId());
+        return ResponseEntity.ok(aResumen(animal));
+    }
+
+    /**
+     * Reactiva un animal con salida registrada: borra la fecha de salida,
+     * el motivo, la nota y el comprador. 404 si el animal no existe; 409
+     * si no tenía una salida registrada, o si tiene algún pesaje activo
+     * posterior a esa salida (ver {@code AnimalService.reactivar}).
+     * Devuelve el animal con el mismo formato que el resumen.
+     */
+    @PutMapping("/{id}/reactivar")
+    public ResponseEntity<AnimalResumen> reactivar(@PathVariable Long id) {
+        Animal animal = animalService.reactivar(id);
+        return ResponseEntity.ok(aResumen(animal));
+    }
+
+    /** Datos de entrada para registrar la salida de un animal; compradorId solo tiene sentido si motivo es VENTA. */
+    public record SalidaRequest(LocalDate fecha, String motivo, String nota, Long compradorId) {
     }
 }

@@ -286,13 +286,19 @@ public class PesajeService {
         }
 
         // Primero se valida todo (que ningún animal tenga una fecha anterior a su ingreso
-        // ni un pesaje activo en la fecha nueva) y recién después se mueve; así, si algo
-        // falla, ningún pesaje queda movido a medias.
+        // o posterior a su salida, ni un pesaje activo en la fecha nueva) y recién después
+        // se mueve; así, si algo falla, ningún pesaje queda movido a medias.
         for (Pesajes pesaje : activos) {
             Animal animal = pesaje.getAnimal();
             if (nuevaFecha.isBefore(animal.getAniFechaIngreso())) {
                 throw new ValidacionException("La nueva fecha no puede ser anterior al ingreso del animal ("
                         + animal.getAniCaravana() + ": " + animal.getAniFechaIngreso() + ")");
+            }
+            // Un pesaje posterior a la salida dejaría al animal "pesado después de
+            // salir"; además, impediría reactivarlo más adelante (ver AnimalService.reactivar).
+            if (animal.getAniFechaEgreso() != null && nuevaFecha.isAfter(animal.getAniFechaEgreso())) {
+                throw new ValidacionException("La nueva fecha no puede ser posterior a la salida del animal ("
+                        + animal.getAniCaravana() + ": " + animal.getAniFechaEgreso() + ")");
             }
         }
         for (Pesajes pesaje : activos) {

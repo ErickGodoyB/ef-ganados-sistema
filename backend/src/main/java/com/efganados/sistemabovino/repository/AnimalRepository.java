@@ -42,4 +42,11 @@ public interface AnimalRepository extends JpaRepository<Animal, Long> {
      * dueña de algún animal no se puede eliminar).
      */
     long countByDuenio_PerId(Long perId);
+
+    /**
+     * Cuenta todos los animales de los que la persona es compradora (ver
+     * PersonaService: una persona compradora de algún animal no se puede
+     * eliminar).
+     */
+    long countByComprador_PerId(Long perId);
 }

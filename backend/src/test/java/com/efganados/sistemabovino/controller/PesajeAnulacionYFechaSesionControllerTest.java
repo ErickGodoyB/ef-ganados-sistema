@@ -393,6 +393,54 @@ class PesajeAnulacionYFechaSesionControllerTest extends AutenticacionTestSupport
     }
 
     @Test
+    @DisplayName("Cambiar la fecha de una sesión a una posterior a la salida de un animal devuelve 400 nombrando la caravana")
+    void cambiarFechaDeSesionPosteriorALaSalidaDevuelve400() throws Exception {
+        SubGrupo lote = crearSubGrupo("Lote-CambioFechaSalida", "Grupo-CambioFechaSalida");
+        LocalDate ingreso = LocalDate.of(2026, 1, 1);
+        Animal animal = crearAnimal("CAR-CFF-SAL-001", lote, ingreso);
+        LocalDate fechaOriginal = LocalDate.of(2026, 3, 1);
+        registrarPesajeDirecto(animal, 200.0, fechaOriginal);
+        animal.setAniFechaEgreso(LocalDate.of(2026, 3, 20));
+        animal.setAniMotivoSalida("MUERTE");
+        animalRepository.save(animal);
+
+        CambiarFechaSesionRequest request = new CambiarFechaSesionRequest(fechaOriginal, lote.getSbId(),
+                LocalDate.of(2026, 3, 21));
+
+        mockMvc.perform(put("/api/pesajes/sesion/fecha")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(
+                        "La nueva fecha no puede ser posterior a la salida del animal (CAR-CFF-SAL-001: 2026-03-20)"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la fecha de una sesión a una anterior o igual a la salida de un animal devuelve 200")
+    void cambiarFechaDeSesionAnteriorOIgualALaSalidaDevuelve200() throws Exception {
+        SubGrupo lote = crearSubGrupo("Lote-CambioFechaSalidaOk", "Grupo-CambioFechaSalidaOk");
+        LocalDate ingreso = LocalDate.of(2026, 1, 1);
+        Animal animal = crearAnimal("CAR-CFF-SAL-002", lote, ingreso);
+        LocalDate fechaOriginal = LocalDate.of(2026, 3, 1);
+        registrarPesajeDirecto(animal, 200.0, fechaOriginal);
+        animal.setAniFechaEgreso(LocalDate.of(2026, 3, 20));
+        animal.setAniMotivoSalida("MUERTE");
+        animalRepository.save(animal);
+
+        // Igual a la fecha de salida: límite inclusive.
+        CambiarFechaSesionRequest request = new CambiarFechaSesionRequest(fechaOriginal, lote.getSbId(),
+                LocalDate.of(2026, 3, 20));
+
+        mockMvc.perform(put("/api/pesajes/sesion/fecha")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cantidad").value(1));
+    }
+
+    @Test
     @DisplayName("Cambiar la fecha de una sesión a una fecha donde un animal ya tiene un pesaje activo devuelve 409")
     void cambiarFechaDeSesionConAnimalYaPesadoEnDestinoDevuelve409() throws Exception {
         SubGrupo lote = crearSubGrupo("Lote-CambioFechaChoque", "Grupo-CambioFechaChoque");

@@ -34,7 +34,7 @@ public class PersonaService {
      * tomada para este proyecto (ver CONTEXTO_PROYECTO.md); esta constante
      * es la única fuente de verdad de qué valores son válidos.
      */
-    private static final List<String> TIPOS_PERMITIDOS = List.of("PROPIETARIO", "EMPLEADO");
+    private static final List<String> TIPOS_PERMITIDOS = List.of("PROPIETARIO", "EMPLEADO", "CLIENTE");
 
     /** Formato básico de correo: algo@algo.algo, sin espacios ni "@" de más. */
     private static final Pattern FORMATO_CORREO = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
@@ -84,12 +84,14 @@ public class PersonaService {
 
     private PersonaResumen aResumen(Persona persona) {
         long cantidadAnimales = animalRepository.countByDuenio_PerId(persona.getPerId());
+        long cantidadComoComprador = animalRepository.countByComprador_PerId(persona.getPerId());
         long cantidadPesajes = pesajesRepository.countByResponsableOAnuladoPor(persona.getPerId());
         boolean tieneUsuario = usuarioRepository.existsByPersona_PerId(persona.getPerId());
 
         return new PersonaResumen(persona.getPerId(), persona.getPerNombre(), persona.getPerApellido(),
                 persona.getPerRuc(), persona.getPerCi(), persona.getPerTipo(), persona.getPerTelefono(),
-                persona.getPerCorreo(), persona.getPerDireccion(), cantidadAnimales, cantidadPesajes, tieneUsuario);
+                persona.getPerCorreo(), persona.getPerDireccion(), cantidadAnimales, cantidadComoComprador,
+                cantidadPesajes, tieneUsuario);
     }
 
     /**
@@ -147,20 +149,25 @@ public class PersonaService {
     }
 
     /**
-     * Elimina una persona. 404 si no existe; 409 si está en uso (es dueña de
-     * algún animal, figura en algún pesaje, o tiene un usuario de acceso),
-     * con un mensaje que detalla solo lo que corresponda.
+     * Elimina una persona. 404 si no existe; 409 si está en uso (es dueña
+     * de algún animal, es compradora de algún animal, figura en algún
+     * pesaje, o tiene un usuario de acceso), con un mensaje que detalla
+     * solo lo que corresponda.
      */
     public void eliminar(Long id) {
         Persona persona = buscarPorId(id);
 
         long cantidadAnimales = animalRepository.countByDuenio_PerId(id);
+        long cantidadComoComprador = animalRepository.countByComprador_PerId(id);
         long cantidadPesajes = pesajesRepository.countByResponsableOAnuladoPor(id);
         boolean tieneUsuario = usuarioRepository.existsByPersona_PerId(id);
 
         List<String> motivos = new ArrayList<>();
         if (cantidadAnimales > 0) {
             motivos.add("es dueña de " + cantidadAnimales + " animales");
+        }
+        if (cantidadComoComprador > 0) {
+            motivos.add("figura como comprador de " + cantidadComoComprador + " animales");
         }
         if (cantidadPesajes > 0) {
             motivos.add("figura en " + cantidadPesajes + " pesajes");
@@ -170,19 +177,19 @@ public class PersonaService {
         }
 
         if (!motivos.isEmpty()) {
-            throw new ConflictoException("No se puede eliminar la persona: " + unirConY(motivos));
+            throw new ConflictoException("No se puede eliminar la persona: " + unir(motivos, "y"));
         }
 
         personaRepository.delete(persona);
     }
 
-    /** Une una lista de motivos en español: "a", "a y b", "a, b y c". */
-    private String unirConY(List<String> motivos) {
-        if (motivos.size() == 1) {
-            return motivos.get(0);
+    /** Une una lista de partes en español con la conjunción dada ("y"/"o"): "a", "a {conjuncion} b", "a, b {conjuncion} c". */
+    private String unir(List<String> partes, String conjuncion) {
+        if (partes.size() == 1) {
+            return partes.get(0);
         }
-        String todosMenosElUltimo = String.join(", ", motivos.subList(0, motivos.size() - 1));
-        return todosMenosElUltimo + " y " + motivos.get(motivos.size() - 1);
+        String todasMenosLaUltima = String.join(", ", partes.subList(0, partes.size() - 1));
+        return todasMenosLaUltima + " " + conjuncion + " " + partes.get(partes.size() - 1);
     }
 
     /** Valida que el nombre no falte, y lo devuelve recortado. */
@@ -200,7 +207,7 @@ public class PersonaService {
         }
         String tipoRecortado = tipo.trim();
         if (!TIPOS_PERMITIDOS.contains(tipoRecortado)) {
-            throw new ValidacionException("El tipo debe ser " + String.join(" o ", TIPOS_PERMITIDOS));
+            throw new ValidacionException("El tipo debe ser " + unir(TIPOS_PERMITIDOS, "o"));
         }
         return tipoRecortado;
     }

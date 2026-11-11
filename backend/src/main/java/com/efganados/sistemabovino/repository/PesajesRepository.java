@@ -126,4 +126,11 @@ public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
      */
     @Query("SELECT COUNT(p) FROM Pesajes p WHERE p.responsable.perId = :personaId OR p.anuladoPor.perId = :personaId")
     long countByResponsableOAnuladoPor(@Param("personaId") Long personaId);
+
+    /**
+     * Indica si el animal tiene algún pesaje ACTIVO posterior a la fecha
+     * dada (ver AnimalService.reactivar: no se puede reactivar un animal si
+     * algún pesaje activo quedó después de su fecha de salida).
+     */
+    boolean existsByAnimal_AniIdAndPesaEstadoAndPesaFechaAfter(Long aniId, EstadoPesaje estado, LocalDate fecha);
 }

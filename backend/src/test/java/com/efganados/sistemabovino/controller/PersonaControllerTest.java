@@ -104,6 +104,15 @@ class PersonaControllerTest extends AutenticacionTestSupport {
         return animalRepository.save(animal);
     }
 
+    /** Crea y persiste un animal de prueba ya vendido, con la persona dada como compradora. */
+    private Animal crearAnimalConComprador(String caravana, Persona comprador) {
+        Animal animal = crearAnimalConDuenio(caravana, crearPersona("Dueño-" + caravana, "Apellido", null, null, "PROPIETARIO"));
+        animal.setComprador(comprador);
+        animal.setAniMotivoSalida("VENTA");
+        animal.setAniFechaEgreso(LocalDate.of(2026, 6, 1));
+        return animalRepository.save(animal);
+    }
+
     /** Crea y persiste un pesaje ACTIVO de ese animal, con la persona dada como responsable. */
     private Pesajes crearPesajeConResponsable(Animal animal, Persona responsable) {
         Pesajes pesaje = new Pesajes();
@@ -214,14 +223,30 @@ class PersonaControllerTest extends AutenticacionTestSupport {
     @DisplayName("Crear una persona con un tipo inválido devuelve 400")
     void crearPersonaConTipoInvalidoDevuelve400() throws Exception {
         Persona request = personaValida();
-        request.setPerTipo("CLIENTE");
+        request.setPerTipo("PROVEEDOR");
 
         mockMvc.perform(post("/api/personas")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("El tipo debe ser PROPIETARIO o EMPLEADO"));
+                .andExpect(content().string("El tipo debe ser PROPIETARIO, EMPLEADO o CLIENTE"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con tipo CLIENTE devuelve 201")
+    void crearPersonaConTipoClienteDevuelve201() throws Exception {
+        Persona request = personaValida();
+        request.setPerTipo("CLIENTE");
+        request.setPerCi(null);
+        request.setPerRuc(null);
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.perTipo").value("CLIENTE"));
     }
 
     @Test
@@ -557,6 +582,18 @@ class PersonaControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
+    @DisplayName("Eliminar una persona compradora de un animal devuelve 409 con la cantidad")
+    void eliminarPersonaCompradoraDeAnimalesDevuelve409() throws Exception {
+        Persona comprador = crearPersona("Carlos", "Díaz", null, null, "CLIENTE");
+        crearAnimalConComprador("CAR-PER-COMP-001", comprador);
+
+        mockMvc.perform(delete("/api/personas/{id}", comprador.getPerId())
+                        .header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("No se puede eliminar la persona: figura como comprador de 1 animales"));
+    }
+
+    @Test
     @DisplayName("Eliminar una persona inexistente devuelve 404")
     void eliminarPersonaInexistenteDevuelve404() throws Exception {
         mockMvc.perform(delete("/api/personas/{id}", 999L)
@@ -586,6 +623,18 @@ class PersonaControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$[0].usuNombre").doesNotExist())
                 .andExpect(jsonPath("$[0].usuPassword").doesNotExist())
                 .andExpect(jsonPath("$[0].usuario").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("El resumen trae cantidadComoComprador para una persona compradora de un animal")
+    void resumenTraeCantidadComoComprador() throws Exception {
+        Persona comprador = crearPersona("Lucía", "Flores", null, null, "CLIENTE");
+        crearAnimalConComprador("CAR-RES-COMP-001", comprador);
+
+        mockMvc.perform(get("/api/personas/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.perId == %d)].cantidadComoComprador", comprador.getPerId()).value(1));
     }
 
     @Test
