@@ -2,10 +2,14 @@
  * Modal de alta o edición de una persona: nombre, apellido, tipo, CI, RUC,
  * teléfono, correo y dirección. Si "persona" viene con datos, edita esa
  * persona (PUT /api/personas/{id}); si no, crea una nueva (POST
- * /api/personas). Los 409 de CI/RUC duplicados del servidor se detectan
- * por el texto del mensaje ("la CI"/"el RUC", ver PersonaService en el
- * backend) y se muestran bajo el campo correspondiente; cualquier otro
- * error se muestra como error general.
+ * /api/personas). Las validaciones de formato de teléfono/CI/RUC/correo
+ * reflejan exactamente las de PersonaService en el backend (ver ese
+ * Javadoc), para que el error del cliente y el del servidor digan lo
+ * mismo. Cualquier 400/409 del servidor se enruta al campo que
+ * corresponde buscando "CI"/"RUC"/"teléfono"/"correo" en el propio texto
+ * del mensaje (todos los mensajes de esos campos, sean 400 de formato o
+ * 409 de duplicado, mencionan esa palabra); lo que no se reconoce se
+ * muestra como error general.
  */
 
 import { useRef, useState } from 'react'
@@ -15,6 +19,22 @@ import { TIPOS_PERSONA } from './tiposPersona'
 import '../Personas.css'
 
 const FORMATO_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Teléfono: solo dígitos, espacios y + - ( ) (admite "+595", guiones y
+// paréntesis); hasta 20 caracteres; al menos 6 dígitos.
+const FORMATO_TELEFONO = /^[0-9+\-() ]+$/
+const LARGO_MAXIMO_TELEFONO = 20
+const MINIMO_DIGITOS_TELEFONO = 6
+
+// CI/RUC: letras (de cualquier idioma), números, puntos, guiones y
+// espacios (ej. "80.123.456-7"); hasta 20 caracteres.
+const FORMATO_DOCUMENTO = /^[\p{L}\p{N}.\- ]+$/u
+const LARGO_MAXIMO_DOCUMENTO = 20
+
+/** Quita del texto cualquier carácter que un teléfono no pueda tener, para filtrar lo que se escribe o se pega. */
+function filtrarTelefono(texto) {
+  return texto.replace(/[^0-9+\-() ]/g, '')
+}
 
 export default function ModalFormularioPersona({ persona, onCerrar, onGuardado, refDisparador }) {
   const esEdicion = Boolean(persona)
@@ -34,13 +54,32 @@ export default function ModalFormularioPersona({ persona, onCerrar, onGuardado, 
   const refTipo = useRef(null)
   const refCi = useRef(null)
   const refRuc = useRef(null)
+  const refTelefono = useRef(null)
   const refCorreo = useRef(null)
 
   const camposEnOrden = [
     ['nombre', refNombre],
     ['tipo', refTipo],
+    ['ci', refCi],
+    ['ruc', refRuc],
+    ['telefono', refTelefono],
     ['correo', refCorreo],
   ]
+
+  /** Valida el formato de un documento (CI o RUC); null si no hay error. */
+  function errorDeDocumento(valor, etiqueta) {
+    if (!valor.trim()) {
+      return null
+    }
+    const valorRecortado = valor.trim()
+    if (!FORMATO_DOCUMENTO.test(valorRecortado)) {
+      return `${etiqueta} solo puede tener letras, números, puntos, guiones y espacios`
+    }
+    if (valorRecortado.length > LARGO_MAXIMO_DOCUMENTO) {
+      return `${etiqueta} no puede tener más de ${LARGO_MAXIMO_DOCUMENTO} caracteres`
+    }
+    return null
+  }
 
   function validar() {
     const encontrados = {}
@@ -50,6 +89,31 @@ export default function ModalFormularioPersona({ persona, onCerrar, onGuardado, 
     if (!tipo) {
       encontrados.tipo = 'Elegí un tipo'
     }
+
+    const errorCi = errorDeDocumento(ci, 'La CI')
+    if (errorCi) {
+      encontrados.ci = errorCi
+    }
+    const errorRuc = errorDeDocumento(ruc, 'El RUC')
+    if (errorRuc) {
+      encontrados.ruc = errorRuc
+    }
+
+    const telefonoRecortado = telefono.trim()
+    if (telefonoRecortado) {
+      // El formato ya queda garantizado por el filtro de onChange (ver
+      // filtrarTelefono), salvo que "persona" trajera un valor inválido de
+      // antes (datos cargados sin pasar por este formulario); por eso se
+      // revalida igual, no solo el largo/cantidad de dígitos.
+      if (!FORMATO_TELEFONO.test(telefonoRecortado)) {
+        encontrados.telefono = 'El teléfono solo puede tener números, espacios y los símbolos + - ( )'
+      } else if (telefonoRecortado.length > LARGO_MAXIMO_TELEFONO) {
+        encontrados.telefono = `El teléfono no puede tener más de ${LARGO_MAXIMO_TELEFONO} caracteres`
+      } else if (telefonoRecortado.replace(/[^0-9]/g, '').length < MINIMO_DIGITOS_TELEFONO) {
+        encontrados.telefono = `El teléfono debe tener al menos ${MINIMO_DIGITOS_TELEFONO} números`
+      }
+    }
+
     if (correo.trim() && !FORMATO_CORREO.test(correo.trim())) {
       encontrados.correo = 'El correo no tiene un formato válido'
     }
@@ -94,15 +158,22 @@ export default function ModalFormularioPersona({ persona, onCerrar, onGuardado, 
       // está disabled (guardando sigue en true hasta el finally de abajo),
       // así que un enfoque síncrono no tendría efecto; alcanza con que el
       // mensaje quede asociado al campo correcto (role="alert" ya lo
-      // anuncia solo).
-      if (err instanceof ErrorHttp && err.estado === 409 && err.message.includes('la CI')) {
-        setErrores((actual) => ({ ...actual, ci: err.message }))
-      } else if (err instanceof ErrorHttp && err.estado === 409 && err.message.includes('el RUC')) {
-        setErrores((actual) => ({ ...actual, ruc: err.message }))
-      } else if (err instanceof ErrorHttp) {
-        setErrorGeneral(err.message || 'No se pudo guardar la persona.')
-      } else {
+      // anuncia solo). "CI"/"RUC"/"teléfono"/"correo" alcanza para
+      // reconocer el campo: tanto el 400 de formato como el 409 de
+      // duplicado (para CI/RUC) mencionan esa palabra, y ningún mensaje de
+      // otro campo la contiene.
+      if (!(err instanceof ErrorHttp)) {
         setErrorGeneral('No se pudo conectar con el servidor.')
+      } else if (err.message.includes('CI')) {
+        setErrores((actual) => ({ ...actual, ci: err.message }))
+      } else if (err.message.includes('RUC')) {
+        setErrores((actual) => ({ ...actual, ruc: err.message }))
+      } else if (err.message.includes('teléfono')) {
+        setErrores((actual) => ({ ...actual, telefono: err.message }))
+      } else if (err.message.includes('correo')) {
+        setErrores((actual) => ({ ...actual, correo: err.message }))
+      } else {
+        setErrorGeneral(err.message || 'No se pudo guardar la persona.')
       }
     } finally {
       setGuardando(false)
@@ -211,11 +282,19 @@ export default function ModalFormularioPersona({ persona, onCerrar, onGuardado, 
             <label htmlFor="persona-telefono">Teléfono</label>
             <input
               id="persona-telefono"
+              ref={refTelefono}
               type="text"
+              inputMode="tel"
               value={telefono}
-              onChange={(evento) => setTelefono(evento.target.value)}
+              onChange={(evento) => setTelefono(filtrarTelefono(evento.target.value))}
+              aria-invalid={Boolean(errores.telefono)}
               disabled={guardando}
             />
+            {errores.telefono && (
+              <p className="campo-error" role="alert">
+                {errores.telefono}
+              </p>
+            )}
           </div>
 
           <div className="campo">

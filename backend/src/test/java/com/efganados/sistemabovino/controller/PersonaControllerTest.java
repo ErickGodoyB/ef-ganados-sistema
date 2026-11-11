@@ -315,6 +315,118 @@ class PersonaControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$.perDireccion").doesNotExist());
     }
 
+    @Test
+    @DisplayName("Crear una persona con un teléfono válido (con +595, espacios y guiones) devuelve 201")
+    void crearPersonaConTelefonoValidoDevuelve201() throws Exception {
+        Persona request = personaValida();
+        request.setPerTelefono("+595 981-123456");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.perTelefono").value("+595 981-123456"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con un teléfono con letras devuelve 400")
+    void crearPersonaConTelefonoConLetrasDevuelve400() throws Exception {
+        Persona request = personaValida();
+        request.setPerTelefono("098abc1234");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("El teléfono solo puede tener números, espacios y los símbolos + - ( )"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con un teléfono con menos de 6 números devuelve 400")
+    void crearPersonaConTelefonoMuyCortoDevuelve400() throws Exception {
+        Persona request = personaValida();
+        request.setPerTelefono("12345");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("El teléfono debe tener al menos 6 números"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con un teléfono de más de 20 caracteres devuelve 400")
+    void crearPersonaConTelefonoMuyLargoDevuelve400() throws Exception {
+        Persona request = personaValida();
+        request.setPerTelefono("0".repeat(21));
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("El teléfono no puede tener más de 20 caracteres"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con una CI con caracteres inválidos devuelve 400")
+    void crearPersonaConCiConCaracteresInvalidosDevuelve400() throws Exception {
+        Persona request = personaValida();
+        request.setPerCi("123@456");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("La CI solo puede tener letras, números, puntos, guiones y espacios"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con una CI válida con puntos y guiones devuelve 201")
+    void crearPersonaConCiValidaConPuntosYGuionesDevuelve201() throws Exception {
+        Persona request = personaValida();
+        request.setPerCi("1.234.567-8");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.perCi").value("1.234.567-8"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con un RUC con caracteres inválidos devuelve 400")
+    void crearPersonaConRucConCaracteresInvalidosDevuelve400() throws Exception {
+        Persona request = personaValida();
+        request.setPerRuc("80#000000-1");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("El RUC solo puede tener letras, números, puntos, guiones y espacios"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con un RUC válido con puntos y guiones devuelve 201")
+    void crearPersonaConRucValidoConPuntosYGuionesDevuelve201() throws Exception {
+        Persona request = personaValida();
+        request.setPerRuc("80.000.000-1");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.perRuc").value("80.000.000-1"));
+    }
+
     // ---- PUT /api/personas/{id} ----
 
     @Test

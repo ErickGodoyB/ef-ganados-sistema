@@ -39,6 +39,15 @@ public class PersonaService {
     /** Formato básico de correo: algo@algo.algo, sin espacios ni "@" de más. */
     private static final Pattern FORMATO_CORREO = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
+    /** Teléfono: solo dígitos, espacios y los símbolos + - ( ) (admite el "+595" del código de país, guiones, paréntesis). */
+    private static final Pattern FORMATO_TELEFONO = Pattern.compile("^[0-9+\\-() ]+$");
+    private static final int LARGO_MAXIMO_TELEFONO = 20;
+    private static final int MINIMO_DIGITOS_TELEFONO = 6;
+
+    /** CI/RUC: letras (de cualquier idioma), números, puntos, guiones y espacios (ej. "80123456-7"). */
+    private static final Pattern FORMATO_DOCUMENTO = Pattern.compile("^[\\p{L}\\p{N}.\\-\\s]+$");
+    private static final int LARGO_MAXIMO_DOCUMENTO = 20;
+
     private final PersonaRepository personaRepository;
     private final AnimalRepository animalRepository;
     private final PesajesRepository pesajesRepository;
@@ -116,10 +125,15 @@ public class PersonaService {
         String tipoValidado = validarTipo(datos.getPerTipo());
         String correoNormalizado = aNuloSiVacio(datos.getPerCorreo());
         validarFormatoCorreo(correoNormalizado);
+        String telefonoNormalizado = aNuloSiVacio(datos.getPerTelefono());
+        validarFormatoTelefono(telefonoNormalizado);
 
         String ciNormalizada = aNuloSiVacio(datos.getPerCi());
-        String rucNormalizado = aNuloSiVacio(datos.getPerRuc());
+        validarFormatoCi(ciNormalizada);
         validarCiUnica(ciNormalizada, idPropio);
+
+        String rucNormalizado = aNuloSiVacio(datos.getPerRuc());
+        validarFormatoRuc(rucNormalizado);
         validarRucUnico(rucNormalizado, idPropio);
 
         persona.setPerNombre(nombreRecortado);
@@ -127,7 +141,7 @@ public class PersonaService {
         persona.setPerRuc(rucNormalizado);
         persona.setPerCi(ciNormalizada);
         persona.setPerTipo(tipoValidado);
-        persona.setPerTelefono(aNuloSiVacio(datos.getPerTelefono()));
+        persona.setPerTelefono(telefonoNormalizado);
         persona.setPerCorreo(correoNormalizado);
         persona.setPerDireccion(aNuloSiVacio(datos.getPerDireccion()));
     }
@@ -195,6 +209,56 @@ public class PersonaService {
     private void validarFormatoCorreo(String correoNormalizado) {
         if (correoNormalizado != null && !FORMATO_CORREO.matcher(correoNormalizado).matches()) {
             throw new ValidacionException("El correo no tiene un formato válido");
+        }
+    }
+
+    /**
+     * Valida el formato del teléfono, si vino alguno (ya normalizado a null
+     * si estaba vacío): solo dígitos, espacios y + - ( ) (admite "+595",
+     * guiones y paréntesis); hasta 20 caracteres; al menos 6 dígitos (para
+     * no aceptar algo como "---" o "()" que cumple el patrón pero no es un
+     * número real).
+     */
+    private void validarFormatoTelefono(String telefonoNormalizado) {
+        if (telefonoNormalizado == null) {
+            return;
+        }
+        if (!FORMATO_TELEFONO.matcher(telefonoNormalizado).matches()) {
+            throw new ValidacionException("El teléfono solo puede tener números, espacios y los símbolos + - ( )");
+        }
+        if (telefonoNormalizado.length() > LARGO_MAXIMO_TELEFONO) {
+            throw new ValidacionException("El teléfono no puede tener más de " + LARGO_MAXIMO_TELEFONO
+                    + " caracteres");
+        }
+        long cantidadDigitos = telefonoNormalizado.chars().filter(Character::isDigit).count();
+        if (cantidadDigitos < MINIMO_DIGITOS_TELEFONO) {
+            throw new ValidacionException("El teléfono debe tener al menos " + MINIMO_DIGITOS_TELEFONO + " números");
+        }
+    }
+
+    /** Valida el formato de la CI, si vino alguna (ya normalizada a null si estaba vacía): ver FORMATO_DOCUMENTO. */
+    private void validarFormatoCi(String ciNormalizada) {
+        if (ciNormalizada == null) {
+            return;
+        }
+        if (!FORMATO_DOCUMENTO.matcher(ciNormalizada).matches()) {
+            throw new ValidacionException("La CI solo puede tener letras, números, puntos, guiones y espacios");
+        }
+        if (ciNormalizada.length() > LARGO_MAXIMO_DOCUMENTO) {
+            throw new ValidacionException("La CI no puede tener más de " + LARGO_MAXIMO_DOCUMENTO + " caracteres");
+        }
+    }
+
+    /** Valida el formato del RUC, si vino alguno (ya normalizado a null si estaba vacío): ver FORMATO_DOCUMENTO. */
+    private void validarFormatoRuc(String rucNormalizado) {
+        if (rucNormalizado == null) {
+            return;
+        }
+        if (!FORMATO_DOCUMENTO.matcher(rucNormalizado).matches()) {
+            throw new ValidacionException("El RUC solo puede tener letras, números, puntos, guiones y espacios");
+        }
+        if (rucNormalizado.length() > LARGO_MAXIMO_DOCUMENTO) {
+            throw new ValidacionException("El RUC no puede tener más de " + LARGO_MAXIMO_DOCUMENTO + " caracteres");
         }
     }
 
