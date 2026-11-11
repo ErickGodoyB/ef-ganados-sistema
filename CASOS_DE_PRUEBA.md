@@ -84,6 +84,7 @@ Nota sobre CP30: en AR-901 los dos pesajes tienen la misma fecha, así que cuál
 | `POST /api/pesajes/sesion` y `POST /api/animales/{id}/pesajes` | 409 `El animal <caravana> ya tiene un pesaje activo el dd/MM/yyyy...`; fecha anterior al ingreso 400 (verificado) |
 | Consultas de peso actual, GMD, resumen, listados | Los pesajes anulados no cuentan |
 | `GET /api/razas/resumen`, `POST/PUT/DELETE /api/razas` | Descripción obligatoria y única sin distinguir mayúsculas (409), peso mayor a 0 y hasta 2000 (400), borrado con animales 409, conteo de animales con y sin salida |
+| `PUT /api/animales/{id}/salida`, `PUT /api/animales/{id}/reactivar` | Fecha no futura, no anterior al ingreso ni al último pesaje activo; motivo VENTA / MUERTE / OTRO; nota obligatoria con OTRO; comprador solo con VENTA y existente; segunda salida 409; reactivar 409 sin salida o con pesaje posterior; el cambio de fecha de sesión posterior a la salida se rechaza |
 | `GET /api/personas/resumen`, `POST/PUT/DELETE /api/personas` | Nombre y tipo obligatorios, tipos permitidos, vacíos como `null`, CI y RUC únicos (409), correo con formato, borrado bloqueado si es dueña de animales, responsable de pesajes o tiene usuario (409), conteos |
 | `GET /api/grupos/resumen`, `POST/PUT/DELETE /api/grupos` y `/api/subgrupos` | Grupo con descripción única; lote con descripción única dentro de su grupo; cambio de grupo; borrar lote con animales o grupo con lotes 409; conteos total y activos |
 | `GET /api/animales/{id}/pesajes` | Historial ordenado por fecha con peso anterior y GMD (misma lógica que el detalle de sesión); `incluirAnulados` lista los anulados sin que cuenten como anterior; 404 si el animal no existe |
@@ -141,6 +142,14 @@ Hechas por el autor en PC (y celular Android) con los datos `TEST-xx`.
 | UI-43 | Selectores de Dueño (nuevo animal) y Responsable (nuevo pesaje) con las personas actualizadas | Aprobado |
 | UI-44 | Personas en el celular | Aprobado |
 | UI-45 | Personas: formato de teléfono, CI y RUC (letras en el teléfono, `+595 981 123-456`, teléfono corto, CI `1.234.567-8`, CI con `@#$`) | Aprobado (2026-11-11): las letras no se escriben, los formatos válidos guardan y los inválidos muestran el error bajo el campo |
+| UI-46 | Listado de animales: filtro "Estado de salida" (Activos por defecto, Salidos, Todos) y etiqueta "Salió: motivo el fecha" | Aprobado (2026-11-11) |
+| UI-47 | Registrar salida con motivo Venta y comprador (alta rápida de un cliente con "+") | Aprobado: etiqueta de salida y bloque con fecha, motivo y comprador en el detalle |
+| UI-48 | Validaciones de la salida: fecha anterior al último pesaje, fecha futura, motivo Otro sin nota, y comprador visible solo con Venta | Aprobado |
+| UI-49 | Animal con salida: desaparece "Registrar salida" y aparece "Reactivar"; no se ofrece en Nuevo pesaje | Aprobado |
+| UI-50 | Personas: tipo Cliente, filtro "Clientes", columna "Compras" y borrado bloqueado por compras; el cliente no aparece en Dueño ni en Responsable y sí en Comprador | Aprobado |
+| UI-51 | Hora de registro de un animal nuevo ("Registrado el ... hh:mm") y "—" en los animales anteriores | Aprobado |
+| UI-52 | Reactivar un animal con confirmación: vuelve a Activos sin comprador ni nota, y el cliente deja de estar bloqueado | Aprobado |
+| UI-53 | Salida del animal y Personas en el celular | Aprobado |
 
 **Hallazgo (2026-10-31), resuelto el 2026-11-05:** un animal con un solo pesaje no mostraba ganancia diaria porque el peso inicial no se consideraba punto de partida. Ahora el peso inicial a la fecha de ingreso es el punto de partida del GMD (UI-17 y UI-18).
 
@@ -193,7 +202,7 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras las sesiones de pesaje (2026-10-28): 59 de 59 aprobadas, 0 fallos, 0 errores** (38 anteriores + 21 nuevas). Cubren: reglas de peso, fecha (futura, anterior al ingreso) y salida del animal; sesión todo o nada; animal repetido y sesión vacía; resumen de sesiones agrupado por fecha y lote (incluido "sin lote"); detalle con peso anterior y GMD; edición y borrado de pesajes; y `/api/auth/yo`. La prueba de atomicidad vive en su propia clase sin `@Transactional`, porque con la transacción de la prueba el "deshacer" no sería visible dentro del mismo método (en producción el rollback es inmediato).
 
-**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100.** **Tras el historial de pesajes por animal (2026-11-07): 105 de 105.** **Tras el catálogo de razas (2026-11-09): 121 de 121.** **Tras el de grupos y lotes (2026-11-10): 147 de 147.** **Tras el de personas (2026-11-11): 170 de 170.** **Tras la validación de formato de personas (2026-11-11): 178 de 178 aprobadas**.
+**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100.** **Tras el historial de pesajes por animal (2026-11-07): 105 de 105.** **Tras el catálogo de razas (2026-11-09): 121 de 121.** **Tras el de grupos y lotes (2026-11-10): 147 de 147.** **Tras el de personas (2026-11-11): 170 de 170.** **Tras la validación de formato de personas (2026-11-11): 178 de 178.** **Tras la salida del animal, el comprador y el tipo CLIENTE (2026-11-11): 203 de 203 aprobadas**.
 
 **Pruebas del frontend (Vitest): 135 el 2026-10-30, 146 el 2026-11-05, 163 el 2026-11-06, 171 el 2026-11-07, 188 el 2026-11-09 y 205 el 2026-11-10 218 y luego 227 de 227 aprobadas el 2026-11-11** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
 
@@ -210,7 +219,8 @@ La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalC
 | `PesajeAnulacionYFechaSesionControllerTest` | 14 | Anular sesión, cambio de fecha de sesión y listado de anulados (sin caso manual) |
 | `RazaControllerTest` | 16 | `GET /api/razas/resumen`, alta, edición y borrado de razas con sus validaciones (sin caso manual en Thunder) |
 | `GrupoControllerTest` | 12 | Validaciones, resumen con conteos (incluido un animal con salida) y borrado de grupos (sin caso manual) |
-| `PersonaControllerTest` | 31 | Alta, validaciones (nombre, tipo, correo, CI y RUC duplicados, vacíos que no chocan), edición, borrado libre y bloqueado (animales, pesajes, usuario) y resumen con conteos (sin caso manual) |
+| `AnimalSalidaControllerTest` | 20 | `PUT /api/animales/{id}/salida` y `/reactivar`: salida feliz con y sin comprador, cada error (fecha, motivo, nota, comprador, doble salida), reactivación y que la edición común no pise la salida (sin caso manual) |
+| `PersonaControllerTest` | 35 | Alta, validaciones (nombre, tipo, correo, CI y RUC duplicados, vacíos que no chocan), edición, borrado libre y bloqueado (animales, pesajes, usuario) y resumen con conteos (sin caso manual) |
 | `SubGrupoControllerTest` | 14 | Validaciones de lotes (descripción única dentro del grupo, cambio de grupo) y borrado con animales (sin caso manual) |
 | `HistorialPesajesControllerTest` | 5 | `GET /api/animales/{id}/pesajes`: valores y orden, primer pesaje contra el ingreso, animal sin pesajes, animal inexistente (404), anulados excluidos o incluidos sin afectar al anterior (sin caso manual) |
 | `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
