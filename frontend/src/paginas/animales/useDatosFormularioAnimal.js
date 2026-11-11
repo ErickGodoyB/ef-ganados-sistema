@@ -25,8 +25,10 @@ export function useDatosFormularioAnimal() {
       setRazas(razasRecibidas ?? [])
       setSubGrupos(subGruposRecibidos ?? [])
       // El dueño de un animal tiene que ser una persona propietaria, no
-      // cualquier persona (puede haber empleados cargados como responsables
-      // de pesaje, que no son dueños de nada).
+      // cualquier persona: ni un empleado cargado como responsable de
+      // pesaje, ni un cliente cargado como comprador de una salida, son
+      // dueños de nada. Esta comparación exacta (no "distinto de EMPLEADO")
+      // ya los excluye a los dos.
       setDuenios((personasRecibidas ?? []).filter((persona) => persona.perTipo === 'PROPIETARIO'))
     } catch {
       setError('No se pudieron cargar los datos del formulario.')

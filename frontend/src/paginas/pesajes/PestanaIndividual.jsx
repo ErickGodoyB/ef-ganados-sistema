@@ -62,7 +62,7 @@ export default function PestanaIndividual({
   onGuardadoParcial,
 }) {
   const { personaId, personaNombre, cargandoYo, errorYo } = useAuth()
-  const { personas, cargandoPersonas, errorPersonas } = usePersonasResponsable()
+  const { personas, cargandoPersonas, errorPersonas } = usePersonasResponsable(personaId)
 
   const [texto, setTexto] = useState('')
   const [animalElegido, setAnimalElegido] = useState(null)

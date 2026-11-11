@@ -38,6 +38,19 @@ const PERSONA_CON_TODO = {
   tieneUsuario: true,
 }
 
+const PERSONA_COMPRADORA = {
+  perId: 4,
+  perNombre: 'Lucía',
+  perApellido: 'Flores',
+  perTipo: 'CLIENTE',
+  perCi: '4444444',
+  perTelefono: '0984444444',
+  cantidadAnimales: 0,
+  cantidadComoComprador: 2,
+  cantidadPesajes: 0,
+  tieneUsuario: false,
+}
+
 const ORDEN = { campo: 'nombreCompleto', direccion: 'asc' }
 
 function renderTabla(personas) {
@@ -82,5 +95,25 @@ describe('TablaPersonas: eliminar deshabilitado', () => {
 
     expect(screen.getByText('Con acceso')).toBeInTheDocument()
     expect(screen.getAllByText('Con acceso')).toHaveLength(1)
+  })
+
+  it('una persona que figura como compradora tiene Eliminar deshabilitado con una explicación visible', () => {
+    renderTabla([PERSONA_COMPRADORA])
+
+    const fila = screen.getByText('Lucía Flores').closest('tr')
+    const botonEliminar = within(fila).getByRole('button', { name: 'Eliminar' })
+    expect(botonEliminar).toBeDisabled()
+    expect(within(fila).getByText('Figura como comprador de 2 animales')).toBeInTheDocument()
+  })
+})
+
+describe('TablaPersonas: columna Compras', () => {
+  it('muestra la cantidad de compras de cada persona en la columna correspondiente', () => {
+    renderTabla([PERSONA_COMPRADORA])
+
+    const fila = screen.getByText('Lucía Flores').closest('tr')
+    // Orden de columnas: Nombre, Tipo, CI, Teléfono, Animales, Compras, Pesajes, Acceso, Acciones.
+    const celdas = within(fila).getAllByRole('cell')
+    expect(celdas[5]).toHaveTextContent('2')
   })
 })

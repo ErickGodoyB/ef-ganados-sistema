@@ -1,10 +1,11 @@
 /**
  * Tabla del listado de personas (>= 768px, ver Personas.css). Las cuatro
  * columnas ordenables (ver columnas.js) tienen un botón en su encabezado,
- * igual criterio que TablaAnimales; CI, Teléfono y Acceso no se ordenan
- * (no lo pide la consigna) y quedan como texto simple. El botón Eliminar
- * se deshabilita con una explicación visible cuando corresponde (ver
- * motivosBloqueo en listadoPersonas.js), enlazada por aria-describedby.
+ * igual criterio que TablaAnimales; CI, Teléfono, Compras y Acceso no se
+ * ordenan (no lo pide la consigna) y quedan como texto simple. El botón
+ * Eliminar se deshabilita con una explicación visible cuando corresponde
+ * (ver motivosBloqueo en listadoPersonas.js, que ahora también cuenta las
+ * compras), enlazada por aria-describedby.
  */
 
 import { Pencil, Trash2 } from 'lucide-react'
@@ -46,6 +47,7 @@ export default function TablaPersonas({ personas, orden, onOrdenar, onEditar, on
             <th scope="col">CI</th>
             <th scope="col">Teléfono</th>
             {encabezadoOrdenable('cantidadAnimales', 'Animales')}
+            <th scope="col">Compras</th>
             {encabezadoOrdenable('cantidadPesajes', 'Pesajes')}
             <th scope="col">Acceso</th>
             <th scope="col">
@@ -65,6 +67,7 @@ export default function TablaPersonas({ personas, orden, onOrdenar, onEditar, on
                 <td>{persona.perCi || '—'}</td>
                 <td>{persona.perTelefono || '—'}</td>
                 <td>{persona.cantidadAnimales}</td>
+                <td>{persona.cantidadComoComprador}</td>
                 <td>{persona.cantidadPesajes}</td>
                 <td>{persona.tieneUsuario && <span className="badge">Con acceso</span>}</td>
                 <td>

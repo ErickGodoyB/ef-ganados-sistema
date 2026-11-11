@@ -43,6 +43,10 @@ export default function TarjetaPersona({ persona, onEditar, onEliminar }) {
           <dd>{persona.cantidadAnimales}</dd>
         </div>
         <div className="tarjeta-persona-dato">
+          <dt>Compras</dt>
+          <dd>{persona.cantidadComoComprador}</dd>
+        </div>
+        <div className="tarjeta-persona-dato">
           <dt>Pesajes</dt>
           <dd>{persona.cantidadPesajes}</dd>
         </div>

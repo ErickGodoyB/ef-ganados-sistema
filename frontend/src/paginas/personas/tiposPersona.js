@@ -9,6 +9,7 @@
 export const TIPOS_PERSONA = [
   { valor: 'PROPIETARIO', etiqueta: 'Propietario' },
   { valor: 'EMPLEADO', etiqueta: 'Empleado' },
+  { valor: 'CLIENTE', etiqueta: 'Cliente' },
 ]
 
 /** Etiqueta legible de un tipo (ej. para la columna "Tipo" de la tabla); el valor crudo si no se reconoce. */

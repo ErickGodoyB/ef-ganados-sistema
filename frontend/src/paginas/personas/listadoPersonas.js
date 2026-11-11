@@ -69,6 +69,9 @@ export function motivosBloqueo(persona) {
   if (persona.cantidadAnimales > 0) {
     motivos.push(`es dueña de ${persona.cantidadAnimales} animales`)
   }
+  if (persona.cantidadComoComprador > 0) {
+    motivos.push(`figura como comprador de ${persona.cantidadComoComprador} animales`)
+  }
   if (persona.cantidadPesajes > 0) {
     motivos.push(`figura en ${persona.cantidadPesajes} pesajes`)
   }

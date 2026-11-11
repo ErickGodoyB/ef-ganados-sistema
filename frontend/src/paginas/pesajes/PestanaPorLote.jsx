@@ -73,7 +73,7 @@ const PestanaPorLote = forwardRef(function PestanaPorLote(
   ref,
 ) {
   const { personaId, personaNombre, cargandoYo, errorYo } = useAuth()
-  const { personas, cargandoPersonas, errorPersonas } = usePersonasResponsable()
+  const { personas, cargandoPersonas, errorPersonas } = usePersonasResponsable(personaId)
 
   const [subGrupos, setSubGrupos] = useState([])
   const [cargandoSubGrupos, setCargandoSubGrupos] = useState(true)
