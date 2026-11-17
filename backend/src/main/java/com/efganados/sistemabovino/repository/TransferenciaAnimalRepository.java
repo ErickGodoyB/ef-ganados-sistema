@@ -13,6 +13,20 @@ import com.efganados.sistemabovino.model.TransferenciaAnimal;
  */
 public interface TransferenciaAnimalRepository extends JpaRepository<TransferenciaAnimal, Long> {
 
+    /** Indica si el animal figura en alguna transferencia (ver AnimalController.eliminar: un animal con historial de lotes no se puede eliminar). */
+    boolean existsByAnimal_AniId(Long animalId);
+
+    /**
+     * Cuenta los movimientos en los que el lote figura como origen o como
+     * destino (ver SubGrupoService.eliminar). Usa LEFT JOIN explícito
+     * porque origen/destino pueden ser null (animal sin lote): con el
+     * acceso directo "ta.origen.sbId" Hibernate haría un INNER JOIN y
+     * descartaría las filas con origen null aunque el destino coincida.
+     */
+    @Query("SELECT COUNT(ta) FROM TransferenciaAnimal ta LEFT JOIN ta.origen o LEFT JOIN ta.destino d "
+            + "WHERE o.sbId = :loteId OR d.sbId = :loteId")
+    long contarMovimientosDeLote(@Param("loteId") Long loteId);
+
     /** Animales de una transferencia, ordenados por caravana. */
     List<TransferenciaAnimal> findByTransferencia_TraIdOrderByAnimal_AniCaravanaAsc(Long traId);
 

@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -707,9 +708,10 @@ class TransferenciaControllerTest extends AutenticacionTestSupport {
         devolver(traId, devolucion(LocalDate.now().plusDays(1)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("La fecha de la transferencia no puede ser futura"));
+        // Anterior al ingreso del animal (2026-01-01) implica anterior a la transferencia original (2026-03-01).
         devolver(traId, devolucion(LocalDate.of(2025, 12, 31)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("CAR-TRA-DF1")));
+                .andExpect(content().string(containsString("01/03/2026")));
 
         // Ninguna de esas devoluciones se guardó: el animal sigue en el destino y la original sin devolver.
         assertEquals(loteB.getSbId(), loteActual(animal));
@@ -741,6 +743,113 @@ class TransferenciaControllerTest extends AutenticacionTestSupport {
                 .andExpect(status().isCreated());
 
         assertEquals(loteB.getSbId(), loteActual(animal));
+    }
+
+    @Test
+    @DisplayName("La fecha de la devolución no puede ser anterior a la de la transferencia original (400 con esa fecha); el mismo día sí se acepta")
+    void devolucionAnteriorALaTransferenciaOriginalDevuelve400() throws Exception {
+        Animal animal = crearAnimal("CAR-TRA-DO1", loteA);
+        long traId = transferirOk(pedidoAlLoteB(animal)); // FECHA = 2026-03-01
+
+        devolver(traId, devolucion(LocalDate.of(2026, 2, 28)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(
+                        "La fecha de la devolución no puede ser anterior a la fecha de la transferencia original (01/03/2026)"));
+
+        assertEquals(loteB.getSbId(), loteActual(animal));
+        assertEquals(1, transferenciaRepository.count());
+
+        devolver(traId, devolucion(FECHA)).andExpect(status().isCreated());
+        assertEquals(loteA.getSbId(), loteActual(animal));
+    }
+
+    // ---- Bloqueo de borrados: lotes, personas y animales con transferencias ----
+
+    @Test
+    @DisplayName("Un lote que fue origen de una transferencia no se puede eliminar (409)")
+    void loteOrigenDeUnaTransferenciaNoSePuedeEliminar() throws Exception {
+        Animal animal = crearAnimal("CAR-TRA-B01", loteA);
+        transferirOk(pedidoAlLoteB(animal)); // el lote A queda vacío, pero figura como origen
+
+        mockMvc.perform(delete("/api/subgrupos/{id}", loteA.getSbId()).header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("No se puede eliminar el lote: figura en 1 movimientos de animales entre lotes"));
+    }
+
+    @Test
+    @DisplayName("Un lote que fue destino de una transferencia no se puede eliminar (409), aunque el origen haya sido \"sin lote\"")
+    void loteDestinoDeUnaTransferenciaNoSePuedeEliminar() throws Exception {
+        Animal sinLote = crearAnimal("CAR-TRA-B02", null);
+        transferirOk(pedidoAlLoteB(sinLote)); // origen null: prueba el LEFT JOIN de la consulta
+        // El animal se va del lote B, para que el bloqueo no sea por tener animales sino por el historial.
+        sinLote.setSubGrupo(loteC);
+        animalRepository.save(sinLote);
+
+        mockMvc.perform(delete("/api/subgrupos/{id}", loteB.getSbId()).header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string(containsString("figura en 1 movimientos")));
+    }
+
+    @Test
+    @DisplayName("Un lote que no figura en ninguna transferencia (ni tiene animales) se sigue pudiendo eliminar")
+    void loteSinTransferenciasSePuedeEliminar() throws Exception {
+        Animal animal = crearAnimal("CAR-TRA-B03", loteA);
+        transferirOk(pedidoAlLoteB(animal));
+
+        mockMvc.perform(delete("/api/subgrupos/{id}", loteC.getSbId()).header("Authorization", token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Una persona responsable de una transferencia no se puede eliminar (409) y el resumen cuenta sus transferencias")
+    void personaResponsableDeUnaTransferenciaNoSePuedeEliminar() throws Exception {
+        Persona otraPersona = crearPersona("Otra");
+        Animal a1 = crearAnimal("CAR-TRA-PE1", loteA);
+        Animal a2 = crearAnimal("CAR-TRA-PE2", loteA);
+        transferirOk(pedidoAlLoteB(a1));
+        long segunda = transferirOk(pedido(LocalDate.of(2026, 3, 5), "SELECCION", null, loteC.getSbId(),
+                responsable.getPerId(), a2.getAniId()));
+        devolver(segunda, devolucion(LocalDate.of(2026, 3, 6))).andExpect(status().isCreated());
+
+        mockMvc.perform(delete("/api/personas/{id}", responsable.getPerId()).header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("No se puede eliminar la persona: figura como responsable de 3 transferencias"));
+
+        mockMvc.perform(get("/api/personas/resumen").header("Authorization", token))
+                .andExpect(jsonPath("$[?(@.perId == %d)].cantidadTransferencias", responsable.getPerId())
+                        .value(hasItem(3)))
+                .andExpect(jsonPath("$[?(@.perId == %d)].cantidadTransferencias", otraPersona.getPerId())
+                        .value(hasItem(0)));
+
+        mockMvc.perform(delete("/api/personas/{id}", otraPersona.getPerId()).header("Authorization", token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("El motivo de transferencias se suma a los demás motivos en el mensaje de eliminar una persona")
+    void personaConVariosMotivosIncluyeLasTransferencias() throws Exception {
+        Animal animal = crearAnimal("CAR-TRA-PE3", loteA);
+        transferirOk(pedidoAlLoteB(animal));
+        pesar(animal, 210.0, LocalDate.of(2026, 3, 2)); // el responsable también figura en un pesaje
+
+        mockMvc.perform(delete("/api/personas/{id}", responsable.getPerId()).header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string(
+                        "No se puede eliminar la persona: figura en 1 pesajes y figura como responsable de 1 transferencias"));
+    }
+
+    @Test
+    @DisplayName("Un animal que figura en una transferencia no se puede eliminar (409); uno sin transferencias sí")
+    void animalConTransferenciasNoSePuedeEliminar() throws Exception {
+        Animal transferido = crearAnimal("CAR-TRA-AN1", loteA);
+        Animal libre = crearAnimal("CAR-TRA-AN2", loteA);
+        transferirOk(pedidoAlLoteB(transferido));
+
+        mockMvc.perform(delete("/api/animales/{id}", transferido.getAniId()).header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("No se puede eliminar el animal: figura en transferencias entre lotes"));
+        mockMvc.perform(delete("/api/animales/{id}", libre.getAniId()).header("Authorization", token))
+                .andExpect(status().isNoContent());
     }
 
     // ---- GET /api/animales/{id}/movimientos ----

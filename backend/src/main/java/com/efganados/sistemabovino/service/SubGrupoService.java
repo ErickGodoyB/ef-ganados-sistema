@@ -9,6 +9,7 @@ import com.efganados.sistemabovino.model.SubGrupo;
 import com.efganados.sistemabovino.repository.AnimalRepository;
 import com.efganados.sistemabovino.repository.GrupoRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
+import com.efganados.sistemabovino.repository.TransferenciaAnimalRepository;
 
 /**
  * Lógica de negocio del catálogo de lotes (SubGrupo): validaciones de
@@ -22,12 +23,14 @@ public class SubGrupoService {
     private final SubGrupoRepository subGrupoRepository;
     private final GrupoRepository grupoRepository;
     private final AnimalRepository animalRepository;
+    private final TransferenciaAnimalRepository transferenciaAnimalRepository;
 
     public SubGrupoService(SubGrupoRepository subGrupoRepository, GrupoRepository grupoRepository,
-            AnimalRepository animalRepository) {
+            AnimalRepository animalRepository, TransferenciaAnimalRepository transferenciaAnimalRepository) {
         this.subGrupoRepository = subGrupoRepository;
         this.grupoRepository = grupoRepository;
         this.animalRepository = animalRepository;
+        this.transferenciaAnimalRepository = transferenciaAnimalRepository;
     }
 
     /**
@@ -70,6 +73,13 @@ public class SubGrupoService {
         long cantidadAnimales = animalRepository.countBySubGrupo_SbId(id);
         if (cantidadAnimales > 0) {
             throw new ConflictoException("No se puede eliminar el lote: tiene " + cantidadAnimales + " animales");
+        }
+        // Un lote que figura como origen o destino de una transferencia es parte del historial de lotes
+        // de los animales: borrarlo dejaría esos registros sin referencia.
+        long cantidadMovimientos = transferenciaAnimalRepository.contarMovimientosDeLote(id);
+        if (cantidadMovimientos > 0) {
+            throw new ConflictoException("No se puede eliminar el lote: figura en " + cantidadMovimientos
+                    + " movimientos de animales entre lotes");
         }
         subGrupoRepository.delete(subGrupo);
     }

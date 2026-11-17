@@ -3,6 +3,7 @@ package com.efganados.sistemabovino.service;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +49,8 @@ import com.efganados.sistemabovino.repository.TransferenciaRepository;
  */
 @Service
 public class TransferenciaService {
+
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private static final int LARGO_MAXIMO_NOTA = 255;
 
@@ -129,7 +132,8 @@ public class TransferenciaService {
      * devuelve una devolución: para eso se hace una transferencia común) o
      * si ya fue devuelta; 409 si ningún animal puede devolverse. La fecha
      * sigue las reglas del alta (obligatoria, no futura y no anterior al
-     * ingreso), aplicadas a los animales que efectivamente se devuelven.
+     * ingreso), aplicadas a los animales que efectivamente se devuelven, y no puede ser
+     * anterior a la fecha de la transferencia original (400).
      */
     @Transactional
     public DevolucionResumen devolver(Long transferenciaId, LocalDate fecha, String nota, Long responsableId) {
@@ -143,6 +147,11 @@ public class TransferenciaService {
         }
 
         validarFechaNoFutura(fecha);
+        // No tiene sentido devolver algo antes de que haya ocurrido: dejaría el historial de lotes incoherente.
+        if (fecha.isBefore(original.getTraFecha())) {
+            throw new ValidacionException("La fecha de la devolución no puede ser anterior a la fecha de la "
+                    + "transferencia original (" + original.getTraFecha().format(FORMATO_FECHA) + ")");
+        }
         String notaValidada = validarNota(MotivoTransferencia.DEVOLUCION, nota);
         if (responsableId == null) {
             throw new ValidacionException("Falta el campo responsableId");

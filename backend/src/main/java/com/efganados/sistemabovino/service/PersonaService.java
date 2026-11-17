@@ -14,6 +14,7 @@ import com.efganados.sistemabovino.model.Persona;
 import com.efganados.sistemabovino.repository.AnimalRepository;
 import com.efganados.sistemabovino.repository.PersonaRepository;
 import com.efganados.sistemabovino.repository.PesajesRepository;
+import com.efganados.sistemabovino.repository.TransferenciaRepository;
 import com.efganados.sistemabovino.repository.UsuarioRepository;
 
 /**
@@ -52,13 +53,16 @@ public class PersonaService {
     private final AnimalRepository animalRepository;
     private final PesajesRepository pesajesRepository;
     private final UsuarioRepository usuarioRepository;
+    private final TransferenciaRepository transferenciaRepository;
 
     public PersonaService(PersonaRepository personaRepository, AnimalRepository animalRepository,
-            PesajesRepository pesajesRepository, UsuarioRepository usuarioRepository) {
+            PesajesRepository pesajesRepository, UsuarioRepository usuarioRepository,
+            TransferenciaRepository transferenciaRepository) {
         this.personaRepository = personaRepository;
         this.animalRepository = animalRepository;
         this.pesajesRepository = pesajesRepository;
         this.usuarioRepository = usuarioRepository;
+        this.transferenciaRepository = transferenciaRepository;
     }
 
     /**
@@ -86,12 +90,13 @@ public class PersonaService {
         long cantidadAnimales = animalRepository.countByDuenio_PerId(persona.getPerId());
         long cantidadComoComprador = animalRepository.countByComprador_PerId(persona.getPerId());
         long cantidadPesajes = pesajesRepository.countByResponsableOAnuladoPor(persona.getPerId());
+        long cantidadTransferencias = transferenciaRepository.countByResponsable_PerId(persona.getPerId());
         boolean tieneUsuario = usuarioRepository.existsByPersona_PerId(persona.getPerId());
 
         return new PersonaResumen(persona.getPerId(), persona.getPerNombre(), persona.getPerApellido(),
                 persona.getPerRuc(), persona.getPerCi(), persona.getPerTipo(), persona.getPerTelefono(),
                 persona.getPerCorreo(), persona.getPerDireccion(), cantidadAnimales, cantidadComoComprador,
-                cantidadPesajes, tieneUsuario);
+                cantidadPesajes, cantidadTransferencias, tieneUsuario);
     }
 
     /**
@@ -160,6 +165,7 @@ public class PersonaService {
         long cantidadAnimales = animalRepository.countByDuenio_PerId(id);
         long cantidadComoComprador = animalRepository.countByComprador_PerId(id);
         long cantidadPesajes = pesajesRepository.countByResponsableOAnuladoPor(id);
+        long cantidadTransferencias = transferenciaRepository.countByResponsable_PerId(id);
         boolean tieneUsuario = usuarioRepository.existsByPersona_PerId(id);
 
         List<String> motivos = new ArrayList<>();
@@ -171,6 +177,9 @@ public class PersonaService {
         }
         if (cantidadPesajes > 0) {
             motivos.add("figura en " + cantidadPesajes + " pesajes");
+        }
+        if (cantidadTransferencias > 0) {
+            motivos.add("figura como responsable de " + cantidadTransferencias + " transferencias");
         }
         if (tieneUsuario) {
             motivos.add("tiene un usuario de acceso");

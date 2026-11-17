@@ -31,6 +31,7 @@ import com.efganados.sistemabovino.repository.PersonaRepository;
 import com.efganados.sistemabovino.repository.PesajesRepository;
 import com.efganados.sistemabovino.repository.RazaRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
+import com.efganados.sistemabovino.repository.TransferenciaAnimalRepository;
 import com.efganados.sistemabovino.service.AnimalService;
 import com.efganados.sistemabovino.service.PesajeService;
 import com.efganados.sistemabovino.service.TransferenciaService;
@@ -52,11 +53,13 @@ public class AnimalController {
     private final SubGrupoRepository subGrupoRepository;
     private final PesajesRepository pesajesRepository;
     private final TransferenciaService transferenciaService;
+    private final TransferenciaAnimalRepository transferenciaAnimalRepository;
 
     public AnimalController(AnimalRepository animalRepository, AnimalService animalService,
             PesajeService pesajeService, PersonaRepository personaRepository, RazaRepository razaRepository,
             SubGrupoRepository subGrupoRepository, PesajesRepository pesajesRepository,
-            TransferenciaService transferenciaService) {
+            TransferenciaService transferenciaService, TransferenciaAnimalRepository transferenciaAnimalRepository) {
+        this.transferenciaAnimalRepository = transferenciaAnimalRepository;
         this.transferenciaService = transferenciaService;
         this.animalRepository = animalRepository;
         this.animalService = animalService;
@@ -269,7 +272,8 @@ public class AnimalController {
 
     /**
      * Elimina un animal por su ID. 404 si no existe; 409 si tiene pesajes
-     * registrados (no se puede eliminar un animal con historial de pesajes).
+     * registrados o figura en alguna transferencia entre lotes (no se puede
+     * eliminar un animal con historial).
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
@@ -279,6 +283,10 @@ public class AnimalController {
         if (pesajesRepository.existsByAnimal_AniId(id)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("No se puede eliminar el animal: tiene pesajes registrados");
+        }
+        if (transferenciaAnimalRepository.existsByAnimal_AniId(id)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("No se puede eliminar el animal: figura en transferencias entre lotes");
         }
         animalRepository.deleteById(id);
         return ResponseEntity.noContent().build();

@@ -25,6 +25,9 @@ public interface TransferenciaRepository extends JpaRepository<Transferencia, Lo
             + "ORDER BY t.traFecha DESC, t.traRegistradaEn DESC, t.traId DESC")
     List<Transferencia> buscarPorRango(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 
+    /** Cuenta las transferencias de las que la persona es responsable (ver PersonaService: una persona que figura en alguna no se puede eliminar). */
+    long countByResponsable_PerId(Long perId);
+
     /** Indica si ya existe una devolución de la transferencia dada (una transferencia solo puede devolverse una vez). */
     boolean existsByDevuelveA_TraId(Long traId);
 
