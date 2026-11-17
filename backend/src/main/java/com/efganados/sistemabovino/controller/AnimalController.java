@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.efganados.sistemabovino.dto.ItemHistorialPesaje;
+import com.efganados.sistemabovino.dto.MovimientoAnimal;
 import com.efganados.sistemabovino.model.Animal;
 import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
@@ -32,6 +33,7 @@ import com.efganados.sistemabovino.repository.RazaRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
 import com.efganados.sistemabovino.service.AnimalService;
 import com.efganados.sistemabovino.service.PesajeService;
+import com.efganados.sistemabovino.service.TransferenciaService;
 
 /**
  * CRUD REST para la entidad {@link Animal}, más los endpoints derivados
@@ -49,10 +51,13 @@ public class AnimalController {
     private final RazaRepository razaRepository;
     private final SubGrupoRepository subGrupoRepository;
     private final PesajesRepository pesajesRepository;
+    private final TransferenciaService transferenciaService;
 
     public AnimalController(AnimalRepository animalRepository, AnimalService animalService,
             PesajeService pesajeService, PersonaRepository personaRepository, RazaRepository razaRepository,
-            SubGrupoRepository subGrupoRepository, PesajesRepository pesajesRepository) {
+            SubGrupoRepository subGrupoRepository, PesajesRepository pesajesRepository,
+            TransferenciaService transferenciaService) {
+        this.transferenciaService = transferenciaService;
         this.animalRepository = animalRepository;
         this.animalService = animalService;
         this.pesajeService = pesajeService;
@@ -386,6 +391,16 @@ public class AnimalController {
     public ResponseEntity<AnimalResumen> reactivar(@PathVariable Long id) {
         Animal animal = animalService.reactivar(id);
         return ResponseEntity.ok(aResumen(animal));
+    }
+
+    /**
+     * Historial de cambios de lote del animal (transferencias y
+     * devoluciones), del más reciente al más antiguo. 404 si el animal no
+     * existe.
+     */
+    @GetMapping("/{id}/movimientos")
+    public List<MovimientoAnimal> movimientos(@PathVariable Long id) {
+        return transferenciaService.obtenerMovimientos(id);
     }
 
     /** Datos de entrada para registrar la salida de un animal; compradorId solo tiene sentido si motivo es VENTA. */
