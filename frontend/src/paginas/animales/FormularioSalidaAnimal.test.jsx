@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { peticionProtegida } from '../../api/cliente'
@@ -66,7 +66,8 @@ describe('FormularioSalidaAnimal', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Registrar salida' }))
 
-    expect(screen.getByText('Elegí un motivo')).toBeInTheDocument()
+    // "Elegí un motivo" también es el texto de la opción vacía del select: el mensaje de error se busca por su rol.
+    expect(screen.getByRole('alert')).toHaveTextContent('Elegí un motivo')
     expect(peticionProtegida).not.toHaveBeenCalledWith('/api/animales/7/salida', expect.anything())
   })
 
@@ -150,13 +151,14 @@ describe('FormularioSalidaAnimal', () => {
     await esperarPersonasCargadas()
 
     const campoFecha = screen.getByLabelText('Fecha')
-    const fechaFutura = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
-    await usuario.clear(campoFecha)
-    await usuario.type(campoFecha, fechaFutura.replaceAll('-', ''))
+    // Dos días adelante (no uno) para que sea futura en cualquier huso horario. Se usa fireEvent.change
+    // porque user-event no escribe en un input type="date" sin el formato aaaa-mm-dd.
+    const fechaFutura = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10)
+    fireEvent.change(campoFecha, { target: { value: fechaFutura } })
     await usuario.selectOptions(screen.getByLabelText('Motivo'), 'MUERTE')
     await usuario.click(screen.getByRole('button', { name: 'Registrar salida' }))
 
-    expect(screen.getByText('La fecha de salida no puede ser futura')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('La fecha de salida no puede ser futura')
     expect(peticionProtegida).not.toHaveBeenCalledWith('/api/animales/7/salida', expect.anything())
   })
 

@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { peticionProtegida } from '../../api/cliente'
 import ModalDetalleAnimal from './ModalDetalleAnimal'
@@ -38,6 +39,15 @@ const ANIMAL_SALIDO = {
   compradorNombre: null,
 }
 
+/**
+ * El modal incluye HistorialPesajesAnimal, que usa useNavigate (para "Ver
+ * sesión"): fuera de un Router falla, así que todos los renders de este
+ * archivo van envueltos en un MemoryRouter.
+ */
+function renderizar(ui) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
+
 function manejadores() {
   return {
     onCerrar: vi.fn(),
@@ -56,7 +66,7 @@ describe('ModalDetalleAnimal: salida y reactivar', () => {
 
   it('un animal activo muestra "Registrar salida" y no "Reactivar"', async () => {
     peticionProtegida.mockResolvedValue([])
-    render(<ModalDetalleAnimal animal={ANIMAL_ACTIVO} {...manejadores()} />)
+    renderizar(<ModalDetalleAnimal animal={ANIMAL_ACTIVO} {...manejadores()} />)
 
     expect(await screen.findByRole('button', { name: /Registrar salida/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Reactivar/ })).not.toBeInTheDocument()
@@ -64,11 +74,14 @@ describe('ModalDetalleAnimal: salida y reactivar', () => {
 
   it('un animal con salida muestra "Reactivar", no "Registrar salida", y los datos de la salida', async () => {
     peticionProtegida.mockResolvedValue([])
-    render(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...manejadores()} />)
+    renderizar(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...manejadores()} />)
 
     expect(await screen.findByRole('button', { name: /Reactivar/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Registrar salida/ })).not.toBeInTheDocument()
-    expect(screen.getByText(/Muerte el 01\/06\/2026/)).toBeInTheDocument()
+    // El texto "Muerte el 01/06/2026" también aparece en el badge de estado del encabezado:
+    // se busca dentro del dato "Salida" del detalle.
+    const datoSalida = screen.getByText('Salida').closest('div')
+    expect(within(datoSalida).getByText(/Muerte el 01\/06\/2026/)).toBeInTheDocument()
   })
 
   it('reactivar con éxito avisa al padre y vuelve al detalle', async () => {
@@ -85,7 +98,7 @@ describe('ModalDetalleAnimal: salida y reactivar', () => {
       throw new Error(`ruta inesperada: ${ruta}`)
     })
 
-    render(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...funciones} />)
+    renderizar(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...funciones} />)
 
     const botonReactivar = await screen.findByRole('button', { name: /Reactivar/ })
     await usuario.click(botonReactivar)
@@ -109,7 +122,7 @@ describe('ModalDetalleAnimal: salida y reactivar', () => {
       throw new ErrorHttp(409, 'No se puede reactivar el animal CAR-002: tiene un pesaje activo posterior a su salida')
     })
 
-    render(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...funciones} />)
+    renderizar(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...funciones} />)
 
     const botonReactivar = await screen.findByRole('button', { name: /Reactivar/ })
     await usuario.click(botonReactivar)
@@ -126,7 +139,7 @@ describe('ModalDetalleAnimal: salida y reactivar', () => {
     const funciones = manejadores()
     peticionProtegida.mockResolvedValue([])
 
-    render(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...funciones} />)
+    renderizar(<ModalDetalleAnimal animal={ANIMAL_SALIDO} {...funciones} />)
 
     const botonReactivar = await screen.findByRole('button', { name: /Reactivar/ })
     await usuario.click(botonReactivar)
