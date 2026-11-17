@@ -1,7 +1,7 @@
 /**
  * Modal de detalle de un animal (RF010 ampliado): muestra sus datos
- * completos, su historial de pesajes (ver HistorialPesajesAnimal.jsx) y,
- * desde el mismo <Modal> (sin apilar varios), permite pasar a "Editar"
+ * completos, su historial de pesajes (ver HistorialPesajesAnimal.jsx), sus
+ * movimientos de lote (ver MovimientosLoteAnimal.jsx) y, desde el mismo <Modal> (sin apilar varios), permite pasar a "Editar"
  * (reutiliza FormularioAnimal en modo "editar"), "Eliminar" (confirmación
  * chica dentro del mismo panel), "Registrar salida" (reutiliza
  * FormularioSalidaAnimal, solo si el animal sigue activo) o "Reactivar"
@@ -29,6 +29,7 @@ import EstadoBadge from './EstadoBadge'
 import FormularioAnimal from './FormularioAnimal'
 import FormularioSalidaAnimal from './FormularioSalidaAnimal'
 import HistorialPesajesAnimal from './HistorialPesajesAnimal'
+import MovimientosLoteAnimal from './MovimientosLoteAnimal'
 import { etiquetaMotivoSalida } from './tiposSalida'
 import './ModalDetalleAnimal.css'
 
@@ -249,6 +250,7 @@ export default function ModalDetalleAnimal({
           {!sinPesajes && <p className="detalle-animal-aviso-pesajes">{avisoNoEliminable}</p>}
 
           <HistorialPesajesAnimal animal={animal} />
+          <MovimientosLoteAnimal animal={animal} />
         </>
       )}
 

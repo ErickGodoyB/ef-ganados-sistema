@@ -75,6 +75,7 @@ describe('BarraLateral: desplegable Catálogos', () => {
 
     expect(screen.getByRole('link', { name: /Animales/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Pesajes/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Transferencias/ })).toHaveAttribute('href', '/transferencias')
     expect(screen.getByRole('link', { name: /Reportes/ })).toBeInTheDocument()
 
     const boton = screen.getByRole('button', { name: 'Catálogos' })

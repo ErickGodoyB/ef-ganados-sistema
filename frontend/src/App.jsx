@@ -18,6 +18,7 @@ import Personas from './paginas/Personas'
 import Pesajes from './paginas/Pesajes'
 import Razas from './paginas/Razas'
 import Reportes from './paginas/Reportes'
+import Transferencias from './paginas/Transferencias'
 import { TemaProvider } from './tema/TemaContext'
 
 /** Si ya hay una sesión activa y se entra a /login, redirige a la app. */
@@ -44,6 +45,7 @@ function App() {
               <Route index element={<Navigate to="/animales" replace />} />
               <Route path="animales" element={<Animales />} />
               <Route path="pesajes" element={<Pesajes />} />
+              <Route path="transferencias" element={<Transferencias />} />
               <Route path="catalogos/razas" element={<Razas />} />
               <Route path="catalogos/grupos-y-lotes" element={<GruposYLotes />} />
               <Route path="catalogos/personas" element={<Personas />} />

@@ -19,7 +19,7 @@
  * persona lo había abierto a mano.
  */
 
-import { Beef, ChartColumn, ChevronDown, LogOut, Scale, Tags } from 'lucide-react'
+import { ArrowLeftRight, Beef, ChartColumn, ChevronDown, LogOut, Scale, Tags } from 'lucide-react'
 import { forwardRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
@@ -30,6 +30,7 @@ import './BarraLateral.css'
 const ACCESOS = [
   { ruta: '/animales', etiqueta: 'Animales', Icono: Beef },
   { ruta: '/pesajes', etiqueta: 'Pesajes', Icono: Scale },
+  { ruta: '/transferencias', etiqueta: 'Transferencias', Icono: ArrowLeftRight },
   { ruta: '/reportes', etiqueta: 'Reportes', Icono: ChartColumn },
 ]
 

@@ -1,0 +1,93 @@
+/**
+ * Estilos del modal de detalle y del formulario de devolución de una
+ * transferencia (ver ModalDetalleTransferencia.jsx y FormularioDevolucion.jsx).
+ * La tabla de animales comparte el aspecto de las tablas de Transferencias.css.
+ * Solo variables de color de index.css: claro y oscuro salen solos.
+ */
+
+.detalle-transferencia {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detalle-transferencia-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.detalle-transferencia-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.detalle-transferencia-subtitulo {
+  margin: 0;
+  font-size: 16px;
+  color: var(--texto);
+}
+
+/* Scroll horizontal solo dentro de la tabla si no entra (nunca de la página). */
+.detalle-transferencia-tabla-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  background: var(--superficie);
+}
+
+.detalle-transferencia-caravana {
+  font-weight: 700;
+}
+
+.detalle-transferencia-si,
+.detalle-transferencia-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.detalle-transferencia-acciones,
+.formulario-devolucion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.detalle-transferencia-acciones .boton-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detalle-transferencia-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detalle-transferencia-resultado-texto {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+  border-radius: var(--radio-md);
+}
+
+.formulario-devolucion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Clase propia (no "p" a secas): un selector de elemento le ganaría en
+   especificidad a .campo-error y los mensajes de error perderían su color. */
+.formulario-devolucion-intro {
+  margin: 0;
+  color: var(--texto);
+}

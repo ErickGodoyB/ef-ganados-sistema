@@ -1,0 +1,70 @@
+/**
+ * Sección "Movimientos de lote" del detalle de animal (ver
+ * MovimientosLoteAnimal.jsx). Mismo lenguaje visual que
+ * HistorialPesajesAnimal.css; solo variables de color de index.css.
+ */
+
+.movimientos-lote {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde);
+}
+
+.movimientos-lote-titulo {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.movimientos-lote-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.movimientos-lote-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.movimientos-lote-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+.movimientos-lote-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.movimientos-lote-fecha {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.movimientos-lote-ruta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.movimientos-lote-responsable {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
