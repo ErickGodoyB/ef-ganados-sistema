@@ -20,6 +20,7 @@ import './TarjetaItemSesion.css'
 export default function TarjetaItemSesion({
   item,
   fecha,
+  fechaIso,
   mostrarResponsable = true,
   activa,
   tipoAccion,
@@ -70,6 +71,7 @@ export default function TarjetaItemSesion({
               pesoAnterior={item.pesoAnterior}
               pesoAnteriorEsIngreso={item.pesoAnteriorEsIngreso}
               fechaPesoAnterior={item.fechaPesoAnterior}
+              fechaPesaje={fechaIso}
             />
           </dd>
         </div>

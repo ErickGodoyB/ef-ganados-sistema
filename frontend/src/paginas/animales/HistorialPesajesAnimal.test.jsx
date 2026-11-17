@@ -47,6 +47,40 @@ describe('HistorialPesajesAnimal', () => {
     expect(within(filas[3]).getByText('210,0 kg')).toBeInTheDocument()
   })
 
+  it('muestra la fecha del pesaje anterior y los días entre cada pesaje', async () => {
+    peticionProtegida.mockResolvedValue([
+      {
+        pesaId: 1,
+        fecha: '2026-01-11',
+        peso: 210,
+        pesoAnterior: 200,
+        pesoAnteriorEsIngreso: true,
+        fechaPesoAnterior: '2026-01-01',
+        gmd: 1.0,
+        responsableNombre: 'Ana Pérez',
+      },
+      {
+        pesaId: 2,
+        fecha: '2026-01-21',
+        peso: 230,
+        pesoAnterior: 210,
+        pesoAnteriorEsIngreso: false,
+        fechaPesoAnterior: '2026-01-11',
+        gmd: 2.0,
+        responsableNombre: 'Ana Pérez',
+      },
+    ])
+    render(<HistorialPesajesAnimal animal={ANIMAL} />)
+
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
+
+    const filas = screen.getAllByRole('row')
+    expect(within(filas[2]).getByText('11/01/2026 · hace 10 días')).toBeInTheDocument()
+    expect(within(filas[3]).getByText('01/01/2026 · hace 10 días')).toBeInTheDocument()
+    expect(within(filas[3]).getByText('ingreso')).toBeInTheDocument()
+    expect(within(filas[2]).queryByText('ingreso')).not.toBeInTheDocument()
+  })
+
   it('sin pesajes, muestra el mensaje de vacío', async () => {
     peticionProtegida.mockResolvedValue([])
     render(<HistorialPesajesAnimal animal={ANIMAL} />)

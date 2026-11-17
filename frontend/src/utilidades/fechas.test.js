@@ -1,5 +1,68 @@
 import { describe, expect, it } from 'vitest'
-import { calcularAtajoIntervalo, fechaHoyIso, primerDiaDelMesIso, rangoDeFechasEsValido, sumarDiasIso } from './fechas'
+import {
+  calcularAtajoIntervalo,
+  diasEntreFechas,
+  fechaHoyIso,
+  primerDiaDelMesIso,
+  rangoDeFechasEsValido,
+  sumarDiasIso,
+  textoDiasTranscurridos,
+} from './fechas'
+
+describe('diasEntreFechas', () => {
+  it('cuenta los días entre dos fechas', () => {
+    expect(diasEntreFechas('2026-10-30', '2026-11-11')).toBe(12)
+  })
+
+  it('es 0 para el mismo día', () => {
+    expect(diasEntreFechas('2026-10-30', '2026-10-30')).toBe(0)
+  })
+
+  it('cruza fin de mes y de año', () => {
+    expect(diasEntreFechas('2026-12-25', '2027-01-05')).toBe(11)
+  })
+
+  it('cuenta bien el 29 de febrero de un año bisiesto', () => {
+    expect(diasEntreFechas('2028-02-28', '2028-03-01')).toBe(2)
+    expect(diasEntreFechas('2027-02-28', '2027-03-01')).toBe(1)
+  })
+
+  it('no se corre por cambios de horario de verano (siempre días enteros)', () => {
+    expect(diasEntreFechas('2026-03-01', '2026-04-01')).toBe(31)
+    expect(diasEntreFechas('2026-10-01', '2026-11-01')).toBe(31)
+  })
+
+  it('es negativo si la segunda fecha es anterior', () => {
+    expect(diasEntreFechas('2026-11-11', '2026-10-30')).toBe(-12)
+  })
+
+  it('devuelve null si falta una fecha o no es válida', () => {
+    expect(diasEntreFechas(null, '2026-10-30')).toBeNull()
+    expect(diasEntreFechas('2026-10-30', undefined)).toBeNull()
+    expect(diasEntreFechas('', '2026-10-30')).toBeNull()
+    expect(diasEntreFechas('30/10/2026', '2026-11-11')).toBeNull()
+  })
+})
+
+describe('textoDiasTranscurridos', () => {
+  it('usa el plural a partir de 2 días', () => {
+    expect(textoDiasTranscurridos('2026-10-30', '2026-11-11')).toBe('hace 12 días')
+  })
+
+  it('usa el singular con 1 día', () => {
+    expect(textoDiasTranscurridos('2026-10-30', '2026-10-31')).toBe('hace 1 día')
+  })
+
+  it('dice "mismo día" con 0 días', () => {
+    expect(textoDiasTranscurridos('2026-10-30', '2026-10-30')).toBe('mismo día')
+  })
+
+  it('devuelve vacío si falta una fecha o la anterior es posterior', () => {
+    expect(textoDiasTranscurridos(null, '2026-10-30')).toBe('')
+    expect(textoDiasTranscurridos('2026-10-30', null)).toBe('')
+    expect(textoDiasTranscurridos('2026-11-11', '2026-10-30')).toBe('')
+  })
+})
 
 describe('rangoDeFechasEsValido', () => {
   it('es válido si falta "desde"', () => {

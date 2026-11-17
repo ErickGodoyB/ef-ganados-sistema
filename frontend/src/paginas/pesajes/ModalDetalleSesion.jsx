@@ -371,6 +371,7 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
             <TablaItemsSesion
               items={items}
               fecha={formatearFecha(fechaActual)}
+              fechaIso={fechaActual}
               mostrarResponsable={mostrarResponsable}
               accionActiva={accionActiva}
               guardando={guardandoAccion}
@@ -389,6 +390,7 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
                 key={item.pesaId}
                 item={item}
                 fecha={formatearFecha(fechaActual)}
+                fechaIso={fechaActual}
                 mostrarResponsable={mostrarResponsable}
                 activa={accionActiva?.pesaId === item.pesaId}
                 tipoAccion={accionActiva?.pesaId === item.pesaId ? accionActiva.tipo : null}

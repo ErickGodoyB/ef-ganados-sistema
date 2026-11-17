@@ -1,11 +1,20 @@
 /**
- * Etiqueta "ingreso" junto al peso anterior (ver ValorPesoAnterior.jsx):
- * mismo lenguaje visual que .badge (estilos/base.css), pero más chica para
- * caber junto a un valor numérico en una celda de tabla o un <dd> de
- * tarjeta.
+ * Peso anterior junto a su fecha (ver ValorPesoAnterior.jsx): el peso (y la
+ * etiqueta "ingreso", si corresponde) en una línea y, debajo, la fecha del
+ * pesaje anterior con los días transcurridos. La etiqueta usa el mismo
+ * lenguaje visual que .badge (estilos/base.css), pero más chica para caber
+ * junto a un valor numérico en una celda de tabla o un <dd> de tarjeta.
+ * Solo variables de color de index.css: sirve igual en claro y oscuro.
  */
 
 .valor-peso-anterior {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.valor-peso-anterior-principal {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -20,4 +29,12 @@
   background: var(--superficie-hover);
   border: 1px solid var(--borde);
   cursor: help;
+}
+
+/* 13px (no menos) y --texto-secundario, que ya cumple 4.5:1 sobre las
+   superficies de tarjeta y tabla en ambos temas. */
+.valor-peso-anterior-fecha {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--texto-secundario);
 }

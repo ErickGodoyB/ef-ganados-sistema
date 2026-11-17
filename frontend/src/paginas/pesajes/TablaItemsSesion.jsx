@@ -20,6 +20,7 @@ import './TablaItemsSesion.css'
 export default function TablaItemsSesion({
   items,
   fecha,
+  fechaIso,
   mostrarResponsable = true,
   accionActiva,
   guardando,
@@ -93,6 +94,7 @@ export default function TablaItemsSesion({
                     pesoAnterior={item.pesoAnterior}
                     pesoAnteriorEsIngreso={item.pesoAnteriorEsIngreso}
                     fechaPesoAnterior={item.fechaPesoAnterior}
+                    fechaPesaje={fechaIso}
                   />
                 </td>
                 <td>

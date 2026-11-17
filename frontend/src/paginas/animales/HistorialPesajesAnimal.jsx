@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom'
 import { peticionProtegida } from '../../api/cliente'
 import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
 import ValorGmd from '../../componentes/ValorGmd'
+import ValorPesoAnterior from '../../componentes/ValorPesoAnterior'
 import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import { calcularDiferenciaPeso } from '../../utilidades/peso'
@@ -64,6 +65,23 @@ export default function HistorialPesajesAnimal({ animal }) {
     return calcularCodigoSesion(item.fecha, animal.subGrupoId)
   }
 
+  /**
+   * Peso anterior del pesaje con su fecha y los días transcurridos. Los
+   * datos (incluida la fecha del anterior) vienen calculados por el
+   * backend con la misma regla que la GMD, así que siempre coinciden con el
+   * detalle de sesión; acá solo se muestran.
+   */
+  function valorPesoAnterior(item) {
+    return (
+      <ValorPesoAnterior
+        pesoAnterior={item.pesoAnterior}
+        pesoAnteriorEsIngreso={item.pesoAnteriorEsIngreso}
+        fechaPesoAnterior={item.fechaPesoAnterior}
+        fechaPesaje={item.fecha}
+      />
+    )
+  }
+
   function verSesion(item) {
     navigate(`/pesajes?codigo=${encodeURIComponent(codigoDe(item))}`)
   }
@@ -97,6 +115,7 @@ export default function HistorialPesajesAnimal({ animal }) {
                   <th scope="col">Fecha</th>
                   <th scope="col">Sesión</th>
                   <th scope="col">Peso</th>
+                  <th scope="col">Peso anterior</th>
                   <th scope="col">Diferencia</th>
                   <th scope="col">GMD</th>
                   <th scope="col">Responsable</th>
@@ -115,6 +134,7 @@ export default function HistorialPesajesAnimal({ animal }) {
                   <td>—</td>
                   <td>—</td>
                   <td>—</td>
+                  <td>—</td>
                   <td></td>
                 </tr>
                 {masRecientePrimero.map((item) => (
@@ -124,6 +144,7 @@ export default function HistorialPesajesAnimal({ animal }) {
                       <span className="historial-pesajes-codigo">{codigoDe(item)}</span>
                     </td>
                     <td>{formatearPeso(item.peso)}</td>
+                    <td>{valorPesoAnterior(item)}</td>
                     <td>
                       <ValorDiferenciaPeso diferencia={calcularDiferenciaPeso(item.peso, item.pesoAnterior)} />
                     </td>
@@ -159,6 +180,10 @@ export default function HistorialPesajesAnimal({ animal }) {
                 </div>
                 <p className="historial-pesajes-tarjeta-fecha">{formatearFecha(item.fecha)}</p>
                 <dl className="historial-pesajes-tarjeta-datos">
+                  <div>
+                    <dt>Peso anterior</dt>
+                    <dd>{valorPesoAnterior(item)}</dd>
+                  </div>
                   <div>
                     <dt>Diferencia</dt>
                     <dd>
