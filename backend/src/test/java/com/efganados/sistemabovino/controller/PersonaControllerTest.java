@@ -104,6 +104,13 @@ class PersonaControllerTest extends AutenticacionTestSupport {
         return animalRepository.save(animal);
     }
 
+    /** Crea y persiste un animal de prueba cuyo proveedor es la persona dada. */
+    private Animal crearAnimalConProveedor(String caravana, Persona proveedor) {
+        Animal animal = crearAnimalConDuenio(caravana, crearPersona("Dueño-" + caravana, "Apellido", null, null, "PROPIETARIO"));
+        animal.setProveedor(proveedor);
+        return animalRepository.save(animal);
+    }
+
     /** Crea y persiste un animal de prueba ya vendido, con la persona dada como compradora. */
     private Animal crearAnimalConComprador(String caravana, Persona comprador) {
         Animal animal = crearAnimalConDuenio(caravana, crearPersona("Dueño-" + caravana, "Apellido", null, null, "PROPIETARIO"));
@@ -223,14 +230,45 @@ class PersonaControllerTest extends AutenticacionTestSupport {
     @DisplayName("Crear una persona con un tipo inválido devuelve 400")
     void crearPersonaConTipoInvalidoDevuelve400() throws Exception {
         Persona request = personaValida();
-        request.setPerTipo("PROVEEDOR");
+        request.setPerTipo("VISITANTE");
 
         mockMvc.perform(post("/api/personas")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("El tipo debe ser PROPIETARIO, EMPLEADO o CLIENTE"));
+                .andExpect(content().string("El tipo debe ser PROPIETARIO, EMPLEADO, CLIENTE o PROVEEDOR"));
+    }
+
+    @Test
+    @DisplayName("Crear una persona con tipo PROVEEDOR devuelve 201")
+    void crearPersonaConTipoProveedorDevuelve201() throws Exception {
+        Persona request = personaValida();
+        request.setPerTipo("PROVEEDOR");
+
+        mockMvc.perform(post("/api/personas")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.perTipo").value("PROVEEDOR"));
+    }
+
+    @Test
+    @DisplayName("Editar una persona para que pase a tipo PROVEEDOR devuelve 200")
+    void editarPersonaATipoProveedorDevuelve200() throws Exception {
+        Persona existente = crearPersona("Edu", "Mora", null, null, "CLIENTE");
+        Persona cambios = personaValida();
+        cambios.setPerCi(null);
+        cambios.setPerRuc(null);
+        cambios.setPerTipo("PROVEEDOR");
+
+        mockMvc.perform(put("/api/personas/{id}", existente.getPerId())
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(cambios)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perTipo").value("PROVEEDOR"));
     }
 
     @Test
@@ -594,6 +632,43 @@ class PersonaControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
+    @DisplayName("Eliminar un proveedor de animales devuelve 409 con la cantidad")
+    void eliminarProveedorDeAnimalesDevuelve409() throws Exception {
+        Persona proveedor = crearPersona("Pedro", "Vera", null, null, "PROVEEDOR");
+        crearAnimalConProveedor("CAR-PER-PROV-001", proveedor);
+        crearAnimalConProveedor("CAR-PER-PROV-002", proveedor);
+
+        mockMvc.perform(delete("/api/personas/{id}", proveedor.getPerId())
+                        .header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("No se puede eliminar la persona: es proveedor de 2 animales"));
+    }
+
+    @Test
+    @DisplayName("Eliminar un proveedor sin animales devuelve 204")
+    void eliminarProveedorSinAnimalesDevuelve204() throws Exception {
+        Persona proveedor = crearPersona("Pedro", "Vera", null, null, "PROVEEDOR");
+
+        mockMvc.perform(delete("/api/personas/{id}", proveedor.getPerId())
+                        .header("Authorization", token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("El mensaje de borrado combina proveedor con los demás motivos, nombrando solo los que corresponden")
+    void eliminarProveedorConOtrosMotivosCombinaElMensaje() throws Exception {
+        Persona persona = crearPersona("Mixta", "Gil", null, null, "PROVEEDOR");
+        crearAnimalConProveedor("CAR-PER-PROV-003", persona);
+        crearUsuarioParaPersona(persona, "mixta-gil");
+
+        mockMvc.perform(delete("/api/personas/{id}", persona.getPerId())
+                        .header("Authorization", token))
+                .andExpect(status().isConflict())
+                .andExpect(content().string(
+                        "No se puede eliminar la persona: es proveedor de 1 animales y tiene un usuario de acceso"));
+    }
+
+    @Test
     @DisplayName("Eliminar una persona inexistente devuelve 404")
     void eliminarPersonaInexistenteDevuelve404() throws Exception {
         mockMvc.perform(delete("/api/personas/{id}", 999L)
@@ -635,6 +710,24 @@ class PersonaControllerTest extends AutenticacionTestSupport {
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.perId == %d)].cantidadComoComprador", comprador.getPerId()).value(1));
+    }
+
+    @Test
+    @DisplayName("El resumen trae cantidadComoProveedor, contando también los animales con salida")
+    void resumenTraeCantidadComoProveedor() throws Exception {
+        Persona proveedor = crearPersona("Rosa", "Núñez", null, null, "PROVEEDOR");
+        crearAnimalConProveedor("CAR-RES-PROV-001", proveedor);
+        Animal vendido = crearAnimalConProveedor("CAR-RES-PROV-002", proveedor);
+        vendido.setAniFechaEgreso(LocalDate.of(2026, 6, 1));
+        vendido.setAniMotivoSalida("MUERTE");
+        animalRepository.save(vendido);
+        Persona sinAnimales = crearPersona("Sin", "Animales", null, null, "PROVEEDOR");
+
+        mockMvc.perform(get("/api/personas/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.perId == %d)].cantidadComoProveedor", proveedor.getPerId()).value(2))
+                .andExpect(jsonPath("$[?(@.perId == %d)].cantidadComoProveedor", sinAnimales.getPerId()).value(0));
     }
 
     @Test

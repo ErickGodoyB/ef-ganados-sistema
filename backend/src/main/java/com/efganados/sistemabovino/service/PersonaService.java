@@ -35,7 +35,11 @@ public class PersonaService {
      * tomada para este proyecto (ver CONTEXTO_PROYECTO.md); esta constante
      * es la única fuente de verdad de qué valores son válidos.
      */
-    private static final List<String> TIPOS_PERMITIDOS = List.of("PROPIETARIO", "EMPLEADO", "CLIENTE");
+    private static final List<String> TIPOS_PERMITIDOS = List.of("PROPIETARIO", "EMPLEADO", "CLIENTE",
+            "PROVEEDOR");
+
+    /** Tipo de la persona que provee animales (ver Animal.proveedor): el único que se acepta como proveedor de un animal. */
+    public static final String TIPO_PROVEEDOR = "PROVEEDOR";
 
     /** Formato básico de correo: algo@algo.algo, sin espacios ni "@" de más. */
     private static final Pattern FORMATO_CORREO = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
@@ -86,9 +90,27 @@ public class PersonaService {
         return texto == null ? "" : texto;
     }
 
+    /**
+     * Junta nombre y apellido separados por un espacio. Si alguno es null
+     * devuelve el otro solo (o null si ambos lo son), para no mostrar "null"
+     * pegado al nombre. Única fuente de este formato para resúmenes y reportes.
+     */
+    public static String nombreCompleto(Persona persona) {
+        String nombre = persona.getPerNombre();
+        String apellido = persona.getPerApellido();
+        if (nombre == null) {
+            return apellido;
+        }
+        if (apellido == null) {
+            return nombre;
+        }
+        return nombre + " " + apellido;
+    }
+
     private PersonaResumen aResumen(Persona persona) {
         long cantidadAnimales = animalRepository.countByDuenio_PerId(persona.getPerId());
         long cantidadComoComprador = animalRepository.countByComprador_PerId(persona.getPerId());
+        long cantidadComoProveedor = animalRepository.countByProveedor_PerId(persona.getPerId());
         long cantidadPesajes = pesajesRepository.countByResponsableOAnuladoPor(persona.getPerId());
         long cantidadTransferencias = transferenciaRepository.countByResponsable_PerId(persona.getPerId());
         boolean tieneUsuario = usuarioRepository.existsByPersona_PerId(persona.getPerId());
@@ -96,7 +118,7 @@ public class PersonaService {
         return new PersonaResumen(persona.getPerId(), persona.getPerNombre(), persona.getPerApellido(),
                 persona.getPerRuc(), persona.getPerCi(), persona.getPerTipo(), persona.getPerTelefono(),
                 persona.getPerCorreo(), persona.getPerDireccion(), cantidadAnimales, cantidadComoComprador,
-                cantidadPesajes, cantidadTransferencias, tieneUsuario);
+                cantidadComoProveedor, cantidadPesajes, cantidadTransferencias, tieneUsuario);
     }
 
     /**
@@ -155,7 +177,7 @@ public class PersonaService {
 
     /**
      * Elimina una persona. 404 si no existe; 409 si está en uso (es dueña
-     * de algún animal, es compradora de algún animal, figura en algún
+     * de algún animal, es compradora o proveedora de algún animal, figura en algún
      * pesaje, o tiene un usuario de acceso), con un mensaje que detalla
      * solo lo que corresponda.
      */
@@ -164,6 +186,7 @@ public class PersonaService {
 
         long cantidadAnimales = animalRepository.countByDuenio_PerId(id);
         long cantidadComoComprador = animalRepository.countByComprador_PerId(id);
+        long cantidadComoProveedor = animalRepository.countByProveedor_PerId(id);
         long cantidadPesajes = pesajesRepository.countByResponsableOAnuladoPor(id);
         long cantidadTransferencias = transferenciaRepository.countByResponsable_PerId(id);
         boolean tieneUsuario = usuarioRepository.existsByPersona_PerId(id);
@@ -174,6 +197,9 @@ public class PersonaService {
         }
         if (cantidadComoComprador > 0) {
             motivos.add("figura como comprador de " + cantidadComoComprador + " animales");
+        }
+        if (cantidadComoProveedor > 0) {
+            motivos.add("es proveedor de " + cantidadComoProveedor + " animales");
         }
         if (cantidadPesajes > 0) {
             motivos.add("figura en " + cantidadPesajes + " pesajes");

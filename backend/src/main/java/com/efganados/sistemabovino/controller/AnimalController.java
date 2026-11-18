@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.efganados.sistemabovino.dto.ItemHistorialPesaje;
 import com.efganados.sistemabovino.dto.MovimientoAnimal;
+import com.efganados.sistemabovino.exception.ValidacionException;
 import com.efganados.sistemabovino.model.Animal;
 import com.efganados.sistemabovino.model.EstadoPesaje;
 import com.efganados.sistemabovino.model.Grupo;
@@ -33,6 +34,7 @@ import com.efganados.sistemabovino.repository.RazaRepository;
 import com.efganados.sistemabovino.repository.SubGrupoRepository;
 import com.efganados.sistemabovino.repository.TransferenciaAnimalRepository;
 import com.efganados.sistemabovino.service.AnimalService;
+import com.efganados.sistemabovino.service.PersonaService;
 import com.efganados.sistemabovino.service.PesajeService;
 import com.efganados.sistemabovino.service.TransferenciaService;
 
@@ -197,7 +199,9 @@ public class AnimalController {
         SubGrupo subGrupo = subGrupoRepository.findById(request.subGrupoId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "SubGrupo no encontrado con id: " + request.subGrupoId()));
+        Persona proveedor = resolverProveedor(request.proveedorId());
 
+        animal.setProveedor(proveedor);
         animal.setDuenio(duenio);
         animal.setRaza(raza);
         animal.setSubGrupo(subGrupo);
@@ -205,6 +209,25 @@ public class AnimalController {
         animal.setAniFechaIngreso(request.aniFechaIngreso());
         animal.setAniPesoInicial(request.aniPesoInicial());
         animal.setAniObservacion(request.aniObservacion());
+    }
+
+    /**
+     * Proveedor opcional del animal: null si no viene (animal sin proveedor,
+     * y al editar sirve para quitarlo). Si viene, la persona debe existir
+     * (404) y ser de tipo PROVEEDOR (400): una persona de otro tipo no puede
+     * figurar como quien proveyó un animal.
+     */
+    private Persona resolverProveedor(Long proveedorId) {
+        if (proveedorId == null) {
+            return null;
+        }
+        Persona proveedor = personaRepository.findById(proveedorId)
+                .orElseThrow(() -> new IllegalArgumentException("Persona no encontrada con id: " + proveedorId));
+        if (!PersonaService.TIPO_PROVEEDOR.equals(proveedor.getPerTipo())) {
+            throw new ValidacionException("La persona indicada como proveedor debe ser de tipo "
+                    + PersonaService.TIPO_PROVEEDOR);
+        }
+        return proveedor;
     }
 
     /**
@@ -226,6 +249,7 @@ public class AnimalController {
         Optional<Pesajes> ultimoPesaje = animalService.ultimoPesajeActivo(animal);
         double pesoActual = ultimoPesaje.map(pesaje -> pesaje.getPesaPeso()).orElse(animal.getAniPesoInicial());
         Persona comprador = animal.getComprador();
+        Persona proveedor = animal.getProveedor();
         Optional<AnimalService.PesoAnterior> anterior = animalService.pesoAnteriorDelUltimoPesaje(animal);
 
         return new AnimalResumen(
@@ -254,24 +278,14 @@ public class AnimalController {
                 animal.getAniFechaRegistro(),
                 anterior.map(AnimalService.PesoAnterior::peso).orElse(null),
                 anterior.map(AnimalService.PesoAnterior::fecha).orElse(null),
-                anterior.map(AnimalService.PesoAnterior::esIngreso).orElse(false));
+                anterior.map(AnimalService.PesoAnterior::esIngreso).orElse(false),
+                proveedor != null ? proveedor.getPerId() : null,
+                proveedor != null ? nombreCompleto(proveedor) : null);
     }
 
-    /**
-     * Junta nombre y apellido de la persona separados por un espacio. Si
-     * alguno de los dos es null, devuelve el otro solo (o null si ambos lo
-     * son), para no mostrar "null" pegado al nombre.
-     */
+    /** Nombre completo de la persona (ver {@link PersonaService#nombreCompleto}). */
     private String nombreCompleto(Persona persona) {
-        String nombre = persona.getPerNombre();
-        String apellido = persona.getPerApellido();
-        if (nombre == null) {
-            return apellido;
-        }
-        if (apellido == null) {
-            return nombre;
-        }
-        return nombre + " " + apellido;
+        return PersonaService.nombreCompleto(persona);
     }
 
     /**
@@ -355,7 +369,15 @@ public class AnimalController {
      * de un animal solo se maneja con PUT /{id}/salida y /{id}/reactivar.
      */
     public record AnimalRequest(Long duenioId, Long razaId, Long subGrupoId, String aniCaravana,
-            LocalDate aniFechaIngreso, Double aniPesoInicial, LocalDate aniFechaEgreso, String aniObservacion) {
+            LocalDate aniFechaIngreso, Double aniPesoInicial, LocalDate aniFechaEgreso, String aniObservacion,
+            Long proveedorId) {
+
+        /** Sin proveedor: el request de antes de que existiera proveedorId (null = sin proveedor). */
+        public AnimalRequest(Long duenioId, Long razaId, Long subGrupoId, String aniCaravana,
+                LocalDate aniFechaIngreso, Double aniPesoInicial, LocalDate aniFechaEgreso, String aniObservacion) {
+            this(duenioId, razaId, subGrupoId, aniCaravana, aniFechaIngreso, aniPesoInicial, aniFechaEgreso,
+                    aniObservacion, null);
+        }
     }
 
     /**
@@ -373,7 +395,8 @@ public class AnimalController {
      * mide la gmd (ver {@code AnimalService.pesoAnteriorDelUltimoPesaje}): el
      * pesaje activo previo, o el peso inicial y la fecha de ingreso (con
      * pesoAnteriorEsIngreso en true) si es su primer pesaje activo. Van en
-     * null/false si el animal no tiene ningún pesaje activo.
+     * null/false si el animal no tiene ningún pesaje activo. proveedorId/
+     * proveedorNombre van en null si el animal no tiene proveedor.
      */
     public record AnimalResumen(Long aniId, String aniCaravana, Long duenioId, String duenioNombre, Long razaId,
             String razaDescripcion, Long subGrupoId, String subGrupoDescripcion, String grupoDescripcion,
@@ -381,7 +404,7 @@ public class AnimalController {
             boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso, LocalDate fechaUltimoPesaje,
             String aniMotivoSalida, String aniNotaSalida, Long compradorId, String compradorNombre,
             LocalDateTime aniFechaRegistro, Double pesoAnterior, LocalDate fechaPesoAnterior,
-            boolean pesoAnteriorEsIngreso) {
+            boolean pesoAnteriorEsIngreso, Long proveedorId, String proveedorNombre) {
     }
 
     /**

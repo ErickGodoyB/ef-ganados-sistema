@@ -50,6 +50,16 @@ public class Animal {
     @JoinColumn(name = "per_id_comprador")
     private Persona comprador;
 
+    /**
+     * Quien proveyó el animal (persona de tipo PROVEEDOR); opcional. Los
+     * animales que ya existían antes de este campo quedan sin proveedor
+     * (null) y se agrupan en "Sin proveedor" en el comparativo de
+     * rendimiento. Sin prefijo porque es una relación, no una columna propia.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "per_id_proveedor")
+    private Persona proveedor;
+
     /** Identificador físico del animal (caravana); debe ser único entre todos los animales. */
     @Column(nullable = false, unique = true)
     private String aniCaravana;

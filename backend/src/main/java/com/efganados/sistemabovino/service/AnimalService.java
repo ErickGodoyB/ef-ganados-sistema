@@ -151,6 +151,44 @@ public class AnimalService {
     }
 
     /**
+     * Rendimiento acumulado de un animal desde su ingreso (ver
+     * {@link #rendimientoAcumulado}).
+     *
+     * @param pesoActual peso del último pesaje ACTIVO, o el peso inicial si no tiene ninguno
+     * @param gananciaKg pesoActual menos el peso inicial
+     * @param gmd        ganancia media diaria acumulada; null si no se puede calcular
+     */
+    public record RendimientoAcumulado(double pesoActual, double gananciaKg, Double gmd) {
+    }
+
+    /**
+     * GMD ACUMULADA del animal: (pesoActual − aniPesoInicial) / días entre
+     * aniFechaIngreso y la fecha del último pesaje ACTIVO. A diferencia de
+     * {@link #calcularGMD} (último pesaje contra el anterior), mide todo el
+     * período desde el ingreso; es la base del comparativo por proveedor.
+     * Esta es la única implementación de la regla: el gmd es null si el
+     * animal no tiene pesajes activos (no hay nada que medir) o si los días
+     * son 0 o menos (el pesaje es del mismo día del ingreso: no hay
+     * período), y en ese caso el animal no entra en los promedios. Un pesaje
+     * anulado no cuenta.
+     */
+    public RendimientoAcumulado rendimientoAcumulado(Animal animal) {
+        Optional<Pesajes> ultimo = ultimoPesajeActivo(animal);
+        double pesoActual = ultimo.map(Pesajes::getPesaPeso).orElse(animal.getAniPesoInicial());
+        double ganancia = pesoActual - animal.getAniPesoInicial();
+        if (ultimo.isEmpty()) {
+            return new RendimientoAcumulado(pesoActual, ganancia, null);
+        }
+        long dias = ChronoUnit.DAYS.between(animal.getAniFechaIngreso(), ultimo.get().getPesaFecha());
+        return new RendimientoAcumulado(pesoActual, ganancia, dias <= 0 ? null : ganancia / dias);
+    }
+
+    /** Solo la GMD acumulada de {@link #rendimientoAcumulado} (null si no se puede calcular). */
+    public Double calcularGmdAcumulado(Animal animal) {
+        return rendimientoAcumulado(animal).gmd();
+    }
+
+    /**
      * Indica si el peso actual alcanzó el peso objetivo de venta definido en la
      * raza del animal (umbral por raza, usado para las alertas de venta).
      */
