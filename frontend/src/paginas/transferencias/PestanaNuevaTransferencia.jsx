@@ -24,6 +24,7 @@ import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { useAuth } from '../../auth/useAuth'
 import Paginacion from '../../componentes/Paginacion'
 import { fechaHoyIso } from '../../utilidades/fechas'
+import { obtenerRazasDisponibles } from '../../utilidades/filtrosAnimales'
 import { formatearGmd } from '../../utilidades/formato'
 import '../animales/FormularioAnimal.css'
 import CampoResponsable from '../pesajes/CampoResponsable'
@@ -36,7 +37,6 @@ import {
   filtrarAnimales,
   idsDeMayorGmd,
   obtenerLotesDeOrigen,
-  obtenerRazasDisponibles,
   ordenarPorGmd,
 } from './listadoTransferencia'
 import ModalConfirmarTransferencia from './ModalConfirmarTransferencia'

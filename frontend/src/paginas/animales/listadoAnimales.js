@@ -4,6 +4,8 @@
  * (y, si hace falta más adelante, testearla) sin depender de React.
  */
 
+import { cumpleFiltroGmd, cumpleFiltroRaza, parsearLimiteGmd } from '../../utilidades/filtrosAnimales'
+
 /**
  * Lotes distintos presentes en los datos (para las opciones del filtro),
  * identificados por subGrupoId (no por el nombre: puede haber lotes con el
@@ -80,14 +82,62 @@ function compararAnimales(a, b, campo, direccion) {
 }
 
 /**
+ * Valores por defecto de los filtros: el listado está "sin filtrar" cuando
+ * todos valen esto. "Activos" es el valor por defecto del estado de salida
+ * (un animal con salida ya no es productivo), así que no cuenta como
+ * filtro activo (ver contarFiltrosActivos).
+ */
+export const FILTROS_POR_DEFECTO = {
+  busqueda: '',
+  lote: 'todos',
+  estado: 'todos',
+  estadoSalida: 'activos',
+  raza: 'todas',
+  gmdMin: '',
+  gmdMax: '',
+}
+
+/**
+ * Cuántos filtros están activos, para el indicador del listado: la
+ * búsqueda, cada uno de los selectores que se aparta de su valor por
+ * defecto, y cada límite de GMD válido (el mínimo y el máximo cuentan por
+ * separado). Un límite a medio escribir ("-", ",") no cuenta, igual que no
+ * filtra (ver utilidades/filtrosAnimales.js). El orden no es un filtro.
+ */
+export function contarFiltrosActivos({
+  busqueda = FILTROS_POR_DEFECTO.busqueda,
+  lote = FILTROS_POR_DEFECTO.lote,
+  estado = FILTROS_POR_DEFECTO.estado,
+  estadoSalida = FILTROS_POR_DEFECTO.estadoSalida,
+  raza = FILTROS_POR_DEFECTO.raza,
+  gmdMin = FILTROS_POR_DEFECTO.gmdMin,
+  gmdMax = FILTROS_POR_DEFECTO.gmdMax,
+}) {
+  return [
+    busqueda.trim() !== '',
+    lote !== FILTROS_POR_DEFECTO.lote,
+    estado !== FILTROS_POR_DEFECTO.estado,
+    estadoSalida !== FILTROS_POR_DEFECTO.estadoSalida,
+    raza !== FILTROS_POR_DEFECTO.raza,
+    parsearLimiteGmd(gmdMin) != null,
+    parsearLimiteGmd(gmdMax) != null,
+  ].filter(Boolean).length
+}
+
+/**
  * Aplica, en orden, la búsqueda por caravana (sin distinguir mayúsculas,
  * ignorando espacios en los extremos), los filtros de lote (por
- * subGrupoId; "sin-lote" filtra los que tienen subGrupoId null), estado
- * (apto/no apto para venta) y estado de salida (activos/salidos), y
- * finalmente el orden elegido. Devuelve un array nuevo; no modifica
- * "animales".
+ * subGrupoId; "sin-lote" filtra los que tienen subGrupoId null), raza (por
+ * razaId), GMD mínima y máxima (si hay alguno válido, los animales sin GMD
+ * quedan afuera; ver utilidades/filtrosAnimales.js), estado (apto/no apto
+ * para venta) y estado de salida (activos/salidos), y finalmente el orden
+ * elegido. "raza", "gmdMin" y "gmdMax" son opcionales (por defecto, sin
+ * filtrar). Devuelve un array nuevo; no modifica "animales".
  */
-export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, estadoSalida, orden }) {
+export function filtrarYOrdenarAnimales(
+  animales,
+  { busqueda, lote, estado, estadoSalida, raza = 'todas', gmdMin = '', gmdMax = '', orden },
+) {
   const termino = busqueda.trim().toLowerCase()
 
   const filtrados = animales.filter((animal) => {
@@ -98,6 +148,12 @@ export function filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, esta
       return false
     }
     if (lote !== 'todos' && lote !== 'sin-lote' && String(animal.subGrupoId) !== lote) {
+      return false
+    }
+    if (!cumpleFiltroRaza(animal, raza)) {
+      return false
+    }
+    if (!cumpleFiltroGmd(animal, gmdMin, gmdMax)) {
       return false
     }
     if (estado === 'aptos' && !animal.aptoVenta) {

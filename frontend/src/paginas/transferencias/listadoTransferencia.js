@@ -8,25 +8,16 @@
  * Los animales son los del resumen (GET /api/animales/resumen): solo
  * cuentan los ACTIVOS (sin salida registrada), porque el backend rechaza
  * transferir un animal con salida.
+ *
+ * Las reglas de los filtros de raza y de GMD son las mismas del listado de
+ * Animales y viven en utilidades/filtrosAnimales.js.
  */
+
+import { cumpleFiltroGmd, cumpleFiltroRaza } from '../../utilidades/filtrosAnimales'
 
 /** Un animal es candidato a transferirse si no tiene salida registrada. */
 export function esActivo(animal) {
   return !animal.aniFechaEgreso
-}
-
-/**
- * Convierte el texto de un límite de GMD (acepta coma o punto decimal) a
- * número. Devuelve null si está vacío o no es un número: un límite a
- * medio escribir ("-", ",") se ignora en vez de vaciar la lista.
- */
-export function parsearLimiteGmd(texto) {
-  const normalizado = String(texto ?? '').trim().replace(',', '.')
-  if (normalizado === '') {
-    return null
-  }
-  const numero = Number(normalizado)
-  return Number.isNaN(numero) ? null : numero
 }
 
 /** Lotes en los que hay animales activos, para el filtro de origen: "Lote — Grupo", ordenados alfabéticamente. */
@@ -44,17 +35,6 @@ export function obtenerLotesDeOrigen(animales) {
   return [...vistos.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
 }
 
-/** Razas presentes entre los animales, para el filtro de raza, ordenadas alfabéticamente. */
-export function obtenerRazasDisponibles(animales) {
-  const vistas = new Map()
-  for (const animal of animales) {
-    if (animal.razaId != null && !vistas.has(animal.razaId)) {
-      vistas.set(animal.razaId, { valor: String(animal.razaId), etiqueta: animal.razaDescripcion })
-    }
-  }
-  return [...vistas.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
-}
-
 /**
  * Aplica los filtros a los animales ACTIVOS:
  * - origen: 'todos', 'sin-lote' o el id del lote (como texto);
@@ -64,10 +44,6 @@ export function obtenerRazasDisponibles(animales) {
  *   pesajes) quedan afuera, porque no se puede saber si cumplen.
  */
 export function filtrarAnimales(animales, { origen = 'todos', raza = 'todas', gmdMin = '', gmdMax = '' }) {
-  const minimo = parsearLimiteGmd(gmdMin)
-  const maximo = parsearLimiteGmd(gmdMax)
-  const hayFiltroGmd = minimo != null || maximo != null
-
   return animales.filter((animal) => {
     if (!esActivo(animal)) {
       return false
@@ -78,21 +54,10 @@ export function filtrarAnimales(animales, { origen = 'todos', raza = 'todas', gm
     if (origen !== 'todos' && origen !== 'sin-lote' && String(animal.subGrupoId) !== origen) {
       return false
     }
-    if (raza !== 'todas' && String(animal.razaId) !== raza) {
+    if (!cumpleFiltroRaza(animal, raza)) {
       return false
     }
-    if (hayFiltroGmd) {
-      if (animal.gmd == null) {
-        return false
-      }
-      if (minimo != null && animal.gmd < minimo) {
-        return false
-      }
-      if (maximo != null && animal.gmd > maximo) {
-        return false
-      }
-    }
-    return true
+    return cumpleFiltroGmd(animal, gmdMin, gmdMax)
   })
 }
 

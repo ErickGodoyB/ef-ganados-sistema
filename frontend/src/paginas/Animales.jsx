@@ -1,9 +1,13 @@
 /**
  * Listado de animales (RF010): trae el resumen desde el backend
  * (GET /api/animales/resumen) y permite buscar por caravana, filtrar por
- * lote (por subGrupoId; ver listadoAnimales.js), por estado (apto/no apto
- * para venta) y por estado de salida (Activos por defecto/Salidos/Todos,
- * un filtro aparte del de apto/no apto), ordenar por cualquier columna,
+ * lote (por subGrupoId; ver listadoAnimales.js), por raza, por GMD mínima y
+ * máxima (los animales sin GMD quedan afuera cuando hay un límite válido),
+ * por estado (apto/no apto para venta) y por estado de salida (Activos por
+ * defecto/Salidos/Todos, un filtro aparte del de apto/no apto). Todo se
+ * filtra en el cliente, sobre el resumen completo que ya trae el backend
+ * (no hay paginación ni filtros en el servidor). Con filtros activos se
+ * muestra un indicador con "Limpiar filtros". Ordena por cualquier columna,
  * paginar en el cliente, y elegir qué columnas opcionales mostrar
  * (preferencia que se recuerda en localStorage, ver
  * usePreferenciasListadoAnimales). El botón "+ Nuevo animal" (RF001) abre
@@ -19,13 +23,19 @@
  * aviso breve.
  */
 
-import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
+import { FilterX, Funnel, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import Paginacion from '../componentes/Paginacion'
 import PanelOpciones from '../componentes/PanelOpciones'
+import { obtenerRazasDisponibles } from '../utilidades/filtrosAnimales'
 import { COLUMNAS_OPCIONALES, OPCIONES_ORDEN_MOVIL } from './animales/columnas'
-import { filtrarYOrdenarAnimales, obtenerLotesDisponibles } from './animales/listadoAnimales'
+import {
+  contarFiltrosActivos,
+  FILTROS_POR_DEFECTO,
+  filtrarYOrdenarAnimales,
+  obtenerLotesDisponibles,
+} from './animales/listadoAnimales'
 import ModalDetalleAnimal from './animales/ModalDetalleAnimal'
 import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
 import TablaAnimales from './animales/TablaAnimales'
@@ -51,6 +61,8 @@ const ESTADOS_SALIDA_FILTRO = [
   { valor: 'todos', etiqueta: 'Todos' },
 ]
 
+const ORDEN_POR_DEFECTO = { campo: 'aniCaravana', direccion: 'asc' }
+
 export default function Animales() {
   const { animales, cargando, error, recargar } = useAnimalesResumen()
   const { columnasVisibles, filasPorPagina, cambiarColumnaVisible, cambiarFilasPorPagina, restablecer } =
@@ -59,8 +71,14 @@ export default function Animales() {
   const [busqueda, setBusqueda] = useState('')
   const [lote, setLote] = useState('todos')
   const [estado, setEstado] = useState('todos')
-  const [estadoSalida, setEstadoSalida] = useState('activos')
-  const [orden, setOrden] = useState({ campo: 'aniCaravana', direccion: 'asc' })
+  const [estadoSalida, setEstadoSalida] = useState(FILTROS_POR_DEFECTO.estadoSalida)
+  const [raza, setRaza] = useState(FILTROS_POR_DEFECTO.raza)
+  // Los límites de GMD se guardan como el texto que se escribe (no como
+  // número) para poder aceptar un valor a medio escribir ("-", ","): el
+  // filtro lo ignora hasta que sea un número (ver utilidades/filtrosAnimales.js).
+  const [gmdMin, setGmdMin] = useState(FILTROS_POR_DEFECTO.gmdMin)
+  const [gmdMax, setGmdMax] = useState(FILTROS_POR_DEFECTO.gmdMax)
+  const [orden, setOrden] = useState(ORDEN_POR_DEFECTO)
   const [pagina, setPagina] = useState(1)
 
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -75,24 +93,39 @@ export default function Animales() {
   // durante el render en vez de en un useEffect: es el patrón que React
   // recomienda para "reiniciar estado cuando cambia otra cosa" (evita un
   // re-render extra y el aviso de set-state-in-effect).
-  const [filtrosPrevios, setFiltrosPrevios] = useState({ busqueda, lote, estado, estadoSalida, orden })
+  const [filtrosPrevios, setFiltrosPrevios] = useState({
+    busqueda,
+    lote,
+    estado,
+    estadoSalida,
+    raza,
+    gmdMin,
+    gmdMax,
+    orden,
+  })
   if (
     filtrosPrevios.busqueda !== busqueda ||
     filtrosPrevios.lote !== lote ||
     filtrosPrevios.estado !== estado ||
     filtrosPrevios.estadoSalida !== estadoSalida ||
+    filtrosPrevios.raza !== raza ||
+    filtrosPrevios.gmdMin !== gmdMin ||
+    filtrosPrevios.gmdMax !== gmdMax ||
     filtrosPrevios.orden !== orden
   ) {
-    setFiltrosPrevios({ busqueda, lote, estado, estadoSalida, orden })
+    setFiltrosPrevios({ busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax, orden })
     setPagina(1)
   }
 
   const lotesDisponibles = useMemo(() => obtenerLotesDisponibles(animales), [animales])
+  const razasDisponibles = useMemo(() => obtenerRazasDisponibles(animales), [animales])
 
   const resultado = useMemo(
-    () => filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, estadoSalida, orden }),
-    [animales, busqueda, lote, estado, estadoSalida, orden],
+    () => filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax, orden }),
+    [animales, busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax, orden],
   )
+
+  const cantidadFiltros = contarFiltrosActivos({ busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax })
 
   const totalPaginas = Math.max(1, Math.ceil(resultado.length / filasPorPagina))
   // Por si cambiaron las filas por página (u otra cosa) y la página
@@ -101,11 +134,25 @@ export default function Animales() {
   const inicio = (paginaActual - 1) * filasPorPagina
   const animalesDeLaPagina = resultado.slice(inicio, inicio + filasPorPagina)
 
+  /** Vuelve todos los filtros a su valor por defecto (el orden no es un filtro: se conserva). */
   function limpiarFiltros() {
-    setBusqueda('')
-    setLote('todos')
-    setEstado('todos')
-    setEstadoSalida('activos')
+    setBusqueda(FILTROS_POR_DEFECTO.busqueda)
+    setLote(FILTROS_POR_DEFECTO.lote)
+    setEstado(FILTROS_POR_DEFECTO.estado)
+    setEstadoSalida(FILTROS_POR_DEFECTO.estadoSalida)
+    setRaza(FILTROS_POR_DEFECTO.raza)
+    setGmdMin(FILTROS_POR_DEFECTO.gmdMin)
+    setGmdMax(FILTROS_POR_DEFECTO.gmdMax)
+  }
+
+  /**
+   * Control "Ordenar por GMD": no es un orden aparte, mueve el mismo
+   * "orden" que el encabezado de la tabla y el selector "Ordenar por" de
+   * celular, así que los tres siempre muestran lo mismo. Elegir "Sin
+   * orden por GMD" vuelve al orden por defecto (caravana).
+   */
+  function alCambiarOrdenGmd(direccion) {
+    setOrden(direccion ? { campo: 'gmd', direccion } : ORDEN_POR_DEFECTO)
   }
 
   function alOrdenar(campo) {
@@ -265,6 +312,70 @@ export default function Animales() {
             ))}
           </select>
         </div>
+
+        <div className="campo-filtro">
+          <label htmlFor="animales-filtro-raza">Raza</label>
+          <select id="animales-filtro-raza" value={raza} onChange={(evento) => setRaza(evento.target.value)}>
+            <option value="todas">Todas las razas</option>
+            {razasDisponibles.map((opcion) => (
+              <option key={opcion.valor} value={opcion.valor}>
+                {opcion.etiqueta}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="campo-filtro animales-filtro-gmd">
+          <label htmlFor="animales-filtro-gmd-min">GMD mínima (kg/día)</label>
+          <input
+            id="animales-filtro-gmd-min"
+            className="entrada"
+            type="text"
+            inputMode="decimal"
+            value={gmdMin}
+            onChange={(evento) => setGmdMin(evento.target.value)}
+            placeholder="Ej. 0,8"
+          />
+        </div>
+
+        <div className="campo-filtro animales-filtro-gmd">
+          <label htmlFor="animales-filtro-gmd-max">GMD máxima (kg/día)</label>
+          <input
+            id="animales-filtro-gmd-max"
+            className="entrada"
+            type="text"
+            inputMode="decimal"
+            value={gmdMax}
+            onChange={(evento) => setGmdMax(evento.target.value)}
+            placeholder="Ej. 1,5"
+          />
+        </div>
+
+        <div className="campo-filtro">
+          <label htmlFor="animales-filtro-orden-gmd">Ordenar por GMD</label>
+          <select
+            id="animales-filtro-orden-gmd"
+            value={orden.campo === 'gmd' ? orden.direccion : ''}
+            onChange={(evento) => alCambiarOrdenGmd(evento.target.value)}
+          >
+            <option value="">Sin orden por GMD</option>
+            <option value="desc">Mayor a menor</option>
+            <option value="asc">Menor a mayor</option>
+          </select>
+        </div>
+
+        {cantidadFiltros > 0 && (
+          <div className="animales-filtros-activos">
+            <p className="animales-filtros-activos-texto" aria-live="polite">
+              <Funnel aria-hidden="true" size={16} />
+              {cantidadFiltros === 1 ? '1 filtro activo' : `${cantidadFiltros} filtros activos`}
+            </p>
+            <button type="button" className="boton boton-secundario" onClick={limpiarFiltros}>
+              <FilterX aria-hidden="true" size={16} />
+              Limpiar filtros
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="campo-filtro animales-orden-movil">

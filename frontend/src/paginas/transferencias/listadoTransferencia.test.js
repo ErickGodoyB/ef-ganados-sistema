@@ -6,9 +6,7 @@ import {
   filtrarAnimales,
   idsDeMayorGmd,
   obtenerLotesDeOrigen,
-  obtenerRazasDisponibles,
   ordenarPorGmd,
-  parsearLimiteGmd,
 } from './listadoTransferencia'
 
 function animal(aniId, caravana, extra = {}) {
@@ -33,17 +31,6 @@ const ANIMALES = [
   animal(4, 'CAR-004', { gmd: 2.2, subGrupoId: null, subGrupoDescripcion: null, grupoDescripcion: null }),
   animal(5, 'CAR-005', { gmd: 3, aniFechaEgreso: '2026-06-01' }),
 ]
-
-describe('parsearLimiteGmd', () => {
-  it('acepta coma o punto, y devuelve null si está vacío o no es un número', () => {
-    expect(parsearLimiteGmd('1,5')).toBe(1.5)
-    expect(parsearLimiteGmd(' 0.8 ')).toBe(0.8)
-    expect(parsearLimiteGmd('-0,2')).toBe(-0.2)
-    expect(parsearLimiteGmd('')).toBeNull()
-    expect(parsearLimiteGmd('-')).toBeNull()
-    expect(parsearLimiteGmd('abc')).toBeNull()
-  })
-})
 
 describe('filtrarAnimales', () => {
   it('sin filtros trae solo los activos (excluye los que tienen salida)', () => {
@@ -124,14 +111,10 @@ describe('calcularGmdPromedio', () => {
 })
 
 describe('opciones de filtro y descripciones', () => {
-  it('lista los lotes con "Lote — Grupo", sin repetir, y las razas ordenadas', () => {
+  it('lista los lotes con "Lote — Grupo", sin repetir', () => {
     expect(obtenerLotesDeOrigen(ANIMALES)).toEqual([
       { valor: '10', etiqueta: 'Lote A — Invernada' },
       { valor: '11', etiqueta: 'Lote B — Invernada' },
-    ])
-    expect(obtenerRazasDisponibles(ANIMALES)).toEqual([
-      { valor: '1', etiqueta: 'Brangus' },
-      { valor: '2', etiqueta: 'Nelore' },
     ])
   })
 

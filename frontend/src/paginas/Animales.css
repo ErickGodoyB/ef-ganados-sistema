@@ -91,6 +91,44 @@
   outline-offset: 2px;
 }
 
+/* Los dos límites de GMD (mínima/máxima) son campos cortos: en una fila
+   no necesitan más que un ancho cómodo para "Ej. 0,8". */
+.animales-filtro-gmd {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 768px) {
+  .animales-filtro-gmd .entrada {
+    width: 9.5rem;
+  }
+}
+
+/* Indicador "N filtros activos" + "Limpiar filtros": ocupa su propia fila
+   (flex-basis 100%) debajo de los controles, para que se vea de un vistazo
+   que el listado está filtrado. Usa los colores de acento de index.css
+   (celeste claro con texto oscuro), válidos en claro y oscuro. */
+.animales-filtros-activos {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-md);
+}
+
+.animales-filtros-activos-texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-acento-texto);
+}
+
 .animales-aviso {
   margin: 0;
   padding: 10px 14px;
