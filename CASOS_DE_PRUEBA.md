@@ -150,6 +150,14 @@ Hechas por el autor en PC (y celular Android) con los datos `TEST-xx`.
 | UI-51 | Hora de registro de un animal nuevo ("Registrado el ... hh:mm") y "—" en los animales anteriores | Aprobado |
 | UI-52 | Reactivar un animal con confirmación: vuelve a Activos sin comprador ni nota, y el cliente deja de estar bloqueado | Aprobado |
 | UI-53 | Salida del animal y Personas en el celular | Aprobado |
+| UI-54 | Pesajes: en el detalle de sesión y en el historial del animal se ve la fecha del pesaje anterior y "hace N días" (con la etiqueta "ingreso" cuando corresponde) | Aprobado (2026-11-18) |
+| UI-55 | Transferencias: lista con buscador, filtro de fechas y botón "Nueva transferencia" | Aprobado (2026-11-18) |
+| UI-56 | Nueva transferencia: elegir lote de origen despliega sus animales; filtros por raza y GMD; orden por GMD y por peso; peso anterior con fecha y días | Aprobado (2026-11-18) |
+| UI-57 | Nueva transferencia: selección individual, "todos los filtrados", "los N de mayor ganancia", contador y GMD promedio; lote destino nuevo con "+"; confirmación y guardado | Aprobado (2026-11-18) |
+| UI-58 | Historial de transferencias: detalle con animales y "Devolver" | Aprobado (2026-11-18) |
+| UI-59 | Tabla y tarjetas duplicadas en Transferencias, historial del animal y modal nuevo (hallazgo del 2026-11-18) | Corregido y verificado el 2026-11-18 |
+| UI-60 | Animales: filtro por raza, GMD mínima y máxima, orden por GMD, indicador "N filtros activos" y "Limpiar filtros" | Pendiente de probar |
+| UI-61 | Transferencias en celular y modo oscuro (pie fijo del modal) | Pendiente de probar |
 
 **Hallazgo (2026-10-31), resuelto el 2026-11-05:** un animal con un solo pesaje no mostraba ganancia diaria porque el peso inicial no se consideraba punto de partida. Ahora el peso inicial a la fecha de ingreso es el punto de partida del GMD (UI-17 y UI-18).
 
@@ -202,9 +210,9 @@ en su propia transacción, que se revierte al terminar.
 
 **Tras las sesiones de pesaje (2026-10-28): 59 de 59 aprobadas, 0 fallos, 0 errores** (38 anteriores + 21 nuevas). Cubren: reglas de peso, fecha (futura, anterior al ingreso) y salida del animal; sesión todo o nada; animal repetido y sesión vacía; resumen de sesiones agrupado por fecha y lote (incluido "sin lote"); detalle con peso anterior y GMD; edición y borrado de pesajes; y `/api/auth/yo`. La prueba de atomicidad vive en su propia clase sin `@Transactional`, porque con la transacción de la prueba el "deshacer" no sería visible dentro del mismo método (en producción el rollback es inmediato).
 
-**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100.** **Tras el historial de pesajes por animal (2026-11-07): 105 de 105.** **Tras el catálogo de razas (2026-11-09): 121 de 121.** **Tras el de grupos y lotes (2026-11-10): 147 de 147.** **Tras el de personas (2026-11-11): 170 de 170.** **Tras la validación de formato de personas (2026-11-11): 178 de 178.** **Tras la salida del animal, el comprador y el tipo CLIENTE (2026-11-11): 203 de 203 aprobadas**.
+**Tras la anulación, el cambio de fecha y la clave (2026-10-30): 92 de 92 aprobadas.** **Tras validar la fecha de ingreso contra el primer pesaje activo (2026-10-31): 96 de 96 aprobadas.** **Tras el GMD desde el ingreso (2026-11-05): 99 de 99.** **Tras agregar `fechaUltimoPesaje` al resumen (2026-11-06): 100 de 100.** **Tras el historial de pesajes por animal (2026-11-07): 105 de 105.** **Tras el catálogo de razas (2026-11-09): 121 de 121.** **Tras el de grupos y lotes (2026-11-10): 147 de 147.** **Tras el de personas (2026-11-11): 170 de 170.** **Tras la validación de formato de personas (2026-11-11): 178 de 178.** **Tras la salida del animal, el comprador y el tipo CLIENTE (2026-11-11): 203 de 203.** **Tras las transferencias (2026-11-16): 237 de 237.** **Tras los bloqueos de borrado y la fecha de la devolución (2026-11-17): 244 de 244.** **Tras el peso anterior en el resumen de animales (2026-11-18): 248 de 248 aprobadas**.
 
-**Pruebas del frontend (Vitest): 135 el 2026-10-30, 146 el 2026-11-05, 163 el 2026-11-06, 171 el 2026-11-07, 188 el 2026-11-09 y 205 el 2026-11-10 218 y luego 227 de 227 aprobadas el 2026-11-11** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
+**Pruebas del frontend (Vitest): 135 el 2026-10-30, 146 el 2026-11-05, 163 el 2026-11-06, 171 el 2026-11-07, 188 el 2026-11-09 y 205 el 2026-11-10 218 y luego 227 de 227 aprobadas el 2026-11-11; 433 de 433 el 2026-11-18** con `npm test` desde `frontend` (la API se simula, no se llama al servidor real). Cubren funciones puras, `ValorGmd`, `ValorDiferenciaPeso`, `BuscadorAnimal`, `Intervalo` y las pestañas del modal Nuevo pesaje.
 
 La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalControllerTest` (23 tras las nuevas) y la clase `PesajeAnulacionYFechaSesionControllerTest` (14, nueva). Las demás clases cambiaron de cantidad al adaptar los tests del `DELETE` y agregar los de anulación y clave; el desglose exacto se obtiene con `.\mvnw.cmd test`.
 
@@ -223,6 +231,7 @@ La tabla siguiente refleja el reparto de las primeras 59 pruebas, salvo `AnimalC
 | `PersonaControllerTest` | 35 | Alta, validaciones (nombre, tipo, correo, CI y RUC duplicados, vacíos que no chocan), edición, borrado libre y bloqueado (animales, pesajes, usuario) y resumen con conteos (sin caso manual) |
 | `SubGrupoControllerTest` | 14 | Validaciones de lotes (descripción única dentro del grupo, cambio de grupo) y borrado con animales (sin caso manual) |
 | `HistorialPesajesControllerTest` | 5 | `GET /api/animales/{id}/pesajes`: valores y orden, primer pesaje contra el ingreso, animal sin pesajes, animal inexistente (404), anulados excluidos o incluidos sin afectar al anterior (sin caso manual) |
+| `TransferenciaControllerTest` | 41 | Transferencias: alta feliz con varios animales y animal sin lote, cada error (fecha, motivo, nota, destino, animales, salida, ya en destino), todo o nada, el historial que acompaña al animal, devolución completa, parcial y doble, movimientos del animal, bloqueo de borrado de lote, persona y animal, y fecha de la devolución (sin caso manual) |
 | `SistemaBovinoApplicationTests` | 1 | Carga del contexto de Spring |
 
 Las pruebas manuales (CP01 a CP25) quedan como evidencia de la verificación con una herramienta
