@@ -10,7 +10,7 @@ import { AlertCircle } from 'lucide-react'
 import { useMemo } from 'react'
 import AltaRapidaLote from '../animales/AltaRapidaLote'
 import '../animales/FormularioAnimal.css'
-import { agruparLotesPorGrupo } from './listadoTransferencia'
+import { agruparLotesPorGrupo } from './animalesCandidatos'
 
 export default function SelectorLoteDestino({ id, refSelect, lotes, valor, onCambiar, onLoteCreado, error, disabled }) {
   const grupos = useMemo(() => agruparLotesPorGrupo(lotes), [lotes])

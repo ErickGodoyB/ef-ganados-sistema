@@ -88,13 +88,44 @@ public class AnimalService {
             return null;
         }
         Pesajes masReciente = pesajes.get(0);
+        PesoAnterior anterior = anteriorDelMasReciente(pesajes, animal);
+        return calcularGmdEntre(masReciente.getPesaPeso(), masReciente.getPesaFecha(), anterior.peso(),
+                anterior.fecha(), anterior.esIngreso());
+    }
+
+    /**
+     * El "anterior" del pesaje ACTIVO más reciente de un animal: el punto
+     * contra el que se mide su GMD. Es el segundo pesaje ACTIVO más reciente
+     * si existe, o si no (el animal solo tiene un pesaje activo) su peso
+     * inicial y fecha de ingreso ("esIngreso" true).
+     *
+     * @param peso      peso del anterior, en kg
+     * @param fecha     fecha del anterior
+     * @param esIngreso true si el anterior es el ingreso del animal y no un pesaje real
+     */
+    public record PesoAnterior(double peso, LocalDate fecha, boolean esIngreso) {
+    }
+
+    /**
+     * {@link PesoAnterior} del pesaje ACTIVO más reciente del animal; vacío
+     * si el animal no tiene ningún pesaje activo (no hay pesaje reciente
+     * cuyo anterior mostrar). Es la misma regla que usa {@link #calcularGMD},
+     * así que lo que se muestra como "peso anterior" siempre coincide con lo
+     * que se usó para calcular la GMD.
+     */
+    public Optional<PesoAnterior> pesoAnteriorDelUltimoPesaje(Animal animal) {
+        List<Pesajes> pesajes = pesajesRepository.findTop2ByAnimal_AniIdAndPesaEstadoOrderByPesaFechaDesc(
+                animal.getAniId(), EstadoPesaje.ACTIVO);
+        return pesajes.isEmpty() ? Optional.empty() : Optional.of(anteriorDelMasReciente(pesajes, animal));
+    }
+
+    /** Regla única del "anterior" (ver {@link PesoAnterior}); "pesajes" son los dos ACTIVOS más recientes, el primero es el más reciente. */
+    private static PesoAnterior anteriorDelMasReciente(List<Pesajes> pesajes, Animal animal) {
         if (pesajes.size() >= 2) {
             Pesajes anterior = pesajes.get(1);
-            return calcularGmdEntre(masReciente.getPesaPeso(), masReciente.getPesaFecha(),
-                    anterior.getPesaPeso(), anterior.getPesaFecha(), false);
+            return new PesoAnterior(anterior.getPesaPeso(), anterior.getPesaFecha(), false);
         }
-        return calcularGmdEntre(masReciente.getPesaPeso(), masReciente.getPesaFecha(),
-                animal.getAniPesoInicial(), animal.getAniFechaIngreso(), true);
+        return new PesoAnterior(animal.getAniPesoInicial(), animal.getAniFechaIngreso(), true);
     }
 
     /**

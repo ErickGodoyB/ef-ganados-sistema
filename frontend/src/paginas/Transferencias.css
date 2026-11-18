@@ -1,14 +1,17 @@
 /**
- * Estilos de la pantalla de Transferencias entre lotes (ver
- * Transferencias.jsx y la carpeta transferencias/). Mobile-first, como el
- * resto de la app: todo va apilado por defecto y se reparte en columnas
- * desde 768px; la tabla de animales y las tarjetas conviven en el DOM y se
- * muestra una u otra según el ancho, sin JS. Solo usa las variables de
- * color de index.css, así que funciona igual en modo claro y oscuro.
+ * Estilos de la pantalla de Transferencias (ver Transferencias.jsx).
+ * Mobile-first, como el resto de la app (ver la convención en index.css):
+ * los controles van apilados por defecto y en una fila desde 768px; la
+ * tabla y las tarjetas conviven en el DOM, pero solo una se ve a la vez
+ * según el ancho (sin JS), igual que en Pesajes y Animales. Los estilos del
+ * modal de alta están en transferencias/ModalNuevaTransferencia.css, los de
+ * la lista de animales en transferencias/ListaAnimalesTransferencia.css y
+ * los del detalle en transferencias/ModalDetalleTransferencia.css.
  *
- * Los campos, botones, tarjetas y estados vacíos/de error salen de
- * src/estilos/base.css (.campo, .boton*, .tarjeta, .estado-mensaje,
- * .badge); acá solo va lo propio de esta pantalla.
+ * Los inputs/selects, los estados vacíos/de error, las tarjetas y las
+ * etiquetas salen de src/estilos/base.css (.campo-busqueda, .estado-mensaje,
+ * .tarjeta, .badge). Solo usa variables de color de index.css: claro y
+ * oscuro salen solos.
  */
 
 .transferencias-pagina {
@@ -17,44 +20,72 @@
   gap: 16px;
 }
 
-/* Pestañas "Nueva transferencia"/"Historial" (role="tablist"): control
-   segmentado, mismo lenguaje visual que el selector de Pesajes. */
-.transferencias-pestanas {
+.transferencias-controles {
   display: flex;
-  gap: 2px;
-  padding: 3px;
-  background: var(--superficie-hover);
-  border-radius: var(--radio-md);
-  align-self: flex-start;
-  max-width: 100%;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.transferencias-pestana {
+@media (min-width: 768px) {
+  .transferencias-controles {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .transferencias-controles .campo-busqueda {
+    flex: 1 1 220px;
+  }
+}
+
+/* Buscador + "Nueva transferencia" van juntos; si no entran uno al lado
+   del otro (celular), el botón baja de línea solo. */
+.transferencias-busqueda-fila {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.transferencias-busqueda-fila .campo-busqueda {
+  flex: 1 1 200px;
+}
+
+@media (min-width: 768px) {
+  .transferencias-busqueda-fila {
+    flex: 1 1 auto;
+  }
+}
+
+/* Mismo estilo que .pesajes-boton-nuevo / .animales-boton-nuevo (ver la
+   nota de TablaSesiones.css sobre por qué no se comparte entre pantallas). */
+.transferencias-boton-nueva {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 44px;
-  padding: 0 16px;
-  font-size: 15px;
+  padding: 0 18px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--texto-secundario);
-  background: transparent;
-  border: none;
-  border-radius: var(--radio-sm);
+  color: var(--color-boton-nuevo-texto);
+  background: var(--color-boton-nuevo-fondo);
+  /* El oliva de fondo por sí solo no llega a 3:1 contra --fondo; el borde
+     en el mismo tono oscuro del texto le da un límite nítido que sí cumple. */
+  border: 1px solid var(--color-boton-nuevo-texto);
+  border-radius: var(--radio-md);
   cursor: pointer;
-  transition: background-color var(--transicion-rapida), color var(--transicion-rapida);
+  white-space: nowrap;
+  transition: filter var(--transicion-rapida);
 }
 
-.transferencias-pestana:hover {
-  color: var(--texto);
+.transferencias-boton-nueva:hover {
+  filter: brightness(1.05);
 }
 
-.transferencias-pestana:focus-visible {
+.transferencias-boton-nueva:focus-visible {
   outline: 2px solid var(--color-foco);
   outline-offset: 2px;
-}
-
-.transferencias-pestana--activa {
-  color: var(--texto);
-  background: var(--superficie);
-  box-shadow: var(--sombra);
 }
 
 .transferencias-aviso {
@@ -67,125 +98,13 @@
   border-radius: var(--radio-md);
 }
 
-/* ---- Nueva transferencia ---- */
-
-.nueva-transferencia {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Contador fijo: queda a la vista mientras se recorre la lista. En celular
-   se pega debajo de la barra superior del layout (56px, ver
-   LayoutPrincipal.css); desde 1024px esa barra no existe. */
-.transferencia-contador {
-  position: sticky;
-  top: 56px;
-  z-index: 15;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 16px;
-  padding: 10px 14px;
-  font-size: 15px;
-  color: var(--texto);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio-md);
-  box-shadow: var(--sombra);
-}
-
-@media (min-width: 1024px) {
-  .transferencia-contador {
-    top: 0;
-  }
-}
-
-.transferencia-seccion {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.transferencia-seccion h2 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--texto);
-}
-
-/* Los .campo (etiqueta arriba, control abajo) no traen su layout de
-   base.css, solo el aspecto del control: se define acá para esta pantalla. */
-.nueva-transferencia .campo,
-.formulario-devolucion .campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.nueva-transferencia .campo label,
-.formulario-devolucion .campo label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--texto);
-}
-
-.transferencia-filtros {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-@media (min-width: 768px) {
-  .transferencia-filtros {
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  }
-}
-
-.transferencia-acciones-seleccion {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-}
-
-.transferencia-mayores {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-@media (min-width: 768px) {
-  .transferencia-acciones-seleccion {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-end;
-  }
-
-  .transferencia-mayores {
-    flex-direction: row;
-    align-items: flex-end;
-  }
-
-  .transferencia-mayores .campo {
-    width: 160px;
-  }
-}
-
-.transferencia-mensaje-seleccion {
-  margin: 0;
-  min-height: 1.2em;
-  font-size: 14px;
-  color: var(--texto-secundario);
-}
-
-/* Tabla (>= 768px) y tarjetas (< 768px) de animales. */
-.transferencia-tabla-solo-escritorio {
+/* Tabla (>= 768px) y tarjetas (< 768px). */
+.transferencias-tabla-solo-escritorio {
   display: none;
 }
 
 @media (min-width: 768px) {
-  .transferencia-tabla-solo-escritorio {
+  .transferencias-tabla-solo-escritorio {
     display: block;
     overflow-x: auto;
     background: var(--superficie);
@@ -193,247 +112,98 @@
     border-radius: var(--radio-md);
   }
 
-  .transferencia-tarjetas-solo-movil {
+  .transferencias-tarjetas-solo-movil {
     display: none;
   }
 }
 
-.transferencia-tabla,
-.historial-tabla,
-.detalle-transferencia-tabla {
+.transferencias-tabla {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
   color: var(--texto);
 }
 
-.transferencia-tabla th,
-.transferencia-tabla td,
-.historial-tabla th,
-.historial-tabla td,
-.detalle-transferencia-tabla th,
-.detalle-transferencia-tabla td {
+.transferencias-tabla th,
+.transferencias-tabla td {
   padding: 8px 12px;
   text-align: left;
   vertical-align: middle;
   border-bottom: 1px solid var(--borde);
 }
 
-.transferencia-tabla thead th,
-.historial-tabla thead th,
-.detalle-transferencia-tabla thead th {
+.transferencias-tabla thead th {
   background: var(--superficie-hover);
   white-space: nowrap;
 }
 
-.transferencia-tabla tbody tr:last-child td,
-.historial-tabla tbody tr:last-child td,
-.detalle-transferencia-tabla tbody tr:last-child td {
+.transferencias-tabla tbody tr {
+  cursor: pointer;
+}
+
+.transferencias-tabla tbody tr:hover {
+  background: var(--superficie-hover);
+}
+
+.transferencias-tabla tbody tr:last-child td {
   border-bottom: none;
 }
 
-.transferencia-fila--marcada {
-  background: var(--superficie-hover);
-}
-
-.transferencia-caravana {
-  font-weight: 700;
-}
-
-/* Casilla con área táctil de al menos 44×44 px (el <input> en sí es más
-   chico; el <label> que lo envuelve es el que recibe el toque). */
-.transferencia-casilla {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.transferencia-casilla input {
-  width: 22px;
-  height: 22px;
-  margin: 0;
-  accent-color: var(--color-primario-fondo);
-  cursor: pointer;
-}
-
-.transferencia-casilla input:disabled {
-  cursor: not-allowed;
-}
-
-.transferencia-casilla input:focus-visible {
-  outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
-}
-
-/* "ya está en el destino": texto + borde (no depende solo del color). */
-.transferencia-etiqueta-destino {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 8px;
-  padding: 1px 8px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--texto-secundario);
-  background: var(--superficie-hover);
-  border: 1px solid var(--borde);
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.transferencia-tarjetas-solo-movil {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.transferencia-tarjeta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 14px 14px;
-}
-
-.transferencia-tarjeta--marcada {
-  background: var(--superficie-hover);
-  border-color: var(--color-foco);
-}
-
-.transferencia-tarjeta-encabezado {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-}
-
-.transferencia-tarjeta-peso {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--texto);
-}
-
-.transferencia-tarjeta-datos {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
-  width: 100%;
-  margin: 0;
-}
-
-.transferencia-tarjeta-datos dt,
-.historial-tarjeta-datos dt,
-.detalle-transferencia-datos dt {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--texto-secundario);
-}
-
-.transferencia-tarjeta-datos dd,
-.historial-tarjeta-datos dd,
-.detalle-transferencia-datos dd {
-  margin: 0;
-  font-size: 14px;
-  color: var(--texto);
-  overflow-wrap: anywhere;
-}
-
-/* Destino y datos. */
-.transferencia-formulario {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-
-@media (min-width: 768px) {
-  .transferencia-formulario {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .transferencia-campo-ancho {
-    grid-column: 1 / -1;
-  }
-}
-
-.transferencia-pie {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.transferencia-pie .boton-primario {
-  min-width: 160px;
-}
-
-/* ---- Historial ---- */
-
-.historial-transferencias {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.historial-tabla-solo-escritorio {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .historial-tabla-solo-escritorio {
-    display: block;
-    overflow-x: auto;
-    background: var(--superficie);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio-md);
-  }
-
-  .historial-tarjetas-solo-movil {
-    display: none;
-  }
-}
-
-.historial-tabla .badge {
+.transferencias-tabla .badge {
   margin-left: 8px;
 }
 
-.historial-tarjetas-solo-movil {
+.transferencias-tarjetas-solo-movil {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.historial-tarjeta {
+.transferencias-tarjeta {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
   padding: 14px;
+  cursor: pointer;
 }
 
-.historial-tarjeta-encabezado {
+.transferencias-tarjeta-encabezado {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.historial-tarjeta-fecha {
+.transferencias-tarjeta-fecha {
   font-size: 15px;
   font-weight: 700;
   color: var(--texto);
 }
 
-.historial-tarjeta-ruta {
+.transferencias-tarjeta-ruta {
   margin: 0;
   font-size: 14px;
   color: var(--texto);
   overflow-wrap: anywhere;
 }
 
-.historial-tarjeta-datos {
+.transferencias-tarjeta-datos {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px 12px;
   margin: 0;
+}
+
+.transferencias-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.transferencias-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
 }

@@ -226,6 +226,7 @@ public class AnimalController {
         Optional<Pesajes> ultimoPesaje = animalService.ultimoPesajeActivo(animal);
         double pesoActual = ultimoPesaje.map(pesaje -> pesaje.getPesaPeso()).orElse(animal.getAniPesoInicial());
         Persona comprador = animal.getComprador();
+        Optional<AnimalService.PesoAnterior> anterior = animalService.pesoAnteriorDelUltimoPesaje(animal);
 
         return new AnimalResumen(
                 animal.getAniId(),
@@ -250,7 +251,10 @@ public class AnimalController {
                 animal.getAniNotaSalida(),
                 comprador != null ? comprador.getPerId() : null,
                 comprador != null ? nombreCompleto(comprador) : null,
-                animal.getAniFechaRegistro());
+                animal.getAniFechaRegistro(),
+                anterior.map(AnimalService.PesoAnterior::peso).orElse(null),
+                anterior.map(AnimalService.PesoAnterior::fecha).orElse(null),
+                anterior.map(AnimalService.PesoAnterior::esIngreso).orElse(false));
     }
 
     /**
@@ -364,13 +368,20 @@ public class AnimalController {
      * registrada (o, para el comprador, mientras el motivo no sea VENTA).
      * aniFechaRegistro es null para los animales que ya existían antes de
      * ese campo (no se completa retroactivamente, ver su Javadoc en Animal).
+     * pesoAnterior/fechaPesoAnterior/pesoAnteriorEsIngreso describen el
+     * "anterior" del pesaje ACTIVO más reciente, el mismo contra el que se
+     * mide la gmd (ver {@code AnimalService.pesoAnteriorDelUltimoPesaje}): el
+     * pesaje activo previo, o el peso inicial y la fecha de ingreso (con
+     * pesoAnteriorEsIngreso en true) si es su primer pesaje activo. Van en
+     * null/false si el animal no tiene ningún pesaje activo.
      */
     public record AnimalResumen(Long aniId, String aniCaravana, Long duenioId, String duenioNombre, Long razaId,
             String razaDescripcion, Long subGrupoId, String subGrupoDescripcion, String grupoDescripcion,
             double aniPesoInicial, String aniObservacion, long cantidadPesajes, double pesoActual, Double gmd,
             boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso, LocalDate fechaUltimoPesaje,
             String aniMotivoSalida, String aniNotaSalida, Long compradorId, String compradorNombre,
-            LocalDateTime aniFechaRegistro) {
+            LocalDateTime aniFechaRegistro, Double pesoAnterior, LocalDate fechaPesoAnterior,
+            boolean pesoAnteriorEsIngreso) {
     }
 
     /**

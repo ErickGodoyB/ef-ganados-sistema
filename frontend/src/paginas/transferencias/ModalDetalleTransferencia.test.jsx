@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { fechaHoyIso } from '../../utilidades/fechas'
-import PestanaHistorialTransferencias from './PestanaHistorialTransferencias'
+import ModalDetalleTransferencia from './ModalDetalleTransferencia'
 
 vi.mock('../../api/cliente', () => ({
   peticionProtegida: vi.fn(),
@@ -69,9 +69,6 @@ let respuestaDevolver
 beforeEach(() => {
   respuestaDevolver = async () => ({ ...DEVOLUCION, cantidadDevuelta: 2, cantidadOmitida: 1 })
   peticionProtegida.mockImplementation(async (ruta, opciones) => {
-    if (ruta.startsWith('/api/transferencias?') || ruta === '/api/transferencias') {
-      return LISTA
-    }
     const detalle = /^\/api\/transferencias\/(\d+)$/.exec(ruta)
     if (detalle) {
       const base = LISTA.find((transferencia) => transferencia.traId === Number(detalle[1]))
@@ -91,133 +88,85 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function renderizar(onCambio = vi.fn()) {
-  render(<PestanaHistorialTransferencias onCambio={onCambio} />)
-  await waitFor(() => expect(screen.queryByText('Cargando historial…')).not.toBeInTheDocument())
-  return onCambio
+async function renderizar(traId) {
+  const onCerrar = vi.fn()
+  const onDevuelta = vi.fn()
+  render(
+    <ModalDetalleTransferencia
+      transferenciaId={traId}
+      onCerrar={onCerrar}
+      onDevuelta={onDevuelta}
+      refDisparador={{ current: null }}
+    />,
+  )
+  await screen.findByText('CAR-001')
+  return { onCerrar, onDevuelta }
 }
 
-/** Fila de la tabla (no de las tarjetas) de la transferencia con esa fecha dd/mm/aaaa. */
-function filaDeFecha(fecha) {
-  return within(screen.getByRole('table'))
-    .getAllByRole('row')
-    .find((fila) => within(fila).queryByText(fecha))
-}
-
-async function abrirDetalle(usuario, fecha) {
-  await usuario.click(within(filaDeFecha(fecha)).getByRole('button', { name: /Ver la transferencia/ }))
-  return screen.findByRole('dialog', { name: 'Detalle de la transferencia' })
-}
-
-describe('PestanaHistorialTransferencias: lista', () => {
-  it('muestra fecha, motivo, cantidad, origen → destino y responsable de cada transferencia', async () => {
-    await renderizar()
-
-    const fila = filaDeFecha('01/02/2026')
-    expect(within(fila).getByText('Sanitario')).toBeInTheDocument()
-    expect(within(fila).getByText('2')).toBeInTheDocument()
-    expect(within(fila).getByText('Lote A, Sin lote → Lote B')).toBeInTheDocument()
-    expect(within(fila).getByText('Ana Pérez')).toBeInTheDocument()
-    expect(within(filaDeFecha('10/03/2026')).getByText('Devolución')).toBeInTheDocument()
-  })
-
-  it('la etiqueta "Devuelta" solo aparece en la transferencia ya devuelta', async () => {
-    await renderizar()
-
-    expect(within(filaDeFecha('01/03/2026')).getByText('Devuelta')).toBeInTheDocument()
-    expect(within(filaDeFecha('01/02/2026')).queryByText('Devuelta')).not.toBeInTheDocument()
-    expect(within(filaDeFecha('10/03/2026')).queryByText('Devuelta')).not.toBeInTheDocument()
-  })
-
-  it('sin transferencias muestra el mensaje de vacío', async () => {
-    peticionProtegida.mockResolvedValue([])
-    await renderizar()
-
-    expect(screen.getByText('Todavía no hay transferencias registradas')).toBeInTheDocument()
-  })
-
-  it('si falla la petición muestra un error con "Reintentar"', async () => {
-    peticionProtegida.mockRejectedValue(new Error('falló'))
-    await renderizar()
-
-    expect(screen.getByText('No se pudo cargar el historial de transferencias.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
-  })
-
-  it('el filtro de Intervalo vuelve a pedir la lista con desde y hasta', async () => {
-    const usuario = userEvent.setup()
-    await renderizar()
-
-    await usuario.click(screen.getByRole('button', { name: 'Intervalo' }))
-    await usuario.click(screen.getByRole('button', { name: 'Hoy' }))
-    await usuario.click(screen.getByRole('button', { name: 'Aplicar' }))
-
-    const hoy = fechaHoyIso()
-    await waitFor(() =>
-      expect(peticionProtegida).toHaveBeenCalledWith(`/api/transferencias?desde=${hoy}&hasta=${hoy}`),
-    )
-  })
-})
-
-describe('PestanaHistorialTransferencias: detalle', () => {
-  it('abre el detalle con los datos y la tabla de animales (origen, destino y si sigue en destino)', async () => {
-    const usuario = userEvent.setup()
-    await renderizar()
-
-    const dialogo = await abrirDetalle(usuario, '01/02/2026')
+describe('ModalDetalleTransferencia: detalle', () => {
+  it('muestra los datos y la tabla de animales (origen, destino y si sigue en destino)', async () => {
+    await renderizar(1)
+    const dialogo = screen.getByRole('dialog', { name: 'Detalle de la transferencia' })
 
     expect(within(dialogo).getByText('Aislamiento')).toBeInTheDocument()
     expect(within(dialogo).getByText('Sanitario')).toBeInTheDocument()
+    expect(within(dialogo).getByText('01/02/2026')).toBeInTheDocument()
     const filas = within(dialogo).getAllByRole('row').slice(1)
     expect(filas).toHaveLength(2)
     expect(within(filas[0]).getByText('CAR-001')).toBeInTheDocument()
+    expect(within(filas[0]).getByText('Brangus')).toBeInTheDocument()
     expect(within(filas[0]).getByText('Lote A')).toBeInTheDocument()
     expect(within(filas[0]).getByText(/Sí/)).toBeInTheDocument()
     expect(within(filas[1]).getByText('Sin lote')).toBeInTheDocument()
     expect(within(filas[1]).getByText(/No/)).toBeInTheDocument()
   })
 
+  it('si falla la carga muestra un error con "Reintentar"', async () => {
+    peticionProtegida.mockRejectedValue(new Error('falló'))
+    render(
+      <ModalDetalleTransferencia
+        transferenciaId={1}
+        onCerrar={vi.fn()}
+        onDevuelta={vi.fn()}
+        refDisparador={{ current: null }}
+      />,
+    )
+
+    expect(await screen.findByText('No se pudo cargar el detalle de la transferencia.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
+
   it('"Devolver" se ofrece en una transferencia común', async () => {
-    const usuario = userEvent.setup()
-    await renderizar()
+    await renderizar(1)
 
-    const dialogo = await abrirDetalle(usuario, '01/02/2026')
-
-    expect(within(dialogo).getByRole('button', { name: /Devolver/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Devolver/ })).toBeInTheDocument()
   })
 
-  it('"Devolver" no aparece si la transferencia ya fue devuelta', async () => {
-    const usuario = userEvent.setup()
-    await renderizar()
+  it('"Devolver" no aparece si la transferencia ya fue devuelta (y se ve la etiqueta "Devuelta")', async () => {
+    await renderizar(2)
 
-    const dialogo = await abrirDetalle(usuario, '01/03/2026')
-
-    await within(dialogo).findByText('CAR-001')
-    expect(within(dialogo).queryByRole('button', { name: /Devolver/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Devolver/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Devuelta')).toBeInTheDocument()
   })
 
-  it('"Devolver" no aparece si la transferencia es una devolución', async () => {
-    const usuario = userEvent.setup()
-    await renderizar()
+  it('"Devolver" no aparece si la transferencia es una devolución (y dice a cuál devuelve)', async () => {
+    await renderizar(3)
 
-    const dialogo = await abrirDetalle(usuario, '10/03/2026')
-
-    await within(dialogo).findByText('CAR-001')
-    expect(within(dialogo).queryByRole('button', { name: /Devolver/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Devolver/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Transferencia n.º 2')).toBeInTheDocument()
   })
 })
 
-describe('PestanaHistorialTransferencias: devolución', () => {
+describe('ModalDetalleTransferencia: devolución', () => {
   async function abrirFormularioDeDevolucion(usuario) {
-    const dialogo = await abrirDetalle(usuario, '01/02/2026')
-    await usuario.click(await within(dialogo).findByRole('button', { name: /Devolver/ }))
-    return screen.getByRole('dialog', { name: 'Devolver transferencia' })
+    const funciones = await renderizar(1)
+    await usuario.click(screen.getByRole('button', { name: /Devolver/ }))
+    return { ...funciones, dialogo: screen.getByRole('dialog', { name: 'Devolver transferencia' }) }
   }
 
   it('envía la devolución con fecha, nota y responsable, y muestra cuántos se devolvieron y omitieron', async () => {
     const usuario = userEvent.setup()
-    const onCambio = await renderizar()
-    const dialogo = await abrirFormularioDeDevolucion(usuario)
+    const { dialogo, onDevuelta } = await abrirFormularioDeDevolucion(usuario)
 
     fireEvent.change(within(dialogo).getByLabelText('Fecha'), { target: { value: '2026-03-15' } })
     await usuario.type(within(dialogo).getByLabelText(/Nota/), '  Volvieron al lote  ')
@@ -228,17 +177,14 @@ describe('PestanaHistorialTransferencias: devolución', () => {
     expect(ruta).toBe('/api/transferencias/1/devolver')
     expect(opciones.method).toBe('POST')
     expect(JSON.parse(opciones.body)).toEqual({ fecha: '2026-03-15', nota: 'Volvieron al lote', responsableId: 5 })
-    // Avisa hacia arriba y recarga el listado de fondo.
-    expect(onCambio).toHaveBeenCalledTimes(1)
-    const cargasDelListado = peticionProtegida.mock.calls.filter(([r]) => r === '/api/transferencias').length
-    expect(cargasDelListado).toBeGreaterThanOrEqual(2)
+    // Avisa hacia arriba, para que la pantalla recargue su lista.
+    expect(onDevuelta).toHaveBeenCalledTimes(1)
   })
 
   it('el resultado usa el singular cuando es uno y uno', async () => {
     const usuario = userEvent.setup()
     respuestaDevolver = async () => ({ ...DEVOLUCION, cantidadDevuelta: 1, cantidadOmitida: 1 })
-    await renderizar()
-    const dialogo = await abrirFormularioDeDevolucion(usuario)
+    const { dialogo } = await abrirFormularioDeDevolucion(usuario)
 
     await usuario.click(within(dialogo).getByRole('button', { name: 'Devolver transferencia' }))
 
@@ -247,8 +193,7 @@ describe('PestanaHistorialTransferencias: devolución', () => {
 
   it('una fecha anterior a la de la transferencia original se rechaza en el cliente, indicando esa fecha', async () => {
     const usuario = userEvent.setup()
-    await renderizar()
-    const dialogo = await abrirFormularioDeDevolucion(usuario)
+    const { dialogo, onDevuelta } = await abrirFormularioDeDevolucion(usuario)
 
     fireEvent.change(within(dialogo).getByLabelText('Fecha'), { target: { value: '2026-01-15' } })
     await usuario.click(within(dialogo).getByRole('button', { name: 'Devolver transferencia' }))
@@ -257,12 +202,12 @@ describe('PestanaHistorialTransferencias: devolución', () => {
       within(dialogo).getByText('La fecha no puede ser anterior a la de la transferencia original (01/02/2026)'),
     ).toBeInTheDocument()
     expect(peticionProtegida).not.toHaveBeenCalledWith(expect.stringMatching(/devolver$/), expect.anything())
+    expect(onDevuelta).not.toHaveBeenCalled()
   })
 
   it('el campo de fecha no deja elegir una fecha anterior a la original ni futura', async () => {
     const usuario = userEvent.setup()
-    await renderizar()
-    const dialogo = await abrirFormularioDeDevolucion(usuario)
+    const { dialogo } = await abrirFormularioDeDevolucion(usuario)
 
     const campoFecha = within(dialogo).getByLabelText('Fecha')
     expect(campoFecha).toHaveAttribute('min', '2026-02-01')
@@ -274,8 +219,7 @@ describe('PestanaHistorialTransferencias: devolución', () => {
     respuestaDevolver = async () => {
       throw new ErrorHttp(409, 'No se puede devolver la transferencia 1: ningún animal sigue en el lote de destino')
     }
-    const onCambio = await renderizar()
-    const dialogo = await abrirFormularioDeDevolucion(usuario)
+    const { dialogo, onDevuelta } = await abrirFormularioDeDevolucion(usuario)
 
     await usuario.click(within(dialogo).getByRole('button', { name: 'Devolver transferencia' }))
 
@@ -284,17 +228,16 @@ describe('PestanaHistorialTransferencias: devolución', () => {
         'No se puede devolver la transferencia 1: ningún animal sigue en el lote de destino',
       ),
     ).toBeInTheDocument()
-    expect(onCambio).not.toHaveBeenCalled()
+    expect(onDevuelta).not.toHaveBeenCalled()
   })
 
   it('"Cancelar" vuelve al detalle sin enviar nada', async () => {
     const usuario = userEvent.setup()
-    await renderizar()
-    const dialogo = await abrirFormularioDeDevolucion(usuario)
+    const { dialogo } = await abrirFormularioDeDevolucion(usuario)
 
     await usuario.click(within(dialogo).getByRole('button', { name: 'Cancelar' }))
 
-    expect(await screen.findByRole('dialog', { name: 'Detalle de la transferencia' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'Detalle de la transferencia' })).toBeInTheDocument())
     expect(peticionProtegida).not.toHaveBeenCalledWith(expect.stringMatching(/devolver$/), expect.anything())
   })
 })

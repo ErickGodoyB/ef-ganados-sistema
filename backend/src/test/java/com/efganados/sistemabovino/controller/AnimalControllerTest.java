@@ -409,6 +409,82 @@ class AnimalControllerTest extends AutenticacionTestSupport {
     }
 
     @Test
+    @DisplayName("El resumen de un animal sin pesajes trae el peso anterior vacío (no hay pesaje reciente que comparar)")
+    void resumenSinPesajesTraePesoAnteriorVacio() throws Exception {
+        Persona duenio = crearPersona("Dueño-Anterior0");
+        Raza raza = crearRaza("Raza-Anterior0", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Anterior0");
+        crearAnimal(duenio, raza, subGrupo, "CAR-ANT-000", 200.0);
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoAnterior").value(nullValue()))
+                .andExpect(jsonPath("$[0].fechaPesoAnterior").value(nullValue()))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(false));
+    }
+
+    @Test
+    @DisplayName("Con un solo pesaje activo, el peso anterior es el de ingreso (peso inicial y fecha de ingreso)")
+    void resumenConUnPesajeTraeElIngresoComoPesoAnterior() throws Exception {
+        Persona duenio = crearPersona("Dueño-Anterior1");
+        Persona responsable = crearPersona("Responsable-Anterior1");
+        Raza raza = crearRaza("Raza-Anterior1", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Anterior1");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ANT-001", 200.0);
+        registrarPesaje(animal, responsable, 230.0, LocalDate.of(2026, 1, 31));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoActual").value(230.0))
+                .andExpect(jsonPath("$[0].pesoAnterior").value(200.0))
+                .andExpect(jsonPath("$[0].fechaPesoAnterior").value("2026-01-01"))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(true))
+                .andExpect(jsonPath("$[0].gmd").value(1.0));
+    }
+
+    @Test
+    @DisplayName("Con dos pesajes activos, el peso anterior es el pesaje previo (no el ingreso) y coincide con el usado para la GMD")
+    void resumenConDosPesajesTraeElPesajePrevioComoPesoAnterior() throws Exception {
+        Persona duenio = crearPersona("Dueño-Anterior2");
+        Persona responsable = crearPersona("Responsable-Anterior2");
+        Raza raza = crearRaza("Raza-Anterior2", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Anterior2");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ANT-002", 200.0);
+        registrarPesaje(animal, responsable, 230.0, LocalDate.of(2026, 1, 31));
+        registrarPesaje(animal, responsable, 260.0, LocalDate.of(2026, 3, 2));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoActual").value(260.0))
+                .andExpect(jsonPath("$[0].pesoAnterior").value(230.0))
+                .andExpect(jsonPath("$[0].fechaPesoAnterior").value("2026-01-31"))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(false))
+                .andExpect(jsonPath("$[0].fechaUltimoPesaje").value("2026-03-02"))
+                .andExpect(jsonPath("$[0].gmd").value(1.0));
+    }
+
+    @Test
+    @DisplayName("Un pesaje anulado no cuenta como peso anterior: se usa el ingreso si el único otro pesaje está anulado")
+    void resumenIgnoraLosPesajesAnuladosParaElPesoAnterior() throws Exception {
+        Persona duenio = crearPersona("Dueño-Anterior3");
+        Persona responsable = crearPersona("Responsable-Anterior3");
+        Raza raza = crearRaza("Raza-Anterior3", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-Anterior3");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-ANT-003", 200.0);
+        registrarPesajeAnulado(animal, responsable, 999.0, LocalDate.of(2026, 1, 15));
+        registrarPesaje(animal, responsable, 230.0, LocalDate.of(2026, 1, 31));
+
+        mockMvc.perform(get("/api/animales/resumen")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pesoAnterior").value(200.0))
+                .andExpect(jsonPath("$[0].pesoAnteriorEsIngreso").value(true));
+    }
+
+    @Test
     @DisplayName("El resumen de un animal con dos pesajes trae cantidadPesajes 2")
     void resumenDeAnimalConDosPesajesTraeCantidadPesajesDos() throws Exception {
         Persona duenio = crearPersona("Dueño-Resumen6");

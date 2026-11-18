@@ -1,0 +1,174 @@
+/**
+ * Estilos del modal "Nueva transferencia" (ver ModalNuevaTransferencia.jsx).
+ * Mobile-first: todo apilado por defecto y repartido en columnas desde
+ * 768px. Solo variables de color de index.css (claro y oscuro salen solos).
+ * Los campos, botones, tarjetas y estados vacíos salen de
+ * src/estilos/base.css; la tabla y las tarjetas de animales, de
+ * Transferencias.css.
+ */
+
+.nueva-transferencia {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* El atributo "hidden" (la confirmación se muestra en su lugar) pierde
+   contra un "display" declarado por clase: se reafirma acá. */
+.nueva-transferencia[hidden] {
+  display: none;
+}
+
+.nt-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nt-seccion h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--texto);
+}
+
+/* Los .campo (etiqueta arriba, control abajo) no traen su layout de
+   base.css, solo el aspecto del control. */
+.nueva-transferencia .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nueva-transferencia .campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.nt-formulario,
+.nt-filtros {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .nt-formulario {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nt-campo-ancho {
+    grid-column: 1 / -1;
+  }
+
+  .nt-filtros {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+}
+
+/* "Elegí un lote de origen…": texto + ícono sobre fondo de acento (no
+   depende solo del color). */
+.nt-aviso-origen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-acento-texto);
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-md);
+}
+
+.nt-acciones-seleccion {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.nt-mayores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .nt-acciones-seleccion {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .nt-mayores {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .nt-mayores .campo {
+    width: 160px;
+  }
+}
+
+.nt-mensaje-seleccion {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+/* Pie siempre visible: el contador y "Cancelar"/"Transferir" quedan
+   pegados al borde inferior del modal mientras se recorre la lista. Los
+   márgenes negativos (iguales al padding de .modal-panel, ver Modal.css)
+   hacen que el fondo llegue de borde a borde y no deje ver el contenido
+   que pasa por debajo. */
+.nt-pie {
+  position: sticky;
+  bottom: -20px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 -16px -20px;
+  padding: 12px 16px 20px;
+  background: var(--superficie);
+  border-top: 1px solid var(--borde);
+}
+
+@media (min-width: 768px) {
+  .nt-pie {
+    bottom: -28px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 -28px -28px;
+    padding: 12px 28px 28px;
+  }
+}
+
+.nt-contador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 16px;
+  font-size: 15px;
+  color: var(--texto);
+}
+
+.nt-error-seleccion {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.nt-pie-botones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.nt-pie-botones .boton-primario {
+  min-width: 140px;
+}

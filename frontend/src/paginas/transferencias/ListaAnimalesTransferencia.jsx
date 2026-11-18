@@ -1,7 +1,14 @@
 /**
- * Lista de animales candidatos de la pestaña "Nueva transferencia": tabla
- * desde 768px y tarjetas en celular (se ve una u otra por CSS, ver
+ * Lista de animales candidatos del modal "Nueva transferencia": tabla desde
+ * 768px y tarjetas en celular (se ve una u otra por CSS, ver
  * Transferencias.css; las dos están en el DOM, igual que en Pesajes).
+ *
+ * Columnas: casilla, caravana, raza, peso actual, peso anterior (con su
+ * fecha y los días transcurridos hasta el último pesaje, ver
+ * ValorPesoAnterior: si el anterior es el ingreso del animal, lo aclara) y
+ * GMD. El peso anterior y su fecha vienen del resumen de animales, y los
+ * días se miden contra la fecha del último pesaje, que es el pesaje al que
+ * pertenece ese "anterior".
  *
  * Cada animal tiene su casilla. Los que ya están en el lote de destino
  * aparecen deshabilitados, con la etiqueta "ya está en el destino": el
@@ -11,9 +18,10 @@
  * destino), para que lo que se ve coincida con lo que se va a enviar.
  */
 
-import EstadoBadge from '../animales/EstadoBadge'
 import ValorGmd from '../../componentes/ValorGmd'
+import ValorPesoAnterior from '../../componentes/ValorPesoAnterior'
 import { formatearPeso } from '../../utilidades/formato'
+import './ListaAnimalesTransferencia.css'
 
 /**
  * Casilla de selección con su texto accesible ("Seleccionar CAR-001") y un
@@ -41,6 +49,17 @@ function EtiquetaYaEnDestino() {
   return <span className="transferencia-etiqueta-destino">ya está en el destino</span>
 }
 
+function PesoAnterior({ animal }) {
+  return (
+    <ValorPesoAnterior
+      pesoAnterior={animal.pesoAnterior}
+      pesoAnteriorEsIngreso={animal.pesoAnteriorEsIngreso}
+      fechaPesoAnterior={animal.fechaPesoAnterior}
+      fechaPesaje={animal.fechaUltimoPesaje}
+    />
+  )
+}
+
 export default function ListaAnimalesTransferencia({ animales, seleccionados, destinoId, onAlternar }) {
   const estaEnDestino = (animal) => destinoId !== '' && String(animal.subGrupoId) === destinoId
 
@@ -48,7 +67,7 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
     <>
       <div className="transferencia-tabla-solo-escritorio">
         <table className="transferencia-tabla">
-          <caption className="visualmente-oculto">Animales activos que se pueden transferir</caption>
+          <caption className="visualmente-oculto">Animales activos del lote de origen</caption>
           <thead>
             <tr>
               <th scope="col">
@@ -56,8 +75,8 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
               </th>
               <th scope="col">Caravana</th>
               <th scope="col">Raza</th>
-              <th scope="col">Lote actual</th>
               <th scope="col">Peso actual</th>
+              <th scope="col">Peso anterior</th>
               <th scope="col">GMD</th>
             </tr>
           </thead>
@@ -66,10 +85,7 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
               const enDestino = estaEnDestino(animal)
               const marcado = seleccionados.has(animal.aniId) && !enDestino
               return (
-                <tr
-                  key={animal.aniId}
-                  className={marcado ? 'transferencia-fila--marcada' : undefined}
-                >
+                <tr key={animal.aniId} className={marcado ? 'transferencia-fila--marcada' : undefined}>
                   <td>
                     <Casilla
                       vista="tabla"
@@ -84,8 +100,10 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
                     {enDestino && <EtiquetaYaEnDestino />}
                   </td>
                   <td>{animal.razaDescripcion}</td>
-                  <td>{animal.subGrupoDescripcion ?? 'Sin lote'}</td>
                   <td>{formatearPeso(animal.pesoActual)}</td>
+                  <td>
+                    <PesoAnterior animal={animal} />
+                  </td>
                   <td>
                     <ValorGmd gmd={animal.gmd} />
                   </td>
@@ -123,17 +141,18 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
                   <dd>{animal.razaDescripcion}</dd>
                 </div>
                 <div>
-                  <dt>Lote actual</dt>
-                  <dd>{animal.subGrupoDescripcion ?? 'Sin lote'}</dd>
-                </div>
-                <div>
                   <dt>GMD</dt>
                   <dd>
                     <ValorGmd gmd={animal.gmd} />
                   </dd>
                 </div>
+                <div className="transferencia-tarjeta-dato--ancho">
+                  <dt>Peso anterior</dt>
+                  <dd>
+                    <PesoAnterior animal={animal} />
+                  </dd>
+                </div>
               </dl>
-              <EstadoBadge animal={animal} />
             </article>
           )
         })}

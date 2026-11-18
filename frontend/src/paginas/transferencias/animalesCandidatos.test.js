@@ -6,8 +6,11 @@ import {
   filtrarAnimales,
   idsDeMayorGmd,
   obtenerLotesDeOrigen,
+  OPCIONES_ORDEN,
+  ordenarAnimales,
   ordenarPorGmd,
-} from './listadoTransferencia'
+  ordenDesdeValor,
+} from './animalesCandidatos'
 
 function animal(aniId, caravana, extra = {}) {
   return {
@@ -77,6 +80,33 @@ describe('ordenarPorGmd', () => {
     const empate = [animal(7, 'CAR-010', { gmd: 1 }), animal(8, 'CAR-009', { gmd: 1 })]
     expect(ordenarPorGmd(empate).map((a) => a.aniId)).toEqual([8, 7])
     expect(empate.map((a) => a.aniId)).toEqual([7, 8])
+  })
+})
+
+describe('ordenarAnimales', () => {
+  const conPeso = [
+    animal(1, 'CAR-001', { pesoActual: 300, gmd: 1 }),
+    animal(2, 'CAR-002', { pesoActual: 200, gmd: null }),
+    animal(3, 'CAR-003', { pesoActual: 400, gmd: 2 }),
+  ]
+
+  it('por peso actual, de mayor a menor y de menor a mayor', () => {
+    expect(ordenarAnimales(conPeso, { campo: 'pesoActual', direccion: 'desc' }).map((a) => a.aniId)).toEqual([3, 1, 2])
+    expect(ordenarAnimales(conPeso, { campo: 'pesoActual', direccion: 'asc' }).map((a) => a.aniId)).toEqual([2, 1, 3])
+  })
+
+  it('por GMD deja a los que no tienen al final, en las dos direcciones', () => {
+    expect(ordenarAnimales(conPeso, { campo: 'gmd', direccion: 'desc' }).map((a) => a.aniId)).toEqual([3, 1, 2])
+    expect(ordenarAnimales(conPeso, { campo: 'gmd', direccion: 'asc' }).map((a) => a.aniId)).toEqual([1, 3, 2])
+  })
+
+  it('por defecto ordena por GMD de mayor a menor', () => {
+    expect(ordenarAnimales(conPeso).map((a) => a.aniId)).toEqual([3, 1, 2])
+  })
+
+  it('las opciones del selector cubren GMD y peso actual en ambas direcciones y se traducen a campo/dirección', () => {
+    expect(OPCIONES_ORDEN.map((o) => o.valor)).toEqual(['gmd:desc', 'gmd:asc', 'pesoActual:desc', 'pesoActual:asc'])
+    expect(ordenDesdeValor('pesoActual:asc')).toEqual({ campo: 'pesoActual', direccion: 'asc' })
   })
 })
 

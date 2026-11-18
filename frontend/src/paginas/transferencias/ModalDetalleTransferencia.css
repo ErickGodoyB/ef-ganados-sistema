@@ -1,7 +1,6 @@
 /**
  * Estilos del modal de detalle y del formulario de devolución de una
  * transferencia (ver ModalDetalleTransferencia.jsx y FormularioDevolucion.jsx).
- * La tabla de animales comparte el aspecto de las tablas de Transferencias.css.
  * Solo variables de color de index.css: claro y oscuro salen solos.
  */
 
@@ -22,6 +21,19 @@
   grid-column: 1 / -1;
 }
 
+.detalle-transferencia-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.detalle-transferencia-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
 .detalle-transferencia-subtitulo {
   margin: 0;
   font-size: 16px;
@@ -34,6 +46,30 @@
   border: 1px solid var(--borde);
   border-radius: var(--radio-md);
   background: var(--superficie);
+}
+
+.detalle-transferencia-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.detalle-transferencia-tabla th,
+.detalle-transferencia-tabla td {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--borde);
+}
+
+.detalle-transferencia-tabla thead th {
+  background: var(--superficie-hover);
+  white-space: nowrap;
+}
+
+.detalle-transferencia-tabla tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .detalle-transferencia-caravana {
@@ -79,10 +115,23 @@
   border-radius: var(--radio-md);
 }
 
+/* Formulario de devolución. Los .campo no traen su layout de base.css. */
 .formulario-devolucion {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.formulario-devolucion .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formulario-devolucion .campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
 }
 
 /* Clase propia (no "p" a secas): un selector de elemento le ganaría en

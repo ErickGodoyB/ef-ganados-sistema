@@ -1,6 +1,6 @@
 /**
- * Funciones puras de la pestaña "Nueva transferencia" (ver
- * PestanaNuevaTransferencia.jsx): filtrar y ordenar los animales
+ * Funciones puras del modal "Nueva transferencia" (ver
+ * ModalNuevaTransferencia.jsx): filtrar y ordenar los animales
  * candidatos, elegir los de mayor ganancia y calcular la GMD promedio de
  * la selección. Separadas del componente para poder probar la lógica sin
  * depender de React, igual que listadoAnimales.js y listadoSesiones.js.
@@ -62,28 +62,59 @@ export function filtrarAnimales(animales, { origen = 'todos', raza = 'todas', gm
 }
 
 /**
- * Ordena por ganancia diaria ('desc' = de mayor a menor, 'asc' = de menor
- * a mayor). Los animales sin GMD van siempre al final, en cualquiera de las
- * dos direcciones (no tienen un valor que comparar); a igual GMD, por
- * caravana, para que el orden sea estable. No modifica el arreglo original.
+ * Opciones del selector "Ordenar por" de la lista de candidatos: por GMD o
+ * por peso actual, cada uno en las dos direcciones. El valor es
+ * "campo:direccion" (ver ordenDesdeValor).
  */
-export function ordenarPorGmd(animales, direccion = 'desc') {
+export const OPCIONES_ORDEN = [
+  { valor: 'gmd:desc', etiqueta: 'GMD: mayor a menor' },
+  { valor: 'gmd:asc', etiqueta: 'GMD: menor a mayor' },
+  { valor: 'pesoActual:desc', etiqueta: 'Peso actual: mayor a menor' },
+  { valor: 'pesoActual:asc', etiqueta: 'Peso actual: menor a mayor' },
+]
+
+/** Convierte el valor del selector ("gmd:desc") en { campo, direccion }. */
+export function ordenDesdeValor(valor) {
+  const [campo, direccion] = valor.split(':')
+  return { campo, direccion }
+}
+
+function valorDeOrden(animal, campo) {
+  return campo === 'pesoActual' ? animal.pesoActual : animal.gmd
+}
+
+/**
+ * Ordena por GMD (campo 'gmd') o por peso actual (campo 'pesoActual'), de
+ * mayor a menor ('desc') o de menor a mayor ('asc'). Los animales sin valor
+ * (solo pasa con la GMD, que es null mientras no hay dos pesajes) van
+ * siempre al final, en cualquiera de las dos direcciones; a igual valor,
+ * por caravana, para que el orden sea estable. No modifica el arreglo
+ * original.
+ */
+export function ordenarAnimales(animales, { campo = 'gmd', direccion = 'desc' } = {}) {
   const factor = direccion === 'asc' ? 1 : -1
   return [...animales].sort((a, b) => {
-    if (a.gmd == null && b.gmd == null) {
+    const va = valorDeOrden(a, campo)
+    const vb = valorDeOrden(b, campo)
+    if (va == null && vb == null) {
       return a.aniCaravana.localeCompare(b.aniCaravana, 'es', { numeric: true })
     }
-    if (a.gmd == null) {
+    if (va == null) {
       return 1
     }
-    if (b.gmd == null) {
+    if (vb == null) {
       return -1
     }
-    if (a.gmd !== b.gmd) {
-      return (a.gmd - b.gmd) * factor
+    if (va !== vb) {
+      return (va - vb) * factor
     }
     return a.aniCaravana.localeCompare(b.aniCaravana, 'es', { numeric: true })
   })
+}
+
+/** Ordena por ganancia diaria (ver ordenarAnimales). */
+export function ordenarPorGmd(animales, direccion = 'desc') {
+  return ordenarAnimales(animales, { campo: 'gmd', direccion })
 }
 
 /**
