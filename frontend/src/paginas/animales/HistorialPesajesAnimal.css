@@ -50,6 +50,15 @@
   display: none;
 }
 
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior, y si va después pisa el
+   display:none y se ven la tabla y las tarjetas a la vez. */
+.historial-pesajes-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 @media (min-width: 768px) {
   .historial-pesajes-tabla-solo-escritorio {
     display: block;
@@ -84,12 +93,6 @@
 
 .tabla-historial-pesajes tbody tr:last-child td {
   border-bottom: none;
-}
-
-.historial-pesajes-tarjetas-solo-movil {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 .historial-pesajes-tarjeta {

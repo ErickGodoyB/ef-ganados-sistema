@@ -9,6 +9,14 @@
   display: none;
 }
 
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior. */
+.transferencia-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 @media (min-width: 768px) {
   .transferencia-tabla-solo-escritorio {
     display: block;
@@ -96,12 +104,6 @@
   border: 1px solid var(--borde);
   border-radius: 999px;
   white-space: nowrap;
-}
-
-.transferencia-tarjetas-solo-movil {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 .transferencia-tarjeta {

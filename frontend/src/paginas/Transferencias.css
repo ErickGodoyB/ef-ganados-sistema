@@ -103,6 +103,14 @@
   display: none;
 }
 
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior. */
+.transferencias-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 @media (min-width: 768px) {
   .transferencias-tabla-solo-escritorio {
     display: block;
@@ -151,12 +159,6 @@
 
 .transferencias-tabla .badge {
   margin-left: 8px;
-}
-
-.transferencias-tarjetas-solo-movil {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 .transferencias-tarjeta {
