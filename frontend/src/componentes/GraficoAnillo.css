@@ -1,0 +1,82 @@
+/**
+ * Estilos del gráfico de anillo (ver GraficoAnillo.jsx). El anillo y su
+ * leyenda van apilados en celular y lado a lado desde 768px. Los colores
+ * salen de --serie-* (index.css), y el texto, siempre de --texto.
+ */
+
+.grafico-anillo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .grafico-anillo {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.grafico-anillo-svg {
+  flex-shrink: 0;
+  width: 160px;
+  height: 160px;
+}
+
+.grafico-anillo-total {
+  font-size: 22px;
+  font-weight: 700;
+  fill: var(--texto);
+}
+
+.grafico-anillo-total-etiqueta {
+  font-size: 9px;
+  fill: var(--texto-secundario);
+}
+
+.grafico-anillo-leyenda {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grafico-anillo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+/* Muestra de color con borde: se ve aunque el color se parezca al fondo. */
+.grafico-anillo-muestra {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 3px;
+}
+
+.grafico-anillo-etiqueta {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.grafico-anillo-numero {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.grafico-anillo-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}

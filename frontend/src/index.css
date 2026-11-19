@@ -75,6 +75,24 @@
   --radio-md: 10px;
   --radio-lg: 16px;
   --transicion-rapida: 160ms ease;
+
+  /* Series de los gráficos (anillos y línea de Inicio): un color por cada
+     color de la paleta de marca o derivado suyo, elegidos para que cada
+     porción tenga al menos 3:1 contra --superficie (el fondo de las
+     tarjetas). Verde oscuro #183d09, oliva #738839 (3,6:1), verde azulado
+     #497372 (4,8:1), celeste oscurecido #3f8ba1 (3,5:1; el #7bb3c4 original
+     no llega a 3:1 sobre crema), tierra #8a7a4e derivada del crema (3,8:1),
+     azul petróleo #2c5a6b (6,8:1) y un gris cálido para "Otros" (4,9:1).
+     El texto de las leyendas va siempre en --texto, nunca en el color de la
+     serie, y los gráficos nunca dependen solo del color (leyenda con
+     números y porcentajes). */
+  --serie-1: #183d09;
+  --serie-2: #738839;
+  --serie-3: #497372;
+  --serie-4: #3f8ba1;
+  --serie-5: #8a7a4e;
+  --serie-6: #2c5a6b;
+  --serie-otros: #6e6a5a;
 }
 
 :root[data-tema='oscuro'] {
@@ -92,6 +110,15 @@
   --color-error: #fca5a5;
   --color-error-fondo: rgba(248, 113, 113, 0.12);
   --fondo-superpuesto: rgba(13, 31, 6, 0.65);
+  /* Series de los gráficos en modo oscuro: variantes claras de la misma
+     paleta, todas con al menos 3:1 contra --superficie (#16300c). */
+  --serie-1: #7fbf5a;
+  --serie-2: #a3b85a;
+  --serie-3: #5fa8a6;
+  --serie-4: #7bb3c4;
+  --serie-5: #c9b87a;
+  --serie-6: #4f9ab5;
+  --serie-otros: #a8a58f;
   --sombra:
     0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
 }

@@ -24,6 +24,20 @@
   color: var(--texto);
 }
 
+/* Gráficos: una columna en celular y dos desde 768px. minmax(0, 1fr) deja que
+   cada tarjeta se encoja en vez de ensanchar la página (sin scroll horizontal). */
+.inicio-graficos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .inicio-graficos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .inicio-bienvenida-titulo {
   margin: 0;
   font-size: 20px;

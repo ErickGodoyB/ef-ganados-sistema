@@ -1,0 +1,67 @@
+/**
+ * Estilos del marco de los bloques de gráficos de Inicio (ver
+ * TarjetaGrafico.jsx). Solo variables de color de index.css.
+ */
+
+.tarjeta-grafico {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.tarjeta-grafico-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tarjeta-grafico-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.tarjeta-grafico-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+/* Selectores de los gráficos (Lotes/Grupos/Razas): mismo estilo de botón que el ranking. */
+.grafico-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.grafico-selector-opcion {
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+}
+
+.grafico-selector-opcion:hover {
+  background: var(--superficie-hover);
+}
+
+.grafico-selector-opcion:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* La elegida se distingue por borde grueso y fondo (no solo por color). */
+.grafico-selector-opcion--elegida {
+  border: 2px solid var(--color-primario-fondo);
+  background: var(--superficie-hover);
+}

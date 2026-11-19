@@ -90,3 +90,97 @@ export function useAlertasInicio(tipo, limite = 10) {
 
   return { alerta, cargando, error, recargar: cargar }
 }
+
+/** Reporte de proveedores (GET /api/reportes/proveedores), para la tarjeta "Mejor proveedor". */
+export function useProveedoresInicio() {
+  const [filas, setFilas] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+
+  const cargar = useCallback(async () => {
+    setCargando(true)
+    setError('')
+    try {
+      const datos = await peticionProtegida('/api/reportes/proveedores')
+      setFilas(Array.isArray(datos) ? datos : [])
+    } catch {
+      setError('No se pudo cargar el mejor proveedor.')
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Ver la justificación de este mismo patrón en useAnimalesResumen.js.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    cargar()
+  }, [cargar])
+
+  return { filas, cargando, error, recargar: cargar }
+}
+
+/** Sesiones de pesaje (GET /api/pesajes/sesiones), para la línea de evolución del peso promedio. */
+export function useSesionesInicio() {
+  const [sesiones, setSesiones] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+
+  const cargar = useCallback(async () => {
+    setCargando(true)
+    setError('')
+    try {
+      const datos = await peticionProtegida('/api/pesajes/sesiones')
+      setSesiones(Array.isArray(datos) ? datos : [])
+    } catch {
+      setError('No se pudo cargar la evolución del peso.')
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Ver la justificación de este mismo patrón en useAnimalesResumen.js.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    cargar()
+  }, [cargar])
+
+  return { sesiones, cargando, error, recargar: cargar }
+}
+
+/**
+ * Resumen de animales (GET /api/animales/resumen) para agrupar por raza en el
+ * cliente. Solo se pide cuando "habilitado" es true (al elegir "Razas"), así
+ * que quien no mira ese gráfico no paga una consulta de todos los animales.
+ */
+export function useAnimalesParaRazas(habilitado) {
+  const [animales, setAnimales] = useState([])
+  const [cargando, setCargando] = useState(false)
+  const [cargado, setCargado] = useState(false)
+  const [error, setError] = useState('')
+
+  const cargar = useCallback(async () => {
+    setCargando(true)
+    setError('')
+    try {
+      const datos = await peticionProtegida('/api/animales/resumen')
+      setAnimales(Array.isArray(datos) ? datos : [])
+    } catch {
+      setError('No se pudo cargar la distribución por raza.')
+    } finally {
+      setCargando(false)
+      setCargado(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (habilitado) {
+      // Ver la justificación de este mismo patrón en useAnimalesResumen.js.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      cargar()
+    }
+  }, [habilitado, cargar])
+
+  // "cargado" evita un destello de "sin datos" entre elegir "Razas" y que
+  // arranque la primera carga (el efecto corre después del primer render).
+  return { animales, cargando: cargando || (habilitado && !cargado && !error), error, recargar: cargar }
+}

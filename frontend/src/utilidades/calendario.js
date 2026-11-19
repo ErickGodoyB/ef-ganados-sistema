@@ -77,19 +77,26 @@ export function desplazarMes({ anio, mes }, delta) {
 
 /**
  * Semanas del mes para dibujar la cuadrícula: un arreglo de filas de 7
- * celdas (lunes a domingo). Cada celda es null (hueco antes del día 1 o
- * después del último) o { dia, fechaIso }.
+ * celdas (lunes a domingo). Cada celda es { dia, fechaIso, fueraDelMes }:
+ * los huecos antes del día 1 y después del último día se completan con los
+ * días reales del mes anterior y del siguiente (fueraDelMes en true), para
+ * que la cuadrícula se vea completa y esos días se puedan mostrar atenuados.
  */
 export function armarSemanas(anio, mes) {
+  const anterior = desplazarMes({ anio, mes }, -1)
+  const siguiente = desplazarMes({ anio, mes }, 1)
+  const huecosAntes = indiceDiaSemana(primerDiaDelMes(anio, mes))
+  const diasMes = diasDelMes(anio, mes)
   const celdas = []
-  for (let hueco = 0; hueco < indiceDiaSemana(primerDiaDelMes(anio, mes)); hueco += 1) {
-    celdas.push(null)
+  const diasAnterior = diasDelMes(anterior.anio, anterior.mes)
+  for (let dia = diasAnterior - huecosAntes + 1; dia <= diasAnterior; dia += 1) {
+    celdas.push({ dia, fechaIso: fechaIsoDe(anterior.anio, anterior.mes, dia), fueraDelMes: true })
   }
-  for (let dia = 1; dia <= diasDelMes(anio, mes); dia += 1) {
-    celdas.push({ dia, fechaIso: fechaIsoDe(anio, mes, dia) })
+  for (let dia = 1; dia <= diasMes; dia += 1) {
+    celdas.push({ dia, fechaIso: fechaIsoDe(anio, mes, dia), fueraDelMes: false })
   }
-  while (celdas.length % 7 !== 0) {
-    celdas.push(null)
+  for (let dia = 1; celdas.length % 7 !== 0; dia += 1) {
+    celdas.push({ dia, fechaIso: fechaIsoDe(siguiente.anio, siguiente.mes, dia), fueraDelMes: true })
   }
   const semanas = []
   for (let inicio = 0; inicio < celdas.length; inicio += 7) {

@@ -1,0 +1,76 @@
+/**
+ * Estilos del gráfico de línea de Inicio (ver EvolucionPeso.jsx). El SVG
+ * escala con el ancho de la tarjeta (viewBox) y entra en 360 px sin scroll
+ * horizontal. Solo variables de color de index.css: claro y oscuro salen
+ * solos (la línea usa --serie-3, con 3:1 o más contra la tarjeta en ambos).
+ */
+
+.evolucion-selector {
+  max-width: 100%;
+}
+
+.evolucion-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.evolucion-guia {
+  stroke: var(--borde);
+  stroke-width: 1;
+  stroke-opacity: 0.35;
+}
+
+.evolucion-eje {
+  font-size: 10px;
+  fill: var(--texto-secundario);
+}
+
+.evolucion-linea {
+  fill: none;
+  stroke: var(--serie-3);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.evolucion-punto {
+  fill: var(--superficie);
+  stroke: var(--serie-3);
+  stroke-width: 2.5;
+  cursor: pointer;
+}
+
+.evolucion-punto:hover {
+  fill: var(--serie-3);
+}
+
+/* Foco visible: anillo del color de foco del tema alrededor del punto. */
+.evolucion-punto:focus-visible {
+  fill: var(--serie-3);
+  outline: 2px solid var(--color-foco);
+  outline-offset: 3px;
+}
+
+.evolucion-etiqueta rect {
+  fill: var(--color-primario-fondo);
+}
+
+.evolucion-etiqueta text {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--color-primario-texto);
+}
+
+.evolucion-nota {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.evolucion-aviso {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+}

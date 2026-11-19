@@ -1,7 +1,8 @@
 /**
  * Pantalla de Inicio (ruta "/"): saludo con el nombre de la persona y la
- * fecha de hoy, tarjetas de resumen del hato, alertas, ranking de lotes y
- * grupos, y el calendario de pesajes. El resumen se pide una vez y alimenta
+ * fecha de hoy, tarjetas de resumen del hato, el mejor proveedor, los
+ * gráficos (aptos, animales por lote/grupo/raza y evolución del peso), las
+ * alertas, el ranking de lotes y grupos, y el calendario de pesajes. El resumen se pide una vez y alimenta
  * las tarjetas, las alertas (sus totales) y el ranking; el calendario y la
  * lista de cada alerta se piden por su cuenta, así que un bloque que falla
  * muestra su propio error con "Reintentar" sin romper a los demás. Si no hay
@@ -16,7 +17,11 @@ import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import { fechaLarga } from '../utilidades/calendario'
 import { fechaHoyIso } from '../utilidades/fechas'
 import AlertasInicio from './inicio/AlertasInicio'
+import AnilloAptos from './inicio/AnilloAptos'
+import AnimalesPorCategoria from './inicio/AnimalesPorCategoria'
 import CalendarioPesajes from './inicio/CalendarioPesajes'
+import EvolucionPeso from './inicio/EvolucionPeso'
+import MejorProveedor from './inicio/MejorProveedor'
 import RankingLotesGrupos from './inicio/RankingLotesGrupos'
 import TarjetasResumen from './inicio/TarjetasResumen'
 import { useInicioResumen } from './inicio/useDatosInicio'
@@ -82,6 +87,15 @@ export default function Inicio() {
         <>
           <Seccion id="inicio-resumen" titulo="Resumen del hato" titulosOculto>
             {bloqueDelResumen(resumen && <TarjetasResumen resumen={resumen} />)}
+          </Seccion>
+
+          <Seccion id="inicio-graficos" titulo="Proveedor, distribución y evolución">
+            <div className="inicio-graficos">
+              <MejorProveedor />
+              {bloqueDelResumen(resumen && <AnilloAptos resumen={resumen} />)}
+              {bloqueDelResumen(resumen && <AnimalesPorCategoria resumen={resumen} />)}
+              <EvolucionPeso />
+            </div>
           </Seccion>
 
           <Seccion id="inicio-alertas" titulo="Alertas">

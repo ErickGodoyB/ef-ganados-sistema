@@ -74,35 +74,61 @@ describe('desplazarMes', () => {
 })
 
 describe('armarSemanas', () => {
-  it('noviembre de 2026 empieza en domingo: seis huecos antes del 1 y filas de 7', () => {
+  it('noviembre de 2026 empieza en domingo: seis días de octubre antes del 1 y filas de 7', () => {
     const semanas = armarSemanas(2026, 11)
 
     expect(semanas.every((semana) => semana.length === 7)).toBe(true)
-    expect(semanas[0].slice(0, 6)).toEqual([null, null, null, null, null, null])
-    expect(semanas[0][6]).toEqual({ dia: 1, fechaIso: '2026-11-01' })
+    expect(semanas[0].slice(0, 6).map((celda) => celda.fechaIso)).toEqual([
+      '2026-10-26',
+      '2026-10-27',
+      '2026-10-28',
+      '2026-10-29',
+      '2026-10-30',
+      '2026-10-31',
+    ])
+    expect(semanas[0].slice(0, 6).every((celda) => celda.fueraDelMes)).toBe(true)
+    expect(semanas[0][6]).toEqual({ dia: 1, fechaIso: '2026-11-01', fueraDelMes: false })
     expect(semanas).toHaveLength(6)
-    // El 30 es lunes: la última semana trae el 30 y seis huecos.
-    expect(semanas[5][0]).toEqual({ dia: 30, fechaIso: '2026-11-30' })
-    expect(semanas[5].slice(1)).toEqual([null, null, null, null, null, null])
+    // El 30 es lunes: la última semana trae el 30 y seis días de diciembre.
+    expect(semanas[5][0]).toEqual({ dia: 30, fechaIso: '2026-11-30', fueraDelMes: false })
+    expect(semanas[5].slice(1).map((celda) => celda.fechaIso)).toEqual([
+      '2026-12-01',
+      '2026-12-02',
+      '2026-12-03',
+      '2026-12-04',
+      '2026-12-05',
+      '2026-12-06',
+    ])
+    expect(semanas[5].slice(1).every((celda) => celda.fueraDelMes)).toBe(true)
   })
 
-  it('un mes que empieza en lunes no lleva huecos al principio (junio de 2026)', () => {
+  it('un mes que empieza en lunes no trae días del anterior (junio de 2026)', () => {
     const semanas = armarSemanas(2026, 6)
 
-    expect(semanas[0][0]).toEqual({ dia: 1, fechaIso: '2026-06-01' })
+    expect(semanas[0][0]).toEqual({ dia: 1, fechaIso: '2026-06-01', fueraDelMes: false })
   })
 
-  it('tiene exactamente un día por cada día del mes, en orden', () => {
+  it('pasa de año en los extremos (enero de 2027 empieza en viernes y trae días de diciembre de 2026)', () => {
+    const semanas = armarSemanas(2027, 1)
+
+    expect(semanas[0][0].fechaIso).toBe('2026-12-28')
+    expect(semanas[0][4]).toEqual({ dia: 1, fechaIso: '2027-01-01', fueraDelMes: false })
+  })
+
+  it('los días del mes propio son uno por día, en orden, y todos marcados como del mes', () => {
     const dias = armarSemanas(2028, 2)
       .flat()
-      .filter(Boolean)
+      .filter((celda) => !celda.fueraDelMes)
       .map((celda) => celda.dia)
 
     expect(dias).toEqual(Array.from({ length: 29 }, (_, i) => i + 1))
   })
 
-  it('un febrero de 28 días que empieza en lunes entra justo en cuatro semanas (febrero de 2027)', () => {
-    expect(armarSemanas(2027, 2)).toHaveLength(4)
+  it('un febrero de 28 días que empieza en lunes entra justo en cuatro semanas, sin días de otros meses (febrero de 2027)', () => {
+    const semanas = armarSemanas(2027, 2)
+
+    expect(semanas).toHaveLength(4)
+    expect(semanas.flat().some((celda) => celda.fueraDelMes)).toBe(false)
   })
 
   it('un mes largo puede necesitar seis semanas (agosto de 2026 empieza en sábado)', () => {

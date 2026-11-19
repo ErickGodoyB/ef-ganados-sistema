@@ -51,7 +51,7 @@ describe('Calendario de pesajes: cuadrícula', () => {
     const celdas = within(primeraFila).getAllByRole('cell')
     expect(celdas).toHaveLength(7)
     expect(celdas[6]).toHaveTextContent('1')
-    expect(celdas[0]).toBeEmptyDOMElement()
+    expect(celdas[0]).toHaveTextContent('26') // lunes 26 de octubre, atenuado
   })
 
   it('los días con pesajes son botones con una etiqueta completa y la cantidad de animales', async () => {

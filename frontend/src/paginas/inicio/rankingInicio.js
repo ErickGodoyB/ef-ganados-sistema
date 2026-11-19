@@ -19,3 +19,13 @@ export function filaDestacada(filas, campo) {
   const conMaximo = conDato.filter((fila) => fila[campo] === maximo)
   return conMaximo.length === 1 ? conMaximo[0] : null
 }
+
+/**
+ * El mejor proveedor del reporte de rendimiento (GET /api/reportes/proveedores):
+ * la primera fila con proveedorId y con GMD promedio. El servidor ya manda
+ * las filas por GMD promedio de mayor a menor y la fila "Sin proveedor"
+ * (proveedorId null) no es un proveedor real. Devuelve null si no hay.
+ */
+export function mejorProveedor(filas) {
+  return filas.find((fila) => fila.proveedorId != null && fila.gmdPromedio != null) ?? null
+}

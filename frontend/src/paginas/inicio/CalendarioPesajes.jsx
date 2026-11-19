@@ -2,7 +2,9 @@
  * Calendario de pesajes de Inicio, hecho a mano (sin librerías): cuadrícula
  * del mes con la semana desde el lunes, botones "Mes anterior", "Mes
  * siguiente" y "Hoy", y los días con pesajes marcados con un punto y la
- * cantidad de animales. El día de hoy lleva borde (y aria-current="date").
+ * cantidad de animales, dentro de una cuadrícula con borde (los días del mes
+ * anterior y siguiente que completan las semanas se ven atenuados). El día
+ * de hoy lleva borde de acento (y aria-current="date").
  * Los días con pesajes son botones con una etiqueta completa ("15 de
  * noviembre: 2 sesiones, 40 animales"); al elegir uno se muestran sus
  * sesiones y animales y un enlace a Pesajes con ese día precargado. Los
@@ -104,14 +106,21 @@ export default function CalendarioPesajes() {
           {semanas.map((semana, indice) => (
             <tr key={indice}>
               {semana.map((celda, columna) => {
-                if (!celda) {
-                  return <td key={columna} className="calendario-hueco" />
+                if (celda.fueraDelMes) {
+                  // Día del mes anterior o siguiente: solo completa la cuadrícula, atenuado y sin marcas.
+                  return (
+                    <td key={columna} className="calendario-celda calendario-celda--fuera">
+                      <span className="calendario-dia calendario-dia--fuera" aria-hidden="true">
+                        <span className="calendario-numero">{celda.dia}</span>
+                      </span>
+                    </td>
+                  )
                 }
                 const datos = diasConPesajes.get(celda.fechaIso)
                 const esHoy = celda.fechaIso === hoy
                 const clase = `calendario-dia${esHoy ? ' calendario-dia--hoy' : ''}`
                 return (
-                  <td key={columna}>
+                  <td key={columna} className="calendario-celda">
                     {datos ? (
                       <button
                         type="button"

@@ -76,7 +76,13 @@ describe('Inicio: encabezado', () => {
     await renderizar()
 
     const titulos = screen.getAllByRole('heading', { level: 2 }).map((titulo) => titulo.textContent)
-    expect(titulos).toEqual(['Resumen del hato', 'Alertas', 'Lotes y grupos', 'Calendario de pesajes'])
+    expect(titulos).toEqual([
+      'Resumen del hato',
+      'Proveedor, distribución y evolución',
+      'Alertas',
+      'Lotes y grupos',
+      'Calendario de pesajes',
+    ])
   })
 })
 
@@ -138,7 +144,8 @@ describe('Inicio: estados', () => {
     }
     await renderizar()
 
-    expect(screen.getAllByText('No se pudo cargar el resumen.')).toHaveLength(3)
+    // Tarjetas, anillo de aptos, animales por…, alertas y ranking.
+    expect(screen.getAllByText('No se pudo cargar el resumen.')).toHaveLength(5)
     // El calendario sigue funcionando por su cuenta.
     expect(await screen.findByRole('button', { name: /^18 de noviembre/ })).toBeInTheDocument()
 
@@ -156,7 +163,7 @@ describe('Inicio: estados', () => {
 
     expect(await screen.findByText('No se pudo cargar el calendario.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Animales activos/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Lotes' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Lotes' }).length).toBeGreaterThan(0)
   })
 
   it('sin animales ni pesajes muestra la bienvenida con el botón para registrar el primero', async () => {

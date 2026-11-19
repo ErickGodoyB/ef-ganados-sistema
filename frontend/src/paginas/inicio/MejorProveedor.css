@@ -1,0 +1,44 @@
+/**
+ * Estilos de la tarjeta "Mejor proveedor" de Inicio (ver MejorProveedor.jsx).
+ * Solo variables de color de index.css.
+ */
+
+.mejor-proveedor-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.mejor-proveedor-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.mejor-proveedor-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.mejor-proveedor-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.mejor-proveedor-datos dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.mejor-proveedor-enlace {
+  align-self: flex-start;
+  text-decoration: none;
+}

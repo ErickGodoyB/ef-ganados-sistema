@@ -50,55 +50,79 @@
   outline-offset: 2px;
 }
 
+/* Cuadrícula real: 7 columnas iguales, cada día en una celda con borde del
+   tema y de altura pareja. table-layout fijo + width 100% hacen que entre en
+   360 px sin scroll horizontal (cada columna mide ~46 px). */
 .calendario-tabla {
   width: 100%;
   table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 2px;
+  border-collapse: collapse;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
 }
 
 .calendario-tabla th {
-  padding: 4px 0;
+  padding: 6px 0;
   font-size: 12px;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
   color: var(--texto-secundario);
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
 }
 
-.calendario-tabla td {
+.calendario-celda {
+  height: 60px;
   padding: 0;
-  text-align: center;
+  border: 1px solid var(--borde);
+  vertical-align: top;
 }
 
 .calendario-dia {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
+  align-items: flex-start;
+  justify-content: space-between;
+  box-sizing: border-box;
   width: 100%;
-  min-height: 48px;
-  padding: 2px 0;
+  height: 100%;
+  min-height: 58px;
+  padding: 4px 4px 3px;
   font: inherit;
+  text-align: left;
   color: var(--texto);
   background: transparent;
-  border: 2px solid transparent;
-  border-radius: var(--radio-sm);
+  border: 0;
+  border-radius: 0;
 }
 
 .calendario-numero {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
-/* Día de hoy: borde (no solo color). */
+/* Días del mes anterior y siguiente: atenuados (la cifra sigue por encima de 3:1 y no es interactiva). */
+.calendario-celda--fuera {
+  background: var(--superficie-hover);
+}
+
+.calendario-dia--fuera {
+  color: var(--texto-secundario);
+  opacity: 0.65;
+}
+
+/* Día de hoy: borde de acento hacia adentro de la celda (no solo color: es un marco). */
 .calendario-dia--hoy {
-  border-color: var(--color-primario-fondo);
+  box-shadow: inset 0 0 0 2px var(--color-foco);
+}
+
+.calendario-dia--hoy .calendario-numero {
+  font-weight: 800;
 }
 
 .calendario-dia--con-pesajes {
-  background: var(--superficie);
   cursor: pointer;
 }
 
@@ -108,17 +132,14 @@
 
 .calendario-dia--con-pesajes:focus-visible {
   outline: 2px solid var(--color-foco);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
-/* Día elegido: fondo de énfasis y negrita (no solo color). */
-.calendario-dia--elegido {
+/* Día elegido: fondo de énfasis y texto claro (no solo color: también cambia el peso de la marca). */
+.calendario-dia--elegido,
+.calendario-dia--elegido:hover {
   background: var(--color-primario-fondo);
   color: var(--color-primario-texto);
-}
-
-.calendario-dia--elegido .calendario-numero {
-  font-weight: 700;
 }
 
 .calendario-marca {
