@@ -48,6 +48,7 @@ export default function TablaPersonas({ personas, orden, onOrdenar, onEditar, on
             <th scope="col">Teléfono</th>
             {encabezadoOrdenable('cantidadAnimales', 'Animales')}
             <th scope="col">Compras</th>
+            <th scope="col">Proveedor de</th>
             {encabezadoOrdenable('cantidadPesajes', 'Pesajes')}
             <th scope="col">Acceso</th>
             <th scope="col">
@@ -68,6 +69,7 @@ export default function TablaPersonas({ personas, orden, onOrdenar, onEditar, on
                 <td>{persona.perTelefono || '—'}</td>
                 <td>{persona.cantidadAnimales}</td>
                 <td>{persona.cantidadComoComprador}</td>
+                <td>{persona.cantidadComoProveedor ?? 0}</td>
                 <td>{persona.cantidadPesajes}</td>
                 <td>{persona.tieneUsuario && <span className="badge">Con acceso</span>}</td>
                 <td>

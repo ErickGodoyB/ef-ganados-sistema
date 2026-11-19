@@ -27,7 +27,7 @@ const FILAS_POR_PAGINA = 10
 
 const FILTROS_TIPO = [
   { valor: 'todos', etiqueta: 'Todos' },
-  ...TIPOS_PERSONA.map((tipo) => ({ valor: tipo.valor, etiqueta: `${tipo.etiqueta}s` })),
+  ...TIPOS_PERSONA.map((tipo) => ({ valor: tipo.valor, etiqueta: tipo.plural })),
 ]
 
 export default function Personas() {

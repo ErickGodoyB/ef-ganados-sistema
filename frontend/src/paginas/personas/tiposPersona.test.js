@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { etiquetaTipo, TIPOS_PERSONA } from './tiposPersona'
 
 describe('TIPOS_PERSONA', () => {
-  it('incluye a PROPIETARIO, EMPLEADO y CLIENTE', () => {
+  it('incluye a PROPIETARIO, EMPLEADO, CLIENTE y PROVEEDOR', () => {
     const valores = TIPOS_PERSONA.map((tipo) => tipo.valor)
-    expect(valores).toEqual(['PROPIETARIO', 'EMPLEADO', 'CLIENTE'])
+    expect(valores).toEqual(['PROPIETARIO', 'EMPLEADO', 'CLIENTE', 'PROVEEDOR'])
+  })
+
+  it('la etiqueta de PROVEEDOR es "Proveedor"', () => {
+    expect(etiquetaTipo('PROVEEDOR')).toBe('Proveedor')
   })
 
   it('la etiqueta de CLIENTE es "Cliente"', () => {

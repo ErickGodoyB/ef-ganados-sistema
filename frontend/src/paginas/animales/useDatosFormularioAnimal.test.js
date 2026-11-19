@@ -14,6 +14,7 @@ const PERSONAS = [
   { perId: 1, perNombre: 'Ana', perApellido: 'Gómez', perTipo: 'EMPLEADO' },
   { perId: 2, perNombre: 'Juan', perApellido: 'Pérez', perTipo: 'PROPIETARIO' },
   { perId: 3, perNombre: 'Lucía', perApellido: 'Flores', perTipo: 'CLIENTE' },
+  { perId: 4, perNombre: 'Pedro', perApellido: 'Vera', perTipo: 'PROVEEDOR' },
 ]
 
 describe('useDatosFormularioAnimal', () => {
@@ -30,5 +31,20 @@ describe('useDatosFormularioAnimal', () => {
     await waitFor(() => expect(result.current.cargando).toBe(false))
 
     expect(result.current.duenios.map((persona) => persona.perId)).toEqual([2])
+  })
+
+  it('solo ofrece como proveedores a las personas de tipo PROVEEDOR', async () => {
+    peticionProtegida.mockImplementation((ruta) => {
+      if (ruta === '/api/razas') return Promise.resolve(RAZAS)
+      if (ruta === '/api/subgrupos') return Promise.resolve(SUB_GRUPOS)
+      if (ruta === '/api/personas') return Promise.resolve(PERSONAS)
+      return Promise.reject(new Error(`ruta inesperada: ${ruta}`))
+    })
+
+    const { result } = renderHook(() => useDatosFormularioAnimal())
+
+    await waitFor(() => expect(result.current.cargando).toBe(false))
+
+    expect(result.current.proveedores.map((persona) => persona.perId)).toEqual([4])
   })
 })

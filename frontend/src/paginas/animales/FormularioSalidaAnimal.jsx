@@ -5,7 +5,7 @@
  * del animal, que llega en fechaUltimoPesaje del resumen), motivo (Venta/
  * Muerte/Otro), nota (obligatoria si el motivo es Otro) y, solo con
  * motivo Venta, un comprador opcional (con alta rápida de un cliente
- * nuevo, ver AltaRapidaCliente.jsx). PUT /api/animales/{id}/salida; las
+ * nuevo, ver AltaRapidaPersona.jsx). PUT /api/animales/{id}/salida; las
  * reglas del cliente reflejan las de AnimalService en el backend, para
  * no hacer esperar un error del servidor por algo que ya se podía avisar
  * acá.
@@ -14,7 +14,7 @@
 import { useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { formatearFecha } from '../../utilidades/formato'
-import AltaRapidaCliente from './AltaRapidaCliente'
+import AltaRapidaPersona from './AltaRapidaPersona'
 import { MOTIVOS_SALIDA } from './tiposSalida'
 import { usePersonasComprador } from './usePersonasComprador'
 import './FormularioAnimal.css'
@@ -241,7 +241,7 @@ export default function FormularioSalidaAnimal({ animal, alGuardar, alCancelar }
                   </option>
                 ))}
             </select>
-            <AltaRapidaCliente onCreado={alCrearCliente} />
+            <AltaRapidaPersona tipo="CLIENTE" etiqueta="cliente" onCreado={alCrearCliente} />
           </div>
           {errorPersonas && <p className="campo-ayuda">{errorPersonas}</p>}
           {errores.comprador && (

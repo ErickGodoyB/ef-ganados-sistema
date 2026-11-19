@@ -72,6 +72,9 @@ export function motivosBloqueo(persona) {
   if (persona.cantidadComoComprador > 0) {
     motivos.push(`figura como comprador de ${persona.cantidadComoComprador} animales`)
   }
+  if (persona.cantidadComoProveedor > 0) {
+    motivos.push(`es proveedor de ${persona.cantidadComoProveedor} animales`)
+  }
   if (persona.cantidadPesajes > 0) {
     motivos.push(`figura en ${persona.cantidadPesajes} pesajes`)
   }

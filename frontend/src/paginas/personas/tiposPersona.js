@@ -7,9 +7,11 @@
  */
 
 export const TIPOS_PERSONA = [
-  { valor: 'PROPIETARIO', etiqueta: 'Propietario' },
-  { valor: 'EMPLEADO', etiqueta: 'Empleado' },
-  { valor: 'CLIENTE', etiqueta: 'Cliente' },
+  { valor: 'PROPIETARIO', etiqueta: 'Propietario', plural: 'Propietarios' },
+  { valor: 'EMPLEADO', etiqueta: 'Empleado', plural: 'Empleados' },
+  { valor: 'CLIENTE', etiqueta: 'Cliente', plural: 'Clientes' },
+  // El plural va escrito a mano: "Proveedor" + "s" no sirve ("Proveedores").
+  { valor: 'PROVEEDOR', etiqueta: 'Proveedor', plural: 'Proveedores' },
 ]
 
 /** Etiqueta legible de un tipo (ej. para la columna "Tipo" de la tabla); el valor crudo si no se reconoce. */

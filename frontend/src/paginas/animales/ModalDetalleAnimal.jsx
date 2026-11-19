@@ -172,6 +172,10 @@ export default function ModalDetalleAnimal({
               <dd>{animal.duenioNombre || 'Sin datos'}</dd>
             </div>
             <div className="detalle-animal-dato">
+              <dt>Proveedor</dt>
+              <dd>{animal.proveedorNombre || 'Sin proveedor'}</dd>
+            </div>
+            <div className="detalle-animal-dato">
               <dt>Fecha de ingreso</dt>
               <dd>{formatearFecha(animal.aniFechaIngreso)}</dd>
             </div>

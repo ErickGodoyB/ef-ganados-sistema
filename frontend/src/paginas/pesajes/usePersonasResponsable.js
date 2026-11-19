@@ -1,8 +1,9 @@
 /**
  * Personas disponibles para elegir como responsable de un pesaje (GET
- * /api/personas, sin incluir a las de tipo CLIENTE: un cliente no es
- * quien registra un pesaje). "personaActualId" siempre queda incluida en
- * la lista aunque su tipo sea CLIENTE, porque el usuario autenticado
+ * /api/personas, sin incluir a las de tipo CLIENTE ni PROVEEDOR: ni un
+ * cliente ni un proveedor son quienes registran un pesaje).
+ * "personaActualId" siempre queda incluida en la lista aunque su tipo sea
+ * CLIENTE o PROVEEDOR, porque el usuario autenticado
  * tiene que poder elegirse a sí mismo como responsable sin importar su
  * tipo de persona. Las pestañas "Individual" y "Por lote" del modal
  * "Nuevo pesaje" comparten este hook porque las dos necesitan
@@ -13,6 +14,9 @@
 
 import { useEffect, useState } from 'react'
 import { peticionProtegida } from '../../api/cliente'
+
+/** Tipos que no registran pesajes: un cliente compra y un proveedor provee animales. */
+const TIPOS_NO_RESPONSABLES = ['CLIENTE', 'PROVEEDOR']
 
 export function usePersonasResponsable(personaActualId) {
   // Se guarda la respuesta del servidor sin filtrar: el filtro por
@@ -51,7 +55,7 @@ export function usePersonasResponsable(personaActualId) {
   }, [])
 
   const personas = personasSinFiltrar.filter(
-    (persona) => persona.perTipo !== 'CLIENTE' || persona.perId === personaActualId,
+    (persona) => !TIPOS_NO_RESPONSABLES.includes(persona.perTipo) || persona.perId === personaActualId,
   )
 
   return { personas, cargandoPersonas: cargando, errorPersonas: error }

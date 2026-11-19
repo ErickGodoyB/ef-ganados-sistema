@@ -47,6 +47,10 @@ export default function TarjetaPersona({ persona, onEditar, onEliminar }) {
           <dd>{persona.cantidadComoComprador}</dd>
         </div>
         <div className="tarjeta-persona-dato">
+          <dt>Proveedor de</dt>
+          <dd>{persona.cantidadComoProveedor ?? 0}</dd>
+        </div>
+        <div className="tarjeta-persona-dato">
           <dt>Pesajes</dt>
           <dd>{persona.cantidadPesajes}</dd>
         </div>

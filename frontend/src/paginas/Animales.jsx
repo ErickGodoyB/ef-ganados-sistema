@@ -1,7 +1,7 @@
 /**
  * Listado de animales (RF010): trae el resumen desde el backend
  * (GET /api/animales/resumen) y permite buscar por caravana, filtrar por
- * lote (por subGrupoId; ver listadoAnimales.js), por raza, por GMD mínima y
+ * lote (por subGrupoId; ver listadoAnimales.js), por raza, por proveedor, por GMD mínima y
  * máxima (los animales sin GMD quedan afuera cuando hay un límite válido),
  * por estado (apto/no apto para venta) y por estado de salida (Activos por
  * defecto/Salidos/Todos, un filtro aparte del de apto/no apto). Todo se
@@ -35,6 +35,7 @@ import {
   FILTROS_POR_DEFECTO,
   filtrarYOrdenarAnimales,
   obtenerLotesDisponibles,
+  obtenerProveedoresDisponibles,
 } from './animales/listadoAnimales'
 import ModalDetalleAnimal from './animales/ModalDetalleAnimal'
 import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
@@ -73,6 +74,7 @@ export default function Animales() {
   const [estado, setEstado] = useState('todos')
   const [estadoSalida, setEstadoSalida] = useState(FILTROS_POR_DEFECTO.estadoSalida)
   const [raza, setRaza] = useState(FILTROS_POR_DEFECTO.raza)
+  const [proveedor, setProveedor] = useState(FILTROS_POR_DEFECTO.proveedor)
   // Los límites de GMD se guardan como el texto que se escribe (no como
   // número) para poder aceptar un valor a medio escribir ("-", ","): el
   // filtro lo ignora hasta que sea un número (ver utilidades/filtrosAnimales.js).
@@ -99,6 +101,7 @@ export default function Animales() {
     estado,
     estadoSalida,
     raza,
+    proveedor,
     gmdMin,
     gmdMax,
     orden,
@@ -109,23 +112,44 @@ export default function Animales() {
     filtrosPrevios.estado !== estado ||
     filtrosPrevios.estadoSalida !== estadoSalida ||
     filtrosPrevios.raza !== raza ||
+    filtrosPrevios.proveedor !== proveedor ||
     filtrosPrevios.gmdMin !== gmdMin ||
     filtrosPrevios.gmdMax !== gmdMax ||
     filtrosPrevios.orden !== orden
   ) {
-    setFiltrosPrevios({ busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax, orden })
+    setFiltrosPrevios({ busqueda, lote, estado, estadoSalida, raza, proveedor, gmdMin, gmdMax, orden })
     setPagina(1)
   }
 
   const lotesDisponibles = useMemo(() => obtenerLotesDisponibles(animales), [animales])
   const razasDisponibles = useMemo(() => obtenerRazasDisponibles(animales), [animales])
+  const proveedoresDisponibles = useMemo(() => obtenerProveedoresDisponibles(animales), [animales])
 
   const resultado = useMemo(
-    () => filtrarYOrdenarAnimales(animales, { busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax, orden }),
-    [animales, busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax, orden],
+    () => filtrarYOrdenarAnimales(animales, {
+        busqueda,
+        lote,
+        estado,
+        estadoSalida,
+        raza,
+        proveedor,
+        gmdMin,
+        gmdMax,
+        orden,
+      }),
+    [animales, busqueda, lote, estado, estadoSalida, raza, proveedor, gmdMin, gmdMax, orden],
   )
 
-  const cantidadFiltros = contarFiltrosActivos({ busqueda, lote, estado, estadoSalida, raza, gmdMin, gmdMax })
+  const cantidadFiltros = contarFiltrosActivos({
+    busqueda,
+    lote,
+    estado,
+    estadoSalida,
+    raza,
+    proveedor,
+    gmdMin,
+    gmdMax,
+  })
 
   const totalPaginas = Math.max(1, Math.ceil(resultado.length / filasPorPagina))
   // Por si cambiaron las filas por página (u otra cosa) y la página
@@ -141,6 +165,7 @@ export default function Animales() {
     setEstado(FILTROS_POR_DEFECTO.estado)
     setEstadoSalida(FILTROS_POR_DEFECTO.estadoSalida)
     setRaza(FILTROS_POR_DEFECTO.raza)
+    setProveedor(FILTROS_POR_DEFECTO.proveedor)
     setGmdMin(FILTROS_POR_DEFECTO.gmdMin)
     setGmdMax(FILTROS_POR_DEFECTO.gmdMax)
   }
@@ -318,6 +343,23 @@ export default function Animales() {
           <select id="animales-filtro-raza" value={raza} onChange={(evento) => setRaza(evento.target.value)}>
             <option value="todas">Todas las razas</option>
             {razasDisponibles.map((opcion) => (
+              <option key={opcion.valor} value={opcion.valor}>
+                {opcion.etiqueta}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="campo-filtro">
+          <label htmlFor="animales-filtro-proveedor">Proveedor</label>
+          <select
+            id="animales-filtro-proveedor"
+            value={proveedor}
+            onChange={(evento) => setProveedor(evento.target.value)}
+          >
+            <option value="todos">Todos los proveedores</option>
+            <option value="sin-proveedor">Sin proveedor</option>
+            {proveedoresDisponibles.map((opcion) => (
               <option key={opcion.valor} value={opcion.valor}>
                 {opcion.etiqueta}
               </option>

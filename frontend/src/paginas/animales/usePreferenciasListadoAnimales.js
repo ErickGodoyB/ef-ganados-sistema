@@ -14,10 +14,12 @@ const CLAVE = 'preferenciasListadoAnimales'
 const FILAS_POR_PAGINA_POR_DEFECTO = 10
 
 // Todas las columnas opcionales visibles por defecto, salvo "Fecha de
-// ingreso" (pedido explícitamente así). Se arma a partir de
+// ingreso" y "Proveedor" (pedido explícitamente así).
+const COLUMNAS_OCULTAS_POR_DEFECTO = ['fechaIngreso', 'proveedor']
+// Se arma a partir de
 // COLUMNAS_OPCIONALES para que una columna nueva no quede fuera por olvido.
 const COLUMNAS_POR_DEFECTO = COLUMNAS_OPCIONALES.reduce((acumulado, columna) => {
-  acumulado[columna.clave] = columna.clave !== 'fechaIngreso'
+  acumulado[columna.clave] = !COLUMNAS_OCULTAS_POR_DEFECTO.includes(columna.clave)
   return acumulado
 }, {})
 

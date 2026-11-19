@@ -1,0 +1,106 @@
+/**
+ * Estilos del modal "Ver animales" del reporte por proveedor (ver
+ * ModalAnimalesProveedor.jsx): tabla desde 768px y tarjetas en celular, una
+ * u otra según el ancho, sin JS. Solo variables de color de index.css.
+ */
+
+.animales-proveedor-vacio,
+.animales-proveedor-orden {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior (ver
+   estilos/tablaYTarjetas.test.js). */
+.animales-proveedor-tabla-solo-escritorio {
+  display: none;
+}
+
+.animales-proveedor-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .animales-proveedor-tabla-solo-escritorio {
+    display: block;
+    overflow-x: auto;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-md);
+  }
+
+  .animales-proveedor-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.animales-proveedor-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.animales-proveedor-tabla th,
+.animales-proveedor-tabla td {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--borde);
+}
+
+.animales-proveedor-tabla thead th {
+  background: var(--superficie-hover);
+}
+
+.animales-proveedor-tabla tbody tr:last-child th,
+.animales-proveedor-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.animales-proveedor-caravana {
+  font-weight: 700;
+}
+
+.animales-proveedor-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+
+.animales-proveedor-tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.animales-proveedor-tarjeta-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.animales-proveedor-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.animales-proveedor-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.animales-proveedor-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}

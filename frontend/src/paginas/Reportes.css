@@ -1,0 +1,64 @@
+/**
+ * Estilos de la página de Reportes (ver Reportes.jsx): el selector de
+ * reporte en tarjetas. Una columna en celular y varias desde 768px, para
+ * que sumar reportes no obligue a tocar nada. Solo variables de index.css.
+ */
+
+.reportes-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reportes-selector {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .reportes-selector {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+.reportes-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 44px;
+  padding: 14px;
+  text-align: left;
+  font: inherit;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.reportes-opcion:hover {
+  background: var(--superficie-hover);
+}
+
+.reportes-opcion:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* El reporte elegido se distingue por borde grueso (no solo por color). */
+.reportes-opcion--elegida {
+  border: 2px solid var(--color-primario-fondo);
+}
+
+.reportes-opcion-titulo {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.reportes-opcion-descripcion {
+  font-size: 14px;
+  color: var(--texto-secundario);
+}

@@ -22,6 +22,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import { parsearPeso, pesoEsValido } from '../../utilidades/peso'
 import AltaRapidaLote from './AltaRapidaLote'
+import AltaRapidaPersona from './AltaRapidaPersona'
 import AltaRapidaRaza from './AltaRapidaRaza'
 import { useDatosFormularioAnimal } from './useDatosFormularioAnimal'
 import './FormularioAnimal.css'
@@ -43,6 +44,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
     razas: razasDelServidor,
     subGrupos: subGruposDelServidor,
     duenios,
+    proveedores: proveedoresDelServidor,
     cargando,
     error,
     recargar,
@@ -67,10 +69,21 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
     setSubGrupos(subGruposDelServidor)
   }
 
+  const [proveedoresPrevios, setProveedoresPrevios] = useState(proveedoresDelServidor)
+  const [proveedores, setProveedores] = useState(proveedoresDelServidor)
+  if (proveedoresPrevios !== proveedoresDelServidor) {
+    setProveedoresPrevios(proveedoresDelServidor)
+    setProveedores(proveedoresDelServidor)
+  }
+
   const [caravana, setCaravana] = useState(valoresIniciales.aniCaravana ?? '')
   const [razaId, setRazaId] = useState(valoresIniciales.razaId ? String(valoresIniciales.razaId) : '')
   const [subGrupoId, setSubGrupoId] = useState(valoresIniciales.subGrupoId ? String(valoresIniciales.subGrupoId) : '')
   const [duenioId, setDuenioId] = useState(valoresIniciales.duenioId ? String(valoresIniciales.duenioId) : '')
+  // Opcional: '' = sin proveedor (se envía como proveedorId null).
+  const [proveedorId, setProveedorId] = useState(
+    valoresIniciales.proveedorId ? String(valoresIniciales.proveedorId) : '',
+  )
   const [fechaIngreso, setFechaIngreso] = useState(valoresIniciales.aniFechaIngreso ?? obtenerFechaHoyIso())
   const [pesoInicial, setPesoInicial] = useState(
     valoresIniciales.aniPesoInicial != null ? String(valoresIniciales.aniPesoInicial) : '',
@@ -84,6 +97,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
   const refRaza = useRef(null)
   const refSubGrupo = useRef(null)
   const refDuenio = useRef(null)
+  const refProveedor = useRef(null)
   const refFecha = useRef(null)
   const refPeso = useRef(null)
   const refObservacion = useRef(null)
@@ -173,6 +187,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
       aniFechaIngreso: fechaIngreso,
       aniPesoInicial: parsearPeso(pesoInicial),
       aniObservacion: observacion.trim() || null,
+      proveedorId: proveedorId ? Number(proveedorId) : null,
     }
 
     setGuardando(true)
@@ -283,6 +298,13 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
     refSubGrupo.current?.focus()
   }
 
+  /** El proveedor recién creado por alta rápida se agrega a las opciones, queda seleccionado, y el foco vuelve al select. */
+  function alCrearProveedor(proveedorCreado) {
+    setProveedores((actual) => [...actual, proveedorCreado])
+    setProveedorId(String(proveedorCreado.perId))
+    refProveedor.current?.focus()
+  }
+
   if (cargando) {
     return <p role="status">Cargando datos del formulario…</p>
   }
@@ -384,7 +406,7 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
           ref={refDuenio}
           value={duenioId}
           onChange={(evento) => setDuenioId(evento.target.value)}
-          onKeyDown={alPresionarEnterIrA(refFecha)}
+          onKeyDown={alPresionarEnterIrA(refProveedor)}
           aria-invalid={Boolean(errores.duenioId)}
           disabled={guardando}
         >
@@ -400,6 +422,28 @@ const FormularioAnimal = forwardRef(function FormularioAnimal(
             {errores.duenioId}
           </p>
         )}
+      </div>
+
+      <div className="campo">
+        <label htmlFor="nuevo-animal-proveedor">Proveedor (opcional)</label>
+        <div className="campo-con-alta-rapida">
+          <select
+            id="nuevo-animal-proveedor"
+            ref={refProveedor}
+            value={proveedorId}
+            onChange={(evento) => setProveedorId(evento.target.value)}
+            onKeyDown={alPresionarEnterIrA(refFecha)}
+            disabled={guardando}
+          >
+            <option value="">Sin proveedor</option>
+            {proveedores.map((persona) => (
+              <option key={persona.perId} value={persona.perId}>
+                {persona.perNombre} {persona.perApellido}
+              </option>
+            ))}
+          </select>
+          <AltaRapidaPersona tipo="PROVEEDOR" etiqueta="proveedor" onCreado={alCrearProveedor} />
+        </div>
       </div>
 
       <div className="campo">

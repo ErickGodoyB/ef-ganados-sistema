@@ -11,6 +11,7 @@ export const COLUMNAS = [
   { clave: 'aniCaravana', etiqueta: 'Caravana', campoOrden: 'aniCaravana', obligatoria: true },
   { clave: 'raza', etiqueta: 'Raza', campoOrden: 'razaDescripcion' },
   { clave: 'lote', etiqueta: 'Lote', campoOrden: 'lote' },
+  { clave: 'proveedor', etiqueta: 'Proveedor', campoOrden: 'proveedor' },
   { clave: 'pesoActual', etiqueta: 'Peso actual', campoOrden: 'pesoActual' },
   { clave: 'gmd', etiqueta: 'GMD', campoOrden: 'gmd' },
   { clave: 'estado', etiqueta: 'Estado', campoOrden: 'aptoVenta' },

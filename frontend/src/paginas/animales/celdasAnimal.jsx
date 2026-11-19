@@ -18,6 +18,8 @@ export function valorCelda(animal, clave) {
       return animal.razaDescripcion
     case 'lote':
       return <LoteInfo subGrupoDescripcion={animal.subGrupoDescripcion} grupoDescripcion={animal.grupoDescripcion} />
+    case 'proveedor':
+      return animal.proveedorNombre || 'Sin proveedor'
     case 'pesoActual':
       return formatearPeso(animal.pesoActual)
     case 'gmd':

@@ -29,6 +29,22 @@ export function obtenerLotesDisponibles(animales) {
   return [...vistos.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
 }
 
+/**
+ * Proveedores distintos presentes en los datos (para las opciones del
+ * filtro), identificados por proveedorId y ordenados por nombre. Los
+ * animales sin proveedor no entran acá: "Sin proveedor" es una opción fija
+ * del filtro (igual criterio que "Sin lote").
+ */
+export function obtenerProveedoresDisponibles(animales) {
+  const vistos = new Map()
+  for (const animal of animales) {
+    if (animal.proveedorId != null && !vistos.has(animal.proveedorId)) {
+      vistos.set(animal.proveedorId, { valor: String(animal.proveedorId), etiqueta: animal.proveedorNombre })
+    }
+  }
+  return [...vistos.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
+}
+
 function valorDeOrden(animal, campo) {
   switch (campo) {
     case 'aniCaravana':
@@ -37,6 +53,8 @@ function valorDeOrden(animal, campo) {
       return animal.razaDescripcion?.toLowerCase() ?? null
     case 'lote':
       return animal.subGrupoDescripcion?.toLowerCase() ?? null
+    case 'proveedor':
+      return animal.proveedorNombre?.toLowerCase() ?? null
     case 'pesoActual':
       return animal.pesoActual
     case 'gmd':
@@ -93,6 +111,7 @@ export const FILTROS_POR_DEFECTO = {
   estado: 'todos',
   estadoSalida: 'activos',
   raza: 'todas',
+  proveedor: 'todos',
   gmdMin: '',
   gmdMax: '',
 }
@@ -110,6 +129,7 @@ export function contarFiltrosActivos({
   estado = FILTROS_POR_DEFECTO.estado,
   estadoSalida = FILTROS_POR_DEFECTO.estadoSalida,
   raza = FILTROS_POR_DEFECTO.raza,
+  proveedor = FILTROS_POR_DEFECTO.proveedor,
   gmdMin = FILTROS_POR_DEFECTO.gmdMin,
   gmdMax = FILTROS_POR_DEFECTO.gmdMax,
 }) {
@@ -119,6 +139,7 @@ export function contarFiltrosActivos({
     estado !== FILTROS_POR_DEFECTO.estado,
     estadoSalida !== FILTROS_POR_DEFECTO.estadoSalida,
     raza !== FILTROS_POR_DEFECTO.raza,
+    proveedor !== FILTROS_POR_DEFECTO.proveedor,
     parsearLimiteGmd(gmdMin) != null,
     parsearLimiteGmd(gmdMax) != null,
   ].filter(Boolean).length
@@ -136,7 +157,7 @@ export function contarFiltrosActivos({
  */
 export function filtrarYOrdenarAnimales(
   animales,
-  { busqueda, lote, estado, estadoSalida, raza = 'todas', gmdMin = '', gmdMax = '', orden },
+  { busqueda, lote, estado, estadoSalida, raza = 'todas', proveedor = 'todos', gmdMin = '', gmdMax = '', orden },
 ) {
   const termino = busqueda.trim().toLowerCase()
 
@@ -151,6 +172,12 @@ export function filtrarYOrdenarAnimales(
       return false
     }
     if (!cumpleFiltroRaza(animal, raza)) {
+      return false
+    }
+    if (proveedor === 'sin-proveedor' && animal.proveedorId != null) {
+      return false
+    }
+    if (proveedor !== 'todos' && proveedor !== 'sin-proveedor' && String(animal.proveedorId) !== proveedor) {
       return false
     }
     if (!cumpleFiltroGmd(animal, gmdMin, gmdMax)) {

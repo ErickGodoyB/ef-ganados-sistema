@@ -1,0 +1,198 @@
+/**
+ * Estilos del reporte "Rendimiento por proveedor" (ver
+ * ReporteRendimientoProveedor.jsx). Mobile-first: tarjetas en celular y
+ * tabla desde 768px, una u otra según el ancho, sin JS. Solo variables de
+ * color de index.css: claro y oscuro salen solos.
+ */
+
+.reporte-proveedor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reporte-titulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.reporte-explicacion {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--texto);
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-md);
+}
+
+/* Área táctil de al menos 44 px de alto: toda la línea es la etiqueta. */
+.reporte-casilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  align-self: flex-start;
+  font-size: 15px;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.reporte-casilla input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--color-primario-fondo);
+  cursor: pointer;
+}
+
+.reporte-casilla input:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* GMD promedio: número escrito + barra proporcional (la barra es solo ayuda visual). */
+.reporte-gmd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.reporte-gmd-valor {
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.reporte-barra {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+}
+
+.reporte-barra-relleno {
+  display: block;
+  height: 100%;
+  background: var(--color-primario-fondo);
+}
+
+.reporte-etiqueta-mejor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+}
+
+.reporte-nota {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--texto-secundario);
+}
+
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior (ver
+   estilos/tablaYTarjetas.test.js). */
+.reporte-tabla-solo-escritorio {
+  display: none;
+}
+
+.reporte-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .reporte-tabla-solo-escritorio {
+    display: block;
+    overflow-x: auto;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-md);
+  }
+
+  .reporte-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.reporte-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.reporte-tabla th,
+.reporte-tabla td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--borde);
+}
+
+.reporte-tabla thead th {
+  white-space: nowrap;
+  background: var(--superficie-hover);
+}
+
+.reporte-tabla tbody tr:last-child th,
+.reporte-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.reporte-proveedor-nombre {
+  font-weight: 700;
+}
+
+.reporte-tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px;
+}
+
+.reporte-tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reporte-tarjeta-nombre {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.reporte-tarjeta-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.reporte-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.reporte-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
