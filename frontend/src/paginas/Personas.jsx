@@ -10,10 +10,19 @@
  */
 
 import { Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import BotonExportar from '../componentes/BotonExportar'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
+import ModalExportar from '../componentes/ModalExportar'
 import Paginacion from '../componentes/Paginacion'
 import { OPCIONES_ORDEN_MOVIL } from './personas/columnas'
+import {
+  AVISO_DATOS_PERSONALES,
+  COLUMNAS_PERSONAS,
+  describirFiltrosPersonas,
+  filasDePersonasParaExportar,
+} from './personas/exportacionPersonas'
+import FiltrosExportarPersonas from './personas/FiltrosExportarPersonas'
 import { filtrarYOrdenarPersonas } from './personas/listadoPersonas'
 import ModalEliminarPersona from './personas/ModalEliminarPersona'
 import ModalFormularioPersona from './personas/ModalFormularioPersona'
@@ -21,6 +30,7 @@ import TablaPersonas from './personas/TablaPersonas'
 import TarjetaPersona from './personas/TarjetaPersona'
 import { TIPOS_PERSONA } from './personas/tiposPersona'
 import { usePersonasResumen } from './personas/usePersonasResumen'
+import { useUsuarioExportacion } from '../utilidades/exportacion/useUsuarioExportacion'
 import './Personas.css'
 
 const FILAS_POR_PAGINA = 10
@@ -42,7 +52,10 @@ export default function Personas() {
   const [personaAEliminar, setPersonaAEliminar] = useState(null)
   const [aviso, setAviso] = useState('')
 
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
   const refBotonNuevaPersona = useRef(null)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
   const refDisparadorAccion = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
@@ -120,6 +133,9 @@ export default function Personas() {
     mostrarAviso('Esa persona ya no existía: se actualizó el listado')
   }
 
+  // Exportación (PDF/Excel): el modal reutiliza el filtrado del listado sobre las mismas personas.
+  const obtenerFilasExportacion = useCallback((filtros) => filasDePersonasParaExportar(personas, filtros), [personas])
+
   function limpiarFiltros() {
     setBusqueda('')
     setTipo('todos')
@@ -158,6 +174,14 @@ export default function Personas() {
             ))}
           </select>
         </div>
+
+        <BotonExportar
+          onClick={(evento) => {
+            refBotonExportar.current = evento.currentTarget
+            setModalExportarAbierto(true)
+          }}
+          disabled={cargando || Boolean(error)}
+        />
 
         <button type="button" ref={refBotonNuevaPersona} className="personas-boton-nuevo" onClick={abrirCrear}>
           <Plus aria-hidden="true" size={18} />
@@ -242,6 +266,25 @@ export default function Personas() {
             onCambiarPagina={setPagina}
           />
         </>
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo="Personas"
+          listado="personas"
+          columnas={COLUMNAS_PERSONAS}
+          filtrosIniciales={{ busqueda, tipo }}
+          renderFiltros={({ filtros, cambiarFiltro }) => (
+            <FiltrosExportarPersonas filtros={filtros} cambiarFiltro={cambiarFiltro} />
+          )}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirFiltrosPersonas}
+          usuario={usuarioExportacion}
+          aviso={AVISO_DATOS_PERSONALES}
+          onCerrar={() => setModalExportarAbierto(false)}
+          onGenerado={(nombre) => mostrarAviso('Archivo ' + nombre + ' generado')}
+          refDisparador={refBotonExportar}
+        />
       )}
 
       {modalPersona && (

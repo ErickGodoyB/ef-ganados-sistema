@@ -1,0 +1,143 @@
+/**
+ * Estilos del modal de exportación (ver ModalExportar.jsx). Mobile-first: los
+ * grupos van apilados y las opciones se acomodan solas (wrap); desde 768px
+ * las columnas se reparten en dos o tres por fila. Solo variables de color de
+ * index.css: claro y oscuro salen solos. Las áreas táctiles son de al menos
+ * 44 px y los campos de texto, de 16 px (los pone base.css).
+ */
+
+.exportar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exportar-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-acento-texto);
+  background: var(--color-acento-fondo);
+  border-radius: var(--radio-md);
+}
+
+.exportar-grupo {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 14px 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+}
+
+.exportar-grupo legend {
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.exportar-filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .exportar-filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.exportar-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 12px;
+}
+
+@media (min-width: 480px) {
+  .exportar-columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .exportar-columnas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.exportar-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+}
+
+/* La etiqueta entera es el área táctil: al menos 44 px de alto. */
+.exportar-opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.exportar-opcion input {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--color-primario-fondo);
+  cursor: pointer;
+}
+
+.exportar-opcion input:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.exportar-ayuda {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+.exportar-conteo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.exportar-advertencia {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.exportar-error {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-error);
+  background: var(--color-error-fondo);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radio-md);
+}
+
+.exportar-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.exportar-generar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

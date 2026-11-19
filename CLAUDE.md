@@ -74,8 +74,11 @@ TFG "Sistema de gestión bovina" para EF Ganados (Curuguaty, Paraguay).
 - Toda llamada a la API pasa por `src/api/cliente.js`.
 - No agregar dependencias nuevas sin autorización explícita. Las únicas
   autorizadas hasta ahora, fuera de lo que trae el proyecto base de Vite,
-  son `lucide-react` (íconos) y `@fontsource-variable/inter` (tipografía
-  Inter autoalojada).
+  son `lucide-react` (íconos), `@fontsource-variable/inter` (tipografía
+  Inter autoalojada) y, solo para la exportación de listados a PDF y
+  Excel, `jspdf`, `jspdf-autotable` y `exceljs`. Estas tres se cargan con
+  `import()` dinámico únicamente al generar el archivo, para no agrandar
+  la carga inicial.
 
 ### Paleta de marca
 

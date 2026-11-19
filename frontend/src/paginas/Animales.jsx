@@ -24,9 +24,11 @@
  */
 
 import { FilterX, Funnel, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import BotonExportar from '../componentes/BotonExportar'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
+import ModalExportar from '../componentes/ModalExportar'
 import Paginacion from '../componentes/Paginacion'
 import PanelOpciones from '../componentes/PanelOpciones'
 import { obtenerRazasDisponibles } from '../utilidades/filtrosAnimales'
@@ -38,12 +40,20 @@ import {
   obtenerLotesDisponibles,
   obtenerProveedoresDisponibles,
 } from './animales/listadoAnimales'
+import {
+  columnasParaExportar,
+  describirFiltrosAnimales,
+  filasDeAnimalesParaExportar,
+  filtrosInicialesDeExportacion,
+} from './animales/exportacionAnimales'
+import FiltrosExportarAnimales from './animales/FiltrosExportarAnimales'
 import ModalDetalleAnimal from './animales/ModalDetalleAnimal'
 import ModalNuevoAnimal from './animales/ModalNuevoAnimal'
 import TablaAnimales from './animales/TablaAnimales'
 import TarjetaAnimal from './animales/TarjetaAnimal'
 import { useAnimalesResumen } from './animales/useAnimalesResumen'
 import { usePreferenciasListadoAnimales } from './animales/usePreferenciasListadoAnimales'
+import { useUsuarioExportacion } from '../utilidades/exportacion/useUsuarioExportacion'
 import './Animales.css'
 
 const COLUMNAS_OBLIGATORIAS = [{ clave: 'aniCaravana', etiqueta: 'Caravana' }]
@@ -89,9 +99,12 @@ export default function Animales() {
   const [pagina, setPagina] = useState(1)
 
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
   const [animalSeleccionado, setAnimalSeleccionado] = useState(null)
   const [aviso, setAviso] = useState('')
   const refBotonNuevoAnimal = useRef(null)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
   const refDisparadorDetalle = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
@@ -129,6 +142,21 @@ export default function Animales() {
   const lotesDisponibles = useMemo(() => obtenerLotesDisponibles(animales), [animales])
   const razasDisponibles = useMemo(() => obtenerRazasDisponibles(animales), [animales])
   const proveedoresDisponibles = useMemo(() => obtenerProveedoresDisponibles(animales), [animales])
+
+  // Exportación (PDF/Excel): el modal reutiliza el filtrado del listado sobre
+  // los mismos animales; las funciones son estables para que el conteo del
+  // modal solo se recalcule cuando cambian los animales o sus filtros.
+  const columnasExportacion = useMemo(() => columnasParaExportar(columnasVisibles), [columnasVisibles])
+  const obtenerFilasExportacion = useCallback((filtros) => filasDeAnimalesParaExportar(animales, filtros), [animales])
+  const describirFiltrosExportacion = useCallback(
+    (filtros) =>
+      describirFiltrosAnimales(filtros, {
+        lotes: lotesDisponibles,
+        razas: razasDisponibles,
+        proveedores: proveedoresDisponibles,
+      }),
+    [lotesDisponibles, razasDisponibles, proveedoresDisponibles],
+  )
 
   const resultado = useMemo(
     () => filtrarYOrdenarAnimales(animales, {
@@ -292,6 +320,14 @@ export default function Animales() {
             <Plus aria-hidden="true" size={18} />
             Nuevo animal
           </button>
+
+          <BotonExportar
+            onClick={(evento) => {
+              refBotonExportar.current = evento.currentTarget
+              setModalExportarAbierto(true)
+            }}
+            disabled={cargando || Boolean(error)}
+          />
 
           <PanelOpciones
             columnasObligatorias={COLUMNAS_OBLIGATORIAS}
@@ -521,6 +557,38 @@ export default function Animales() {
           onCerrar={() => setModalAbierto(false)}
           onGuardado={alGuardarAnimal}
           refDisparador={refBotonNuevoAnimal}
+        />
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo="Animales"
+          listado="animales"
+          columnas={columnasExportacion}
+          filtrosIniciales={filtrosInicialesDeExportacion({
+            busqueda,
+            estadoSalida,
+            lote,
+            raza,
+            proveedor,
+            estado,
+            gmdMin,
+            gmdMax,
+            orden,
+          })}
+          renderFiltros={({ filtros, cambiarFiltro }) => (
+            <FiltrosExportarAnimales
+              filtros={filtros}
+              cambiarFiltro={cambiarFiltro}
+              opciones={{ lotes: lotesDisponibles, razas: razasDisponibles, proveedores: proveedoresDisponibles }}
+            />
+          )}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirFiltrosExportacion}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          onGenerado={(nombre) => mostrarAviso(`Archivo ${nombre} generado`)}
+          refDisparador={refBotonExportar}
         />
       )}
 
