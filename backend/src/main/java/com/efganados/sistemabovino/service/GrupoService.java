@@ -49,12 +49,12 @@ public class GrupoService {
 
     private GrupoResumen aResumen(Grupo grupo) {
         List<LoteResumen> lotes = subGrupoRepository.findByGrupo_GrpId(grupo.getGrpId()).stream()
-                .sorted(Comparator.comparing(SubGrupo::getSbDescripcion, String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparing((SubGrupo lote) -> lote.getSbDescripcion(), String.CASE_INSENSITIVE_ORDER))
                 .map(this::aLoteResumen)
                 .toList();
 
-        long cantidadAnimales = lotes.stream().mapToLong(LoteResumen::cantidadAnimales).sum();
-        long cantidadActivos = lotes.stream().mapToLong(LoteResumen::cantidadActivos).sum();
+        long cantidadAnimales = lotes.stream().mapToLong(lote -> lote.cantidadAnimales()).sum();
+        long cantidadActivos = lotes.stream().mapToLong(lote -> lote.cantidadActivos()).sum();
 
         return new GrupoResumen(grupo.getGrpId(), grupo.getGrpDescripcion(), lotes.size(), cantidadAnimales,
                 cantidadActivos, lotes);

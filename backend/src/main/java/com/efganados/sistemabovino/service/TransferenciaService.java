@@ -43,8 +43,8 @@ import com.efganados.sistemabovino.repository.TransferenciaRepository;
  * (ver {@code Pesajes}). Las transferencias nunca se editan ni se borran;
  * se deshacen con otra transferencia (DEVOLUCION).
  *
- * "Todo o nada": cada operación valida TODO (todos los animales, todas las
- * reglas) antes de modificar nada, y además corre en una transacción, así
+ * "Todo o nada": cada operación valida todos los animales y todas las
+ * reglas antes de modificar nada, y además corre en una transacción, así
  * que un error en cualquier animal deja la base exactamente como estaba.
  */
 @Service

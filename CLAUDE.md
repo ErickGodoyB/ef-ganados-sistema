@@ -14,6 +14,9 @@ TFG "Sistema de gestión bovina" para EF Ganados (Curuguaty, Paraguay).
 ## Comentarios
 
 - Backend: Javadoc en clases y métodos públicos.
+- En el backend, usar lambdas y no referencias a método (::) en Comparator,
+  Function y similares, y no escribir TODO en mayúsculas dentro de
+  comentarios, para no generar advertencias del IDE.
 - Frontend: JSDoc en español.
 - Comentar el **porqué**, no lo obvio (qué decisión hay detrás, no qué hace
   la línea literalmente).

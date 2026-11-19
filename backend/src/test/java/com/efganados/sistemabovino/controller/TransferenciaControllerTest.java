@@ -162,7 +162,7 @@ class TransferenciaControllerTest extends AutenticacionTestSupport {
 
     /** Pedido válido base: SELECCION, al lote B, con el responsable de la prueba. */
     private TransferenciaRequest pedidoAlLoteB(Animal... animales) {
-        Long[] ids = java.util.Arrays.stream(animales).map(Animal::getAniId).toArray(Long[]::new);
+        Long[] ids = java.util.Arrays.stream(animales).map(animal -> animal.getAniId()).toArray(Long[]::new);
         return pedido(FECHA, "SELECCION", null, loteB.getSbId(), responsable.getPerId(), ids);
     }
 

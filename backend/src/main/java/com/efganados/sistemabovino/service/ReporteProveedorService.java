@@ -73,7 +73,7 @@ public class ReporteProveedorService {
                 aFila(id, PersonaService.nombreCompleto(proveedores.get(id)), medidos)));
         // Mayor GMD primero y los null al final; el nombre solo desempata para que el orden sea estable.
         filas.sort(Comparator
-                .comparing(ProveedorComparativo::gmdPromedio, Comparator.nullsLast(Comparator.reverseOrder()))
+                .comparing((ProveedorComparativo fila) -> fila.gmdPromedio(), Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(fila -> fila.proveedorNombre() == null ? "" : fila.proveedorNombre(),
                         String.CASE_INSENSITIVE_ORDER));
 
@@ -118,9 +118,9 @@ public class ReporteProveedorService {
                         : animal.getProveedor() != null && proveedorId.equals(animal.getProveedor().getPerId()))
                 .map(this::aDetalle)
                 .sorted(Comparator
-                        .comparing(AnimalRendimientoProveedor::gmdAcumulado,
+                        .comparing((AnimalRendimientoProveedor animal) -> animal.gmdAcumulado(),
                                 Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparing(AnimalRendimientoProveedor::caravana))
+                        .thenComparing(animal -> animal.caravana()))
                 .toList();
     }
 

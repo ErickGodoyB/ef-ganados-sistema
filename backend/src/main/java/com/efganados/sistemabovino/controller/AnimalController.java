@@ -276,9 +276,9 @@ public class AnimalController {
                 comprador != null ? comprador.getPerId() : null,
                 comprador != null ? nombreCompleto(comprador) : null,
                 animal.getAniFechaRegistro(),
-                anterior.map(AnimalService.PesoAnterior::peso).orElse(null),
-                anterior.map(AnimalService.PesoAnterior::fecha).orElse(null),
-                anterior.map(AnimalService.PesoAnterior::esIngreso).orElse(false),
+                anterior.map(a -> a.peso()).orElse(null),
+                anterior.map(a -> a.fecha()).orElse(null),
+                anterior.map(a -> a.esIngreso()).orElse(false),
                 proveedor != null ? proveedor.getPerId() : null,
                 proveedor != null ? nombreCompleto(proveedor) : null);
     }

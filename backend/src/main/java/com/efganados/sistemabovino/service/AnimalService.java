@@ -174,7 +174,7 @@ public class AnimalService {
      */
     public RendimientoAcumulado rendimientoAcumulado(Animal animal) {
         Optional<Pesajes> ultimo = ultimoPesajeActivo(animal);
-        double pesoActual = ultimo.map(Pesajes::getPesaPeso).orElse(animal.getAniPesoInicial());
+        double pesoActual = ultimo.map(pesaje -> pesaje.getPesaPeso()).orElse(animal.getAniPesoInicial());
         double ganancia = pesoActual - animal.getAniPesoInicial();
         if (ultimo.isEmpty()) {
             return new RendimientoAcumulado(pesoActual, ganancia, null);
