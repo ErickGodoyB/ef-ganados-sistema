@@ -111,6 +111,33 @@ describe('Personas: tipo PROVEEDOR', () => {
     ])
   })
 
+  it('motivosBloqueo suma "responsable de N transferencias" después de los pesajes y antes del usuario', () => {
+    expect(
+      motivosBloqueo({
+        ...PROPIETARIO,
+        cantidadPesajes: 2,
+        cantidadTransferencias: 4,
+        tieneUsuario: true,
+      }),
+    ).toEqual(['figura en 2 pesajes', 'figura como responsable de 4 transferencias', 'tiene un usuario de acceso'])
+  })
+
+  it('una persona responsable de transferencias tiene Eliminar deshabilitado con el aviso', () => {
+    render(
+      <TablaPersonas
+        personas={[{ ...PROPIETARIO, cantidadTransferencias: 3 }]}
+        orden={ORDEN}
+        onOrdenar={vi.fn()}
+        onEditar={vi.fn()}
+        onEliminar={vi.fn()}
+      />,
+    )
+
+    const fila = screen.getByText('Juan Pérez').closest('tr')
+    expect(within(fila).getByRole('button', { name: 'Eliminar' })).toBeDisabled()
+    expect(within(fila).getByText('Figura como responsable de 3 transferencias')).toBeInTheDocument()
+  })
+
   it('el filtro por tipo ofrece "Proveedores" y deja solo a los proveedores', async () => {
     const usuario = userEvent.setup()
     peticionProtegida.mockResolvedValue([PROPIETARIO, PROVEEDOR])

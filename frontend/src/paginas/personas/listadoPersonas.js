@@ -78,6 +78,9 @@ export function motivosBloqueo(persona) {
   if (persona.cantidadPesajes > 0) {
     motivos.push(`figura en ${persona.cantidadPesajes} pesajes`)
   }
+  if (persona.cantidadTransferencias > 0) {
+    motivos.push(`figura como responsable de ${persona.cantidadTransferencias} transferencias`)
+  }
   if (persona.tieneUsuario) {
     motivos.push('tiene un usuario de acceso')
   }
