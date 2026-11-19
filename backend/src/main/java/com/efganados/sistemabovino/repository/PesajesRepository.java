@@ -128,6 +128,12 @@ public interface PesajesRepository extends JpaRepository<Pesajes, Long> {
     long countByResponsableOAnuladoPor(@Param("personaId") Long personaId);
 
     /**
+     * Pesajes en el estado dado con fecha entre desde y hasta (ambos
+     * inclusive): base del resumen del mes y del calendario de Inicio.
+     */
+    List<Pesajes> findByPesaEstadoAndPesaFechaBetween(EstadoPesaje estado, LocalDate desde, LocalDate hasta);
+
+    /**
      * Indica si el animal tiene algún pesaje ACTIVO posterior a la fecha
      * dada (ver AnimalService.reactivar: no se puede reactivar un animal si
      * algún pesaje activo quedó después de su fecha de salida).
