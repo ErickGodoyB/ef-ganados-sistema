@@ -13,6 +13,7 @@ import LayoutPrincipal from './layout/LayoutPrincipal'
 import Animales from './paginas/Animales'
 import Cuenta from './paginas/Cuenta'
 import GruposYLotes from './paginas/GruposYLotes'
+import Inicio from './paginas/Inicio'
 import Login from './paginas/Login'
 import Personas from './paginas/Personas'
 import Pesajes from './paginas/Pesajes'
@@ -42,7 +43,7 @@ function App() {
                 </RutaProtegida>
               }
             >
-              <Route index element={<Navigate to="/animales" replace />} />
+              <Route index element={<Inicio />} />
               <Route path="animales" element={<Animales />} />
               <Route path="pesajes" element={<Pesajes />} />
               <Route path="transferencias" element={<Transferencias />} />

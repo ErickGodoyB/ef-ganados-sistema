@@ -12,12 +12,12 @@
 
 import { Award, Inbox, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useRef, useState } from 'react'
+import BarraGmd from '../../componentes/BarraGmd'
 import { formatearGmd, formatearPeso } from '../../utilidades/formato'
 import ModalAnimalesProveedor from './ModalAnimalesProveedor'
 import {
   esFilaSinProveedor,
   mayorGmdPromedio,
-  porcentajeDeBarra,
   posicionEnRanking,
   proveedorConMejorRendimiento,
 } from './rankingProveedores'
@@ -25,20 +25,6 @@ import { useRendimientoProveedores } from './useRendimientoProveedores'
 import './ReporteRendimientoProveedor.css'
 
 const NOTA_SIN_PROVEEDOR = 'Asigná el proveedor editando los animales para incluirlos en la comparación'
-
-/** GMD promedio: la barra (decorativa, aria-hidden) más el número escrito, que es lo que lee un lector de pantalla. */
-function GmdConBarra({ gmdPromedio, maximo }) {
-  return (
-    <div className="reporte-gmd">
-      <span className={gmdPromedio != null && gmdPromedio < 0 ? 'valor-negativo' : 'reporte-gmd-valor'}>
-        {formatearGmd(gmdPromedio)}
-      </span>
-      <span className="reporte-barra" aria-hidden="true">
-        <span className="reporte-barra-relleno" style={{ width: `${porcentajeDeBarra(gmdPromedio, maximo)}%` }} />
-      </span>
-    </div>
-  )
-}
 
 function EtiquetaMejor() {
   return (
@@ -160,7 +146,7 @@ export default function ReporteRendimientoProveedor() {
                     <td>{fila.cantidadAnimales}</td>
                     <td>{fila.animalesConDatos}</td>
                     <td>
-                      <GmdConBarra gmdPromedio={fila.gmdPromedio} maximo={maximo} />
+                      <BarraGmd gmd={fila.gmdPromedio} maximo={maximo} />
                     </td>
                     <td>{textoGanancia(fila)}</td>
                     <td>{textoMejorAnimal(fila)}</td>
@@ -184,7 +170,7 @@ export default function ReporteRendimientoProveedor() {
                   {fila.proveedorId === idMejor && idMejor != null && <EtiquetaMejor />}
                 </div>
 
-                <GmdConBarra gmdPromedio={fila.gmdPromedio} maximo={maximo} />
+                <BarraGmd gmd={fila.gmdPromedio} maximo={maximo} />
 
                 <dl className="reporte-tarjeta-datos">
                   <div>

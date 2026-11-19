@@ -53,34 +53,6 @@
   outline-offset: 2px;
 }
 
-/* GMD promedio: número escrito + barra proporcional (la barra es solo ayuda visual). */
-.reporte-gmd {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 120px;
-}
-
-.reporte-gmd-valor {
-  font-weight: 700;
-  color: var(--texto);
-}
-
-.reporte-barra {
-  display: block;
-  height: 8px;
-  overflow: hidden;
-  background: var(--superficie-hover);
-  border: 1px solid var(--borde);
-  border-radius: 999px;
-}
-
-.reporte-barra-relleno {
-  display: block;
-  height: 100%;
-  background: var(--color-primario-fondo);
-}
-
 .reporte-etiqueta-mejor {
   display: inline-flex;
   align-items: center;

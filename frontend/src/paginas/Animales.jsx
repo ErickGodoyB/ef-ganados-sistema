@@ -20,11 +20,12 @@
  * conserva la búsqueda, los filtros, el orden y la página (son estados
  * propios de esta pantalla, ajenos a la recarga; si la página actual
  * queda vacía, paginaActual ya se recorta sola más abajo) y se muestra un
- * aviso breve.
+ * aviso breve. La URL puede traer ?caravana=, que precarga la búsqueda.
  */
 
 import { FilterX, Funnel, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import Paginacion from '../componentes/Paginacion'
 import PanelOpciones from '../componentes/PanelOpciones'
@@ -69,7 +70,11 @@ export default function Animales() {
   const { columnasVisibles, filasPorPagina, cambiarColumnaVisible, cambiarFilasPorPagina, restablecer } =
     usePreferenciasListadoAnimales()
 
-  const [busqueda, setBusqueda] = useState('')
+  // Si se llegó desde las alertas de Inicio, la caravana viene en la URL y
+  // precarga el buscador; es solo un valor inicial (mismo criterio que el
+  // código de sesión en Pesajes), así que alcanza con leerla una vez al montar.
+  const [searchParams] = useSearchParams()
+  const [busqueda, setBusqueda] = useState(() => searchParams.get('caravana') ?? '')
   const [lote, setLote] = useState('todos')
   const [estado, setEstado] = useState('todos')
   const [estadoSalida, setEstadoSalida] = useState(FILTROS_POR_DEFECTO.estadoSalida)

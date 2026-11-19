@@ -1,0 +1,57 @@
+/**
+ * Estilos de las tarjetas de resumen de Inicio (ver TarjetasResumen.jsx):
+ * 2 columnas en celular y 4 desde 768px. Solo variables de index.css.
+ */
+
+.tarjetas-resumen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .tarjetas-resumen {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tarjeta-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 44px;
+  padding: 14px;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.tarjeta-resumen--enlace:hover {
+  background: var(--superficie-hover);
+}
+
+.tarjeta-resumen--enlace:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* Valor 0: mismo diseño, atenuado (opacidad suave: el texto sigue por encima de 4,5:1 sobre el fondo). */
+.tarjeta-resumen--atenuada {
+  opacity: 0.85;
+}
+
+.tarjeta-resumen-etiqueta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.tarjeta-resumen-valor {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.tarjeta-resumen-detalle {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}

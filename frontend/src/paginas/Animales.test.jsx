@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { peticionProtegida } from '../api/cliente'
 import Animales from './Animales'
@@ -44,8 +45,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function renderizar() {
-  render(<Animales />)
+async function renderizar(ruta = '/animales') {
+  render(
+    <MemoryRouter initialEntries={[ruta]}>
+      <Animales />
+    </MemoryRouter>,
+  )
   await waitFor(() => expect(screen.queryByText('Cargando animales…')).not.toBeInTheDocument())
 }
 
@@ -56,6 +61,21 @@ function caravanasEnLaTabla() {
     .slice(1)
     .map((fila) => within(fila).getAllByRole('button')[0].textContent)
 }
+
+describe('Animales: caravana en la URL', () => {
+  it('?caravana= precarga el buscador y filtra el listado', async () => {
+    await renderizar('/animales?caravana=CAR-003')
+
+    expect(screen.getByLabelText('Buscar por caravana')).toHaveValue('CAR-003')
+    expect(caravanasEnLaTabla()).toEqual(['CAR-003'])
+  })
+
+  it('sin el parámetro el buscador arranca vacío', async () => {
+    await renderizar()
+
+    expect(screen.getByLabelText('Buscar por caravana')).toHaveValue('')
+  })
+})
 
 describe('Animales: filtros de raza y GMD', () => {
   it('sin filtros activos no muestra el indicador ni "Limpiar filtros"', async () => {

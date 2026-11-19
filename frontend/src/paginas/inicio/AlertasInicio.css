@@ -1,0 +1,203 @@
+/**
+ * Estilos de las alertas de Inicio (ver AlertasInicio.jsx): pestañas con su
+ * total y la lista en tabla (desde 768px) o tarjetas (celular), una u otra
+ * según el ancho, sin JS. Solo variables de color de index.css.
+ */
+
+.alertas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alertas-pestanas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .alertas-pestanas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.alertas-pestana {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 44px;
+  padding: 10px 14px;
+  text-align: left;
+  font: inherit;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+}
+
+.alertas-pestana:hover {
+  background: var(--superficie-hover);
+}
+
+.alertas-pestana:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* La elegida se distingue por borde grueso y fondo (no solo por color). */
+.alertas-pestana--elegida {
+  border: 2px solid var(--color-primario-fondo);
+  background: var(--superficie-hover);
+}
+
+.alertas-pestana-titulo {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.alertas-pestana-total {
+  font-weight: 700;
+}
+
+.alertas-pestana-detalle {
+  font-size: 13px;
+  color: var(--texto-secundario);
+}
+
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior (ver
+   estilos/tablaYTarjetas.test.js). */
+.alertas-tabla-solo-escritorio {
+  display: none;
+}
+
+.alertas-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .alertas-tabla-solo-escritorio {
+    display: block;
+    overflow-x: auto;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-md);
+  }
+
+  .alertas-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.alertas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.alertas-tabla th,
+.alertas-tabla td {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--borde);
+}
+
+.alertas-tabla thead th {
+  background: var(--superficie-hover);
+}
+
+.alertas-tabla tbody tr {
+  cursor: pointer;
+}
+
+.alertas-tabla tbody tr:hover {
+  background: var(--superficie-hover);
+}
+
+.alertas-tabla tbody tr:last-child th,
+.alertas-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.alertas-caravana {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.alertas-caravana:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.alertas-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  cursor: pointer;
+}
+
+.alertas-tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.alertas-tarjeta-peso {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.alertas-tarjeta-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.alertas-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.alertas-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.alertas-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.alertas-mas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.alertas-nota {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.alertas-mas .boton {
+  text-decoration: none;
+}

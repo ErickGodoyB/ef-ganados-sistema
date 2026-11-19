@@ -1,0 +1,32 @@
+/**
+ * Estilos de BarraGmd (ver BarraGmd.jsx): el número y, debajo, la barra
+ * proporcional. Solo variables de color de index.css: claro y oscuro salen
+ * solos.
+ */
+
+.barra-gmd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.barra-gmd-valor {
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.barra-gmd-pista {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+}
+
+.barra-gmd-relleno {
+  display: block;
+  height: 100%;
+  background: var(--color-primario-fondo);
+}

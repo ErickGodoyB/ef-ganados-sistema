@@ -54,8 +54,11 @@ export default function Pesajes() {
   const [searchParams] = useSearchParams()
   const [busqueda, setBusqueda] = useState(() => searchParams.get('codigo') ?? '')
   const [lote, setLote] = useState('todos')
-  const [desde, setDesde] = useState('')
-  const [hasta, setHasta] = useState('')
+  // "fecha" (aaaa-mm-dd) llega desde el calendario de Inicio y precarga el
+  // Intervalo con ese único día; igual que el código, es solo el valor inicial.
+  const fechaInicial = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get('fecha') ?? '') ? searchParams.get('fecha') : ''
+  const [desde, setDesde] = useState(fechaInicial)
+  const [hasta, setHasta] = useState(fechaInicial)
   const [orden, setOrden] = useState({ campo: 'fecha', direccion: 'desc' })
   const [pagina, setPagina] = useState(1)
 

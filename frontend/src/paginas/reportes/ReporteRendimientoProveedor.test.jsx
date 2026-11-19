@@ -170,14 +170,14 @@ describe('Reporte de rendimiento por proveedor: ranking', () => {
     const { container } = await renderizar()
 
     const tabla = container.querySelector('.reporte-tabla')
-    const anchos = [...tabla.querySelectorAll('.reporte-barra-relleno')].map((barra) => barra.style.width)
+    const anchos = [...tabla.querySelectorAll('.barra-gmd-relleno')].map((barra) => barra.style.width)
     // 3,5 es el mayor (100 %); 1,75 es la mitad; sin dato, 0; 2,0 sobre 3,5.
     expect(anchos[0]).toBe('100%')
     expect(anchos[1]).toBe('50%')
     expect(anchos[2]).toBe('0%')
     expect(parseFloat(anchos[3])).toBeCloseTo((2 / 3.5) * 100)
     // La barra es solo ayuda visual: no se anuncia.
-    expect(tabla.querySelector('.reporte-barra')).toHaveAttribute('aria-hidden', 'true')
+    expect(tabla.querySelector('.barra-gmd-pista')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('sin datos (GMD null) muestra "—" en GMD, ganancia y mejor animal', async () => {

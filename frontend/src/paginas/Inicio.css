@@ -1,0 +1,35 @@
+/**
+ * Estilos de la pantalla de Inicio (ver Inicio.jsx). Mobile-first: todo en
+ * una columna; los bloques se apilan con el mismo espaciado. Los estilos de
+ * cada bloque están junto a su componente (paginas/inicio/). Solo variables
+ * de color de index.css: claro y oscuro salen solos.
+ */
+
+.inicio-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inicio-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inicio-seccion-titulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.inicio-bienvenida-titulo {
+  margin: 0;
+  font-size: 20px;
+  color: var(--texto);
+}
+
+.inicio-bienvenida .boton {
+  text-decoration: none;
+}

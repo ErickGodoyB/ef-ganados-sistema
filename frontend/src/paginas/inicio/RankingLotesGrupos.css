@@ -1,0 +1,177 @@
+/**
+ * Estilos del ranking de lotes y grupos de Inicio (ver RankingLotesGrupos.jsx):
+ * selector, tarjetas destacadas y ranking en tabla (desde 768px) o tarjetas
+ * (celular), una u otra según el ancho, sin JS. Solo variables de index.css.
+ */
+
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ranking-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.ranking-opcion {
+  min-height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+}
+
+.ranking-opcion:hover {
+  background: var(--superficie-hover);
+}
+
+.ranking-opcion:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* La elegida se distingue por borde grueso y fondo (no solo por color). */
+.ranking-opcion--elegida {
+  border: 2px solid var(--color-primario-fondo);
+  background: var(--superficie-hover);
+}
+
+.ranking-vacio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.ranking-destacados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ranking-destacado {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+}
+
+.ranking-destacado-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.ranking-destacado-nombre {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.ranking-destacado-valor {
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.ranking-subtitulo {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--texto-secundario);
+}
+
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior (ver
+   estilos/tablaYTarjetas.test.js). */
+.ranking-tabla-solo-escritorio {
+  display: none;
+}
+
+.ranking-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .ranking-tabla-solo-escritorio {
+    display: block;
+    overflow-x: auto;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-md);
+  }
+
+  .ranking-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.ranking-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.ranking-tabla th,
+.ranking-tabla td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--borde);
+}
+
+.ranking-tabla thead th {
+  white-space: nowrap;
+  background: var(--superficie-hover);
+}
+
+.ranking-tabla tbody tr:last-child th,
+.ranking-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ranking-nombre {
+  font-weight: 700;
+}
+
+.ranking-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.ranking-tarjeta-nombre {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.ranking-tarjeta-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.ranking-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.ranking-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+}

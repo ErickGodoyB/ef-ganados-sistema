@@ -19,7 +19,7 @@
  * persona lo había abierto a mano.
  */
 
-import { ArrowLeftRight, Beef, ChartColumn, ChevronDown, LogOut, Scale, Tags } from 'lucide-react'
+import { ArrowLeftRight, Beef, ChartColumn, ChevronDown, House, LogOut, Scale, Tags } from 'lucide-react'
 import { forwardRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
@@ -28,6 +28,8 @@ import BotonTema from '../tema/BotonTema'
 import './BarraLateral.css'
 
 const ACCESOS = [
+  // "end": sin esto, "/" quedaría marcado como activo en todas las rutas.
+  { ruta: '/', etiqueta: 'Inicio', Icono: House, end: true },
   { ruta: '/animales', etiqueta: 'Animales', Icono: Beef },
   { ruta: '/pesajes', etiqueta: 'Pesajes', Icono: Scale },
   { ruta: '/transferencias', etiqueta: 'Transferencias', Icono: ArrowLeftRight },
@@ -93,6 +95,7 @@ const BarraLateral = forwardRef(function BarraLateral({ abierta, onNavegar }, re
             <li key={acceso.ruta}>
               <NavLink
                 to={acceso.ruta}
+                end={acceso.end}
                 className={({ isActive }) =>
                   `barra-lateral-enlace${isActive ? ' barra-lateral-enlace--activo' : ''}`
                 }
