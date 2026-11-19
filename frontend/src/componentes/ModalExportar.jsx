@@ -34,11 +34,16 @@ function textoRegistros(cantidad) {
  * @param {string} props.listado Nombre base del archivo, ej. "animales" -> animales_aaaa-mm-dd.pdf.
  * @param {{clave: string, titulo: string, tipo?: string, alineacion?: string, decimales?: number, porDefecto?: boolean}[]} props.columnas
  *   Columnas disponibles (ver utilidades/exportacion/formatos.js); "porDefecto" marca las que arrancan incluidas.
- * @param {object} props.filtrosIniciales Filtros de la pantalla: se copian al abrir.
- * @param {(args: {filtros: object, cambiarFiltro: (nombre: string, valor: unknown) => void}) => import('react').ReactNode} props.renderFiltros
- *   Controles de filtro del listado.
+ * @param {object} [props.filtrosIniciales] Filtros de la pantalla: se copian al abrir (vacío si no hay).
+ * @param {(args: {filtros: object, cambiarFiltro: (nombre: string, valor: unknown) => void}) => import('react').ReactNode} [props.renderFiltros]
+ *   Controles de filtro del listado. Si no se pasa (listados de solo lectura, o detalles que exportan
+ *   todo lo que muestran), el modal no muestra la sección de filtros.
  * @param {(filtros: object) => object[]} props.obtenerFilas Filas a exportar con esos filtros (ya filtradas y ordenadas).
- * @param {(filtros: object) => {etiqueta: string, valor: string}[]} props.describirFiltros Filtros aplicados, para el encabezado del archivo.
+ * @param {(filtros: object) => {etiqueta: string, valor: string}[]} props.describirFiltros Filtros aplicados, para el encabezado del archivo
+ *   (o, sin controles de filtro, el contexto de lo que se exporta: "Sesión: … · Lote: …").
+ * @param {(filas: object[], filtros: object) => {etiqueta: string, valor: string}[]} [props.describirResumen]
+ *   Datos de resumen de las filas a exportar, para la cabecera del archivo (opcional).
+ * @param {string} [props.tituloModal] Título del diálogo; por defecto "Exportar <titulo>".
  * @param {string} props.usuario Quién genera el archivo.
  * @param {string} [props.aviso] Aviso fijo del modal (ej. que el archivo contiene datos personales).
  * @param {() => void} props.onCerrar
@@ -49,10 +54,12 @@ export default function ModalExportar({
   titulo,
   listado,
   columnas,
-  filtrosIniciales,
+  filtrosIniciales = {},
   renderFiltros,
   obtenerFilas,
   describirFiltros,
+  describirResumen,
+  tituloModal,
   usuario,
   aviso,
   onCerrar,
@@ -92,6 +99,7 @@ export default function ModalExportar({
     setGenerando(true)
     setError('')
     try {
+      const resumen = describirResumen?.(filas, filtros)
       const datos = {
         listado,
         titulo,
@@ -99,6 +107,8 @@ export default function ModalExportar({
         columnas: columnasElegidas,
         filas,
         usuario,
+        // Sin resumen el archivo queda exactamente igual que antes.
+        ...(resumen && resumen.length > 0 ? { resumen } : {}),
       }
       const nombre =
         formato === 'pdf' ? await generarPdf({ ...datos, orientacion }) : await generarExcel(datos)
@@ -111,7 +121,7 @@ export default function ModalExportar({
   }
 
   return (
-    <Modal titulo={`Exportar ${titulo.toLowerCase()}`} onCerrar={generando ? () => {} : onCerrar} refDisparador={refDisparador} tamano="grande">
+    <Modal titulo={tituloModal ?? `Exportar ${titulo.toLowerCase()}`} onCerrar={generando ? () => {} : onCerrar} refDisparador={refDisparador} tamano="grande">
       <div className="exportar">
         {aviso && (
           <p className="exportar-aviso" role="note">
@@ -119,10 +129,12 @@ export default function ModalExportar({
           </p>
         )}
 
-        <fieldset className="exportar-grupo" disabled={generando}>
-          <legend>Filtros</legend>
-          <div className="exportar-filtros">{renderFiltros({ filtros, cambiarFiltro })}</div>
-        </fieldset>
+        {renderFiltros && (
+          <fieldset className="exportar-grupo" disabled={generando}>
+            <legend>Filtros</legend>
+            <div className="exportar-filtros">{renderFiltros({ filtros, cambiarFiltro })}</div>
+          </fieldset>
+        )}
 
         <fieldset className="exportar-grupo" disabled={generando}>
           <legend>Columnas</legend>

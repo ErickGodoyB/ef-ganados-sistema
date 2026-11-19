@@ -99,7 +99,7 @@ describe('columnasParaExportar', () => {
     const porClave = Object.fromEntries(columnasParaExportar({}).map((columna) => [columna.clave, columna]))
 
     expect(porClave.pesoActual).toMatchObject({ tipo: 'numero', decimales: 1 })
-    expect(porClave.gmd).toMatchObject({ tipo: 'numero', decimales: 2 })
+    expect(porClave.gmd).toMatchObject({ tipo: 'numero', decimales: 3 })
     expect(porClave.ingreso.tipo).toBe('fecha')
     expect(porClave.apto.tipo).toBe('booleano')
   })

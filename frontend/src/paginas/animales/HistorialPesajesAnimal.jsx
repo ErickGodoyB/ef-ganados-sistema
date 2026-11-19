@@ -17,15 +17,19 @@
  */
 
 import { TriangleAlert } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { peticionProtegida } from '../../api/cliente'
+import BotonExportar from '../../componentes/BotonExportar'
+import ModalExportar from '../../componentes/ModalExportar'
 import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
 import ValorGmd from '../../componentes/ValorGmd'
 import ValorPesoAnterior from '../../componentes/ValorPesoAnterior'
 import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
+import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import { calcularDiferenciaPeso } from '../../utilidades/peso'
+import { COLUMNAS_HISTORIAL, contextoDeAnimal, filasDeHistorial } from './exportacionHistorial'
 import './HistorialPesajesAnimal.css'
 
 export default function HistorialPesajesAnimal({ animal }) {
@@ -33,6 +37,13 @@ export default function HistorialPesajesAnimal({ animal }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  // Exportación (PDF/Excel) del historial, sin filtros: la caravana va como contexto.
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
+  const obtenerFilasExportacion = useCallback(() => filasDeHistorial(animal, pesajes), [animal, pesajes])
+  const describirContexto = useCallback(() => contextoDeAnimal(animal), [animal])
 
   useEffect(() => {
     let cancelado = false
@@ -90,7 +101,17 @@ export default function HistorialPesajesAnimal({ animal }) {
 
   return (
     <section className="historial-pesajes">
-      <h3 className="historial-pesajes-titulo">Historial de pesajes</h3>
+      <div className="historial-pesajes-encabezado">
+        <h3 className="historial-pesajes-titulo">Historial de pesajes</h3>
+        {!cargando && !error && pesajes.length > 0 && (
+          <BotonExportar
+            onClick={(evento) => {
+              refBotonExportar.current = evento.currentTarget
+              setModalExportarAbierto(true)
+            }}
+          />
+        )}
+      </div>
 
       {cargando && <p role="status">Cargando historial…</p>}
 
@@ -208,6 +229,20 @@ export default function HistorialPesajesAnimal({ animal }) {
             ))}
           </div>
         </>
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo={`Historial de pesajes de ${animal.aniCaravana}`}
+          tituloModal="Exportar historial de pesajes"
+          listado={`historial-de-pesajes-${animal.aniCaravana}`}
+          columnas={COLUMNAS_HISTORIAL}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirContexto}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          refDisparador={refBotonExportar}
+        />
       )}
     </section>
   )

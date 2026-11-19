@@ -9,11 +9,15 @@
  */
 
 import { RefreshCw, TriangleAlert } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { peticionProtegida } from '../../api/cliente'
+import BotonExportar from '../../componentes/BotonExportar'
 import Modal from '../../componentes/Modal'
+import ModalExportar from '../../componentes/ModalExportar'
+import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearFecha, formatearGmd, formatearPeso } from '../../utilidades/formato'
 import { etiquetaMotivoSalida } from '../animales/tiposSalida'
+import { COLUMNAS_ANIMALES_PROVEEDOR, contextoDeProveedor, filaDeAnimalProveedor } from './exportacionProveedores'
 import './ModalAnimalesProveedor.css'
 
 /** "Activo" tal cual, o el motivo de salida legible (VENTA → "Venta"). */
@@ -55,6 +59,16 @@ export default function ModalAnimalesProveedor({ proveedorId, proveedorNombre, s
     cargar()
   }, [cargar])
 
+  // Exportación (PDF/Excel) de esta lista, sin filtros: el proveedor va como contexto.
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
+  const obtenerFilasExportacion = useCallback(
+    () => animales.map((animal) => filaDeAnimalProveedor(animal, textoEstado)),
+    [animales],
+  )
+  const describirContexto = useCallback(() => contextoDeProveedor(proveedorNombre, soloActivos), [proveedorNombre, soloActivos])
+
   return (
     <Modal titulo={`Animales de ${proveedorNombre}`} onCerrar={onCerrar} refDisparador={refDisparador} tamano="grande">
       {cargando && <p role="status">Cargando animales…</p>}
@@ -78,7 +92,15 @@ export default function ModalAnimalesProveedor({ proveedorId, proveedorNombre, s
 
       {!cargando && !error && animales.length > 0 && (
         <>
-          <p className="animales-proveedor-orden">Ordenados por GMD acumulado, de mayor a menor.</p>
+          <div className="animales-proveedor-barra">
+            <p className="animales-proveedor-orden">Ordenados por GMD acumulado, de mayor a menor.</p>
+            <BotonExportar
+              onClick={(evento) => {
+                refBotonExportar.current = evento.currentTarget
+                setModalExportarAbierto(true)
+              }}
+            />
+          </div>
 
           <div className="animales-proveedor-tabla-solo-escritorio">
             <table className="animales-proveedor-tabla">
@@ -161,6 +183,20 @@ export default function ModalAnimalesProveedor({ proveedorId, proveedorNombre, s
             ))}
           </div>
         </>
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo={`Animales de ${proveedorNombre}`}
+          tituloModal="Exportar animales del proveedor"
+          listado={`animales-de-${proveedorNombre.toLowerCase().replace(/\s+/g, '-')}`}
+          columnas={COLUMNAS_ANIMALES_PROVEEDOR}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirContexto}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          refDisparador={refBotonExportar}
+        />
       )}
     </Modal>
   )

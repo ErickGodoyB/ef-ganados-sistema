@@ -11,8 +11,17 @@
   border-top: 1px solid var(--borde);
 }
 
+.historial-pesajes-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
 .historial-pesajes-titulo {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 16px;
   font-weight: 700;
   color: var(--texto);

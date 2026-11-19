@@ -4,6 +4,20 @@
  * u otra según el ancho, sin JS. Solo variables de color de index.css.
  */
 
+/* Nota de orden y botón "Exportar" en una fila (el botón baja solo si no entra). */
+.animales-proveedor-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.animales-proveedor-barra .animales-proveedor-orden {
+  margin: 0;
+}
+
 .animales-proveedor-vacio,
 .animales-proveedor-orden {
   margin: 0 0 12px;

@@ -13,9 +13,17 @@
  */
 
 import { CircleCheck, CircleX, RefreshCw, TriangleAlert, Undo2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { peticionProtegida } from '../../api/cliente'
+import BotonExportar from '../../componentes/BotonExportar'
 import Modal from '../../componentes/Modal'
+import ModalExportar from '../../componentes/ModalExportar'
+import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
+import {
+  COLUMNAS_DETALLE_TRANSFERENCIA,
+  contextoDeTransferencia,
+  filaDeAnimalTransferencia,
+} from './exportacionTransferencias'
 import { formatearFecha, formatearFechaHora } from '../../utilidades/formato'
 import FormularioDevolucion from './FormularioDevolucion'
 import { etiquetaMotivoTransferencia, textoCantidadAnimales } from './motivos'
@@ -67,6 +75,17 @@ export default function ModalDetalleTransferencia({ transferenciaId, onCerrar, o
   }
 
   const puedeDevolverse = detalle && detalle.motivo !== 'DEVOLUCION' && !detalle.devuelta
+
+  // Exportación (PDF/Excel) de los animales de esta transferencia, sin filtros:
+  // el contexto de la transferencia va en la línea de filtros del archivo.
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
+  const obtenerFilasExportacion = useCallback(
+    () => (detalle ? detalle.animales.map(filaDeAnimalTransferencia) : []),
+    [detalle],
+  )
+  const describirContexto = useCallback(() => (detalle ? contextoDeTransferencia(detalle) : []), [detalle])
 
   return (
     <Modal titulo={TITULOS[vista]} onCerrar={onCerrar} refDisparador={refDisparador} tamano="grande">
@@ -163,6 +182,13 @@ export default function ModalDetalleTransferencia({ transferenciaId, onCerrar, o
           </div>
 
           <div className="detalle-transferencia-acciones">
+            <BotonExportar
+              onClick={(evento) => {
+                refBotonExportar.current = evento.currentTarget
+                setModalExportarAbierto(true)
+              }}
+              disabled={detalle.animales.length === 0}
+            />
             <button type="button" className="boton-secundario" onClick={onCerrar}>
               Cerrar
             </button>
@@ -178,6 +204,20 @@ export default function ModalDetalleTransferencia({ transferenciaId, onCerrar, o
 
       {!cargando && !error && detalle && vista === 'devolver' && (
         <FormularioDevolucion transferencia={detalle} onDevuelta={alDevolver} onCancelar={() => setVista('detalle')} />
+      )}
+
+      {modalExportarAbierto && detalle && (
+        <ModalExportar
+          titulo={`Transferencia n.º ${detalle.traId}`}
+          tituloModal="Exportar animales de la transferencia"
+          listado={`transferencia-${detalle.traId}`}
+          columnas={COLUMNAS_DETALLE_TRANSFERENCIA}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirContexto}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          refDisparador={refBotonExportar}
+        />
       )}
 
       {vista === 'resultado' && resultado && (

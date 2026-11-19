@@ -9,9 +9,13 @@
  *   { clave, titulo, tipo, alineacion, decimales }
  * - tipo: 'texto' (por defecto), 'numero', 'entero', 'fecha' (aaaa-mm-dd) o
  *   'booleano' (se muestra "Sí"/"No").
- * - alineacion: 'left', 'right' o 'center'; si falta, los números van a la
- *   derecha y el resto a la izquierda.
- * - decimales: solo para 'numero' (por defecto 1).
+ * - alineacion: 'izquierda' o 'centro' (la del cuerpo Y la del encabezado de
+ *   la columna). Cada listado la define: 'centro' para números, fechas y
+ *   sí/no (pesos, GMD, diferencias, días, cantidades, promedios, fechas,
+ *   posición); 'izquierda' para los textos (caravana, raza, lote, nombres,
+ *   notas). Si falta, se deduce del tipo con esa misma regla.
+ * - decimales: solo para 'numero'; todas las celdas de la columna llevan
+ *   esa misma cantidad de decimales (por defecto 1).
  */
 
 /** Máximo de columnas para que una tabla A4 vertical siga siendo legible: con más, la orientación automática es horizontal. */
@@ -53,12 +57,22 @@ export function formatearFechaHora(ahora) {
   return `${dos(ahora.getDate())}/${dos(ahora.getMonth() + 1)}/${ahora.getFullYear()} ${dos(ahora.getHours())}:${dos(ahora.getMinutes())}`
 }
 
-/** Alineación efectiva de una columna: la indicada o, si falta, derecha para los números e izquierda para el resto. */
+/** Tipos de columna que se centran cuando la definición no trae alineación propia. */
+const TIPOS_CENTRADOS = ['numero', 'entero', 'fecha', 'booleano']
+
+/**
+ * Alineación efectiva de una columna, en los valores que usan jsPDF y
+ * ExcelJS ('left' o 'center'): la indicada ('izquierda' o 'centro') o, si
+ * falta, 'center' para números, fechas y sí/no, y 'left' para el resto.
+ */
 export function alineacionDe(columna) {
-  if (columna.alineacion) {
-    return columna.alineacion
+  if (columna.alineacion === 'centro') {
+    return 'center'
   }
-  return columna.tipo === 'numero' || columna.tipo === 'entero' ? 'right' : 'left'
+  if (columna.alineacion === 'izquierda') {
+    return 'left'
+  }
+  return TIPOS_CENTRADOS.includes(columna.tipo) ? 'center' : 'left'
 }
 
 /** Texto de una celda para el PDF según el tipo de la columna (el Excel usa valores reales, ver generarExcel.js). */
@@ -89,6 +103,18 @@ export function textoDeCelda(valor, columna) {
 export function lineaDeFiltros(filtros) {
   const aplicados = (filtros ?? []).filter((filtro) => filtro.valor !== undefined && filtro.valor !== null && String(filtro.valor).trim() !== '')
   return aplicados.length === 0 ? 'Sin filtros' : aplicados.map((filtro) => `${filtro.etiqueta}: ${filtro.valor}`).join(' · ')
+}
+
+/**
+ * Línea de resumen de la cabecera (va después de los filtros), ej.
+ * "Animales: 20 · Peso promedio: 312,4 kg". Se ignoran los datos sin valor;
+ * sin ninguno devuelve '' (no se dibuja nada).
+ *
+ * @param {{etiqueta: string, valor: string}[]} [resumen]
+ */
+export function lineaDeResumen(resumen) {
+  const datos = (resumen ?? []).filter((dato) => dato.valor !== undefined && dato.valor !== null && String(dato.valor).trim() !== '')
+  return datos.map((dato) => `${dato.etiqueta}: ${dato.valor}`).join(' · ')
 }
 
 /** Nombre del archivo: <listado>_aaaa-mm-dd.<extension>, ej. "animales_2026-11-18.pdf". */

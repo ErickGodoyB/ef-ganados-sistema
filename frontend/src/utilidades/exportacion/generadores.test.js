@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { anchoDeColumna, construirExcel, FILA_CABECERA, valorDeCeldaExcel } from './generarExcel'
+import { anchoDeColumna, construirExcel, FILA_CABECERA, filaDeCabecera, valorDeCeldaExcel } from './generarExcel'
 import { construirPdf } from './generarPdf'
 
 /** Primeros bytes de un Blob (FileReader: el Blob de jsdom no trae arrayBuffer()). */
@@ -119,6 +119,51 @@ describe('construirExcel (prueba de humo)', () => {
     // Congelada hasta la cabecera y con autofiltro.
     expect(hoja.views[0]).toMatchObject({ state: 'frozen', ySplit: FILA_CABECERA })
     expect(hoja.autoFilter).toBeTruthy()
+  })
+})
+
+describe('construirExcel: alineación y resumen', () => {
+  async function leerLibro(datos) {
+    const ExcelJS = (await import('exceljs')).default
+    const blob = await construirExcel({ titulo: 'Animales', filtros: [], columnas: COLUMNAS, filas: FILAS, usuario: 'Ana', ahora: AHORA, ...datos })
+    const libro = new ExcelJS.Workbook()
+    await libro.xlsx.load(await leerBytes(blob))
+    return libro.getWorksheet('Animales')
+  }
+
+  it('centra los números, las fechas y los sí/no (cabecera y celdas) y deja el texto a la izquierda', async () => {
+    const hoja = await leerLibro({})
+    const cabecera = hoja.getRow(FILA_CABECERA)
+    const datos = hoja.getRow(FILA_CABECERA + 1)
+
+    // COLUMNAS: nombre (texto), peso (número), ingreso (fecha), apto (booleano).
+    expect(['left', 'center', 'center', 'center']).toEqual([1, 2, 3, 4].map((c) => cabecera.getCell(c).alignment.horizontal))
+    expect(['left', 'center', 'center', 'center']).toEqual([1, 2, 3, 4].map((c) => datos.getCell(c).alignment.horizontal))
+  })
+
+  it('los números mantienen los decimales de su columna (1 en el peso)', async () => {
+    const hoja = await leerLibro({ filas: [{ nombre: 'A', peso: 200, ingreso: '2026-03-05', apto: true }] })
+
+    expect(hoja.getRow(FILA_CABECERA + 1).getCell(2).numFmt).toBe('#,##0.0')
+  })
+
+  it('sin resumen, la cabecera de la tabla queda en la fila de siempre', async () => {
+    const hoja = await leerLibro({})
+
+    expect(hoja.getCell('A5').value).toBeNull()
+    expect(hoja.getRow(FILA_CABECERA).getCell(1).value).toBe('Nombre')
+    expect(hoja.views[0].ySplit).toBe(FILA_CABECERA)
+  })
+
+  it('con resumen, va en la cabecera después de los filtros y la tabla baja una fila', async () => {
+    const hoja = await leerLibro({
+      resumen: [{ etiqueta: 'Animales', valor: '20' }, { etiqueta: 'Peso promedio', valor: '312,4 kg' }],
+    })
+
+    expect(hoja.getCell('A5').value).toBe('Animales: 20 · Peso promedio: 312,4 kg')
+    expect(hoja.getRow(filaDeCabecera([{ etiqueta: 'a', valor: 'b' }])).getCell(1).value).toBe('Nombre')
+    expect(hoja.getRow(FILA_CABECERA + 2).getCell(1).value).toBe('Ñandú Núñez')
+    expect(hoja.views[0].ySplit).toBe(FILA_CABECERA + 1)
   })
 })
 

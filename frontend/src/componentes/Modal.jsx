@@ -16,6 +16,12 @@ import { X } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import './Modal.css'
 
+// Pila de modales abiertos (el último es el de más arriba). Con modales
+// anidados (ej. "Exportar" dentro del detalle de una sesión), Escape y Tab
+// solo deben actuar sobre el de arriba: sin esto, Escape cerraría los dos y
+// el foco quedaría atrapado en el de abajo.
+const pilaDeModales = []
+
 export default function Modal({ titulo, onCerrar, refDisparador, tamano = 'normal', children }) {
   const idTitulo = useId()
   const refPanel = useRef(null)
@@ -60,7 +66,13 @@ export default function Modal({ titulo, onCerrar, refDisparador, tamano = 'norma
     // esté listo (ver el efecto de ModalNuevoAnimal que espera "cargando").
     elementosFocables()[0]?.focus()
 
+    const marca = {}
+    pilaDeModales.push(marca)
+
     function alPresionarTecla(evento) {
+      if (pilaDeModales[pilaDeModales.length - 1] !== marca) {
+        return
+      }
       if (evento.key === 'Escape') {
         refOnCerrar.current()
         return
@@ -90,6 +102,7 @@ export default function Modal({ titulo, onCerrar, refDisparador, tamano = 'norma
 
     return () => {
       document.removeEventListener('keydown', alPresionarTecla)
+      pilaDeModales.splice(pilaDeModales.indexOf(marca), 1)
       document.body.style.overflow = overflowPrevio
       disparador?.focus()
     }

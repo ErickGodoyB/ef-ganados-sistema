@@ -13,14 +13,25 @@
  */
 
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import BotonExportar from '../componentes/BotonExportar'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import Intervalo from '../componentes/Intervalo'
+import ModalExportar from '../componentes/ModalExportar'
 import Paginacion from '../componentes/Paginacion'
 import PanelOpciones from '../componentes/PanelOpciones'
+import { useUsuarioExportacion } from '../utilidades/exportacion/useUsuarioExportacion'
 import './Pesajes.css'
 import { COLUMNAS_OPCIONALES, OPCIONES_ORDEN_MOVIL } from './pesajes/columnas'
+import {
+  columnasSesionesParaExportar,
+  describirFiltrosSesiones,
+  filasDeSesionesParaExportar,
+  filtrosInicialesSesiones,
+  resumenDeSesiones,
+} from './pesajes/exportacionSesiones'
+import FiltrosExportarSesiones from './pesajes/FiltrosExportarSesiones'
 import { filtrarYOrdenarSesiones, obtenerLotesDisponibles } from './pesajes/listadoSesiones'
 import ModalDetalleSesion from './pesajes/ModalDetalleSesion'
 import ModalNuevoPesaje from './pesajes/ModalNuevoPesaje'
@@ -65,7 +76,10 @@ export default function Pesajes() {
   const [modalNuevoAbierto, setModalNuevoAbierto] = useState(false)
   const [sesionSeleccionada, setSesionSeleccionada] = useState(null)
   const [aviso, setAviso] = useState('')
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
   const refBotonNuevoPesaje = useRef(null)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
   const refDisparadorDetalle = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
@@ -101,6 +115,14 @@ export default function Pesajes() {
   }
 
   const lotesDisponibles = useMemo(() => obtenerLotesDisponibles(sesiones), [sesiones])
+
+  // Exportación (PDF/Excel): el modal reutiliza el filtrado del listado sobre las mismas sesiones.
+  const columnasExportacion = useMemo(() => columnasSesionesParaExportar(columnasVisibles), [columnasVisibles])
+  const obtenerFilasExportacion = useCallback((filtros) => filasDeSesionesParaExportar(sesiones, filtros), [sesiones])
+  const describirFiltrosExportacion = useCallback(
+    (filtros) => describirFiltrosSesiones(filtros, lotesDisponibles),
+    [lotesDisponibles],
+  )
 
   const resultado = useMemo(
     () => filtrarYOrdenarSesiones(sesiones, { busqueda, lote, desde, hasta, orden }),
@@ -241,6 +263,16 @@ export default function Pesajes() {
           </button>
 
           {vista === 'sesiones' && (
+            <BotonExportar
+              onClick={(evento) => {
+                refBotonExportar.current = evento.currentTarget
+                setModalExportarAbierto(true)
+              }}
+              disabled={cargando || Boolean(error)}
+            />
+          )}
+
+          {vista === 'sesiones' && (
             <PanelOpciones
               columnasObligatorias={COLUMNAS_OBLIGATORIAS}
               columnasOpcionales={COLUMNAS_OPCIONALES}
@@ -378,6 +410,25 @@ export default function Pesajes() {
           onGuardado={alGuardarNuevoPesaje}
           onGuardadoParcial={alGuardarParcialNuevoPesaje}
           refDisparador={refBotonNuevoPesaje}
+        />
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo="Sesiones de pesaje"
+          listado="sesiones-de-pesaje"
+          columnas={columnasExportacion}
+          filtrosIniciales={filtrosInicialesSesiones({ busqueda, lote, desde, hasta })}
+          renderFiltros={({ filtros, cambiarFiltro }) => (
+            <FiltrosExportarSesiones filtros={filtros} cambiarFiltro={cambiarFiltro} lotes={lotesDisponibles} />
+          )}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirFiltrosExportacion}
+          describirResumen={resumenDeSesiones}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          onGenerado={(nombre) => mostrarAviso('Archivo ' + nombre + ' generado')}
+          refDisparador={refBotonExportar}
         />
       )}
 

@@ -16,11 +16,14 @@
 
 import { FilterX, Inbox, Plus, RefreshCw, Search, SearchX, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import BotonExportar from '../componentes/BotonExportar'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import Intervalo from '../componentes/Intervalo'
 import Paginacion from '../componentes/Paginacion'
 import { formatearFecha } from '../utilidades/formato'
+import { filtrosInicialesTransferencias } from './transferencias/exportacionTransferencias'
 import { filtrarTransferencias } from './transferencias/listadoTransferencias'
+import ModalExportarTransferencias from './transferencias/ModalExportarTransferencias'
 import ModalDetalleTransferencia from './transferencias/ModalDetalleTransferencia'
 import ModalNuevaTransferencia from './transferencias/ModalNuevaTransferencia'
 import { etiquetaMotivoTransferencia, textoCantidadAnimales, textoOrigenDestino } from './transferencias/motivos'
@@ -48,7 +51,9 @@ export default function Transferencias() {
   const [modalNuevoAbierto, setModalNuevoAbierto] = useState(false)
   const [abierta, setAbierta] = useState(null)
   const [aviso, setAviso] = useState('')
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
   const refBotonNueva = useRef(null)
+  const refBotonExportar = useRef(null)
   const refDisparadorDetalle = useRef(null)
   const refTemporizadorAviso = useRef(null)
 
@@ -122,6 +127,13 @@ export default function Transferencias() {
               />
             </div>
           </div>
+
+          <BotonExportar
+            onClick={(evento) => {
+              refBotonExportar.current = evento.currentTarget
+              setModalExportarAbierto(true)
+            }}
+          />
 
           <button
             type="button"
@@ -269,6 +281,15 @@ export default function Transferencias() {
           onCerrar={() => setModalNuevoAbierto(false)}
           onTransferida={alTransferir}
           refDisparador={refBotonNueva}
+        />
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportarTransferencias
+          filtrosIniciales={filtrosInicialesTransferencias({ busqueda, desde, hasta })}
+          onCerrar={() => setModalExportarAbierto(false)}
+          onGenerado={(nombre) => mostrarAviso(`Archivo ${nombre} generado`)}
+          refDisparador={refBotonExportar}
         />
       )}
 

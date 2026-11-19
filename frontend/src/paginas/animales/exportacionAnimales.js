@@ -17,19 +17,19 @@ import { etiquetaMotivoSalida } from './tiposSalida'
  * arrancan sin marcar.
  */
 const DEFINICION_COLUMNAS = [
-  { clave: 'caravana', titulo: 'Caravana', tipo: 'texto', claveListado: 'aniCaravana' },
-  { clave: 'raza', titulo: 'Raza', tipo: 'texto', claveListado: 'raza' },
-  { clave: 'grupo', titulo: 'Grupo', tipo: 'texto' },
-  { clave: 'lote', titulo: 'Lote', tipo: 'texto', claveListado: 'lote' },
-  { clave: 'duenio', titulo: 'Dueño', tipo: 'texto' },
-  { clave: 'proveedor', titulo: 'Proveedor', tipo: 'texto', claveListado: 'proveedor' },
-  { clave: 'ingreso', titulo: 'Ingreso', tipo: 'fecha', claveListado: 'fechaIngreso' },
-  { clave: 'pesoInicial', titulo: 'Peso inicial (kg)', tipo: 'numero', decimales: 1 },
-  { clave: 'pesoActual', titulo: 'Peso actual (kg)', tipo: 'numero', decimales: 1, claveListado: 'pesoActual' },
-  { clave: 'gmd', titulo: 'GMD (kg/día)', tipo: 'numero', decimales: 2, claveListado: 'gmd' },
-  { clave: 'apto', titulo: 'Apto para venta', tipo: 'booleano' },
-  { clave: 'estado', titulo: 'Estado', tipo: 'texto', claveListado: 'estado' },
-  { clave: 'comprador', titulo: 'Comprador', tipo: 'texto' },
+  { clave: 'caravana', titulo: 'Caravana', tipo: 'texto', alineacion: 'izquierda', claveListado: 'aniCaravana' },
+  { clave: 'raza', titulo: 'Raza', tipo: 'texto', alineacion: 'izquierda', claveListado: 'raza' },
+  { clave: 'grupo', titulo: 'Grupo', tipo: 'texto', alineacion: 'izquierda' },
+  { clave: 'lote', titulo: 'Lote', tipo: 'texto', alineacion: 'izquierda', claveListado: 'lote' },
+  { clave: 'duenio', titulo: 'Dueño', tipo: 'texto', alineacion: 'izquierda' },
+  { clave: 'proveedor', titulo: 'Proveedor', tipo: 'texto', alineacion: 'izquierda', claveListado: 'proveedor' },
+  { clave: 'ingreso', titulo: 'Ingreso', tipo: 'fecha', alineacion: 'centro', claveListado: 'fechaIngreso' },
+  { clave: 'pesoInicial', titulo: 'Peso inicial (kg)', tipo: 'numero', alineacion: 'centro', decimales: 1 },
+  { clave: 'pesoActual', titulo: 'Peso actual (kg)', tipo: 'numero', alineacion: 'centro', decimales: 1, claveListado: 'pesoActual' },
+  { clave: 'gmd', titulo: 'GMD (kg/día)', tipo: 'numero', alineacion: 'centro', decimales: 3, claveListado: 'gmd' },
+  { clave: 'apto', titulo: 'Apto para venta', tipo: 'booleano', alineacion: 'centro' },
+  { clave: 'estado', titulo: 'Estado', tipo: 'texto', alineacion: 'izquierda', claveListado: 'estado' },
+  { clave: 'comprador', titulo: 'Comprador', tipo: 'texto', alineacion: 'izquierda' },
 ]
 
 /**

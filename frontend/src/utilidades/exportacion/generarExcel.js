@@ -15,14 +15,20 @@ import {
   fechaIsoADateUtc,
   formatearFechaHora,
   lineaDeFiltros,
+  lineaDeResumen,
   nombreDeArchivo,
   textoDeCelda,
 } from './formatos'
 
 const VERDE_MARCA = 'FF183D09'
 const CREMA_MARCA = 'FFEFE7D4'
-/** Fila de la hoja donde va la cabecera de la tabla (las de arriba son los datos de contexto). */
+/** Fila de la cabecera de la tabla cuando no hay resumen (las de arriba son los datos de contexto). */
 export const FILA_CABECERA = 6
+
+/** Fila de la cabecera según haya o no una línea de resumen (que suma una fila arriba). */
+export function filaDeCabecera(resumen) {
+  return lineaDeResumen(resumen) ? FILA_CABECERA + 1 : FILA_CABECERA
+}
 
 /** Formato numérico de Excel según los decimales ("#,##0.0": miles y decimales según la configuración regional del usuario). */
 function formatoNumeroExcel(decimales) {
@@ -52,7 +58,7 @@ export function anchoDeColumna(columna, filas) {
 }
 
 /** Arma el libro y devuelve el Blob (sin descargarlo; ver generarExcel). Mismos datos que construirPdf, menos la orientación. */
-export async function construirExcel({ titulo, filtros, columnas, filas, usuario, ahora = new Date() }) {
+export async function construirExcel({ titulo, filtros, columnas, filas, resumen, usuario, ahora = new Date() }) {
   const { default: ExcelJS } = await import('exceljs')
   const libro = new ExcelJS.Workbook()
   libro.creator = MARCA.nombre
@@ -65,9 +71,15 @@ export async function construirExcel({ titulo, filtros, columnas, filas, usuario
   hoja.getCell('A2').font = { bold: true, size: 12 }
   hoja.getCell('A3').value = `Filtros: ${lineaDeFiltros(filtros)}`
   hoja.getCell('A4').value = `Generado el ${formatearFechaHora(ahora)} por ${usuario}`
+  const textoResumen = lineaDeResumen(resumen)
+  if (textoResumen) {
+    hoja.getCell('A5').value = textoResumen
+    hoja.getCell('A5').font = { bold: true }
+  }
+  const filaCabecera = filaDeCabecera(resumen)
 
   // Cabecera de la tabla.
-  const cabecera = hoja.getRow(FILA_CABECERA)
+  const cabecera = hoja.getRow(filaCabecera)
   columnas.forEach((columna, indice) => {
     const celda = cabecera.getCell(indice + 1)
     celda.value = columna.titulo
@@ -79,7 +91,7 @@ export async function construirExcel({ titulo, filtros, columnas, filas, usuario
 
   // Filas de datos, con valores reales y su formato.
   filas.forEach((fila, indiceFila) => {
-    const filaHoja = hoja.getRow(FILA_CABECERA + 1 + indiceFila)
+    const filaHoja = hoja.getRow(filaCabecera + 1 + indiceFila)
     columnas.forEach((columna, indice) => {
       const celda = filaHoja.getCell(indice + 1)
       celda.value = valorDeCeldaExcel(fila[columna.clave], columna)
@@ -101,10 +113,10 @@ export async function construirExcel({ titulo, filtros, columnas, filas, usuario
 
   // Autofiltro sobre la tabla y filas de arriba congeladas hasta la cabecera.
   hoja.autoFilter = {
-    from: { row: FILA_CABECERA, column: 1 },
-    to: { row: FILA_CABECERA + Math.max(filas.length, 1), column: columnas.length },
+    from: { row: filaCabecera, column: 1 },
+    to: { row: filaCabecera + Math.max(filas.length, 1), column: columnas.length },
   }
-  hoja.views = [{ state: 'frozen', ySplit: FILA_CABECERA }]
+  hoja.views = [{ state: 'frozen', ySplit: filaCabecera }]
 
   const buffer = await libro.xlsx.writeBuffer()
   return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })

@@ -244,6 +244,60 @@ describe('ModalExportar: estados', () => {
   })
 })
 
+describe('ModalExportar: sin filtros y resumen', () => {
+  it('sin renderFiltros no muestra la sección de filtros, y el contexto va como línea de filtros', async () => {
+    const usuario = userEvent.setup()
+    renderizar({
+      renderFiltros: undefined,
+      filtrosIniciales: undefined,
+      obtenerFilas: () => DATOS,
+      describirFiltros: () => [{ etiqueta: 'Sesión', valor: 'S-261029-3' }],
+      tituloModal: 'Exportar animales de la sesión',
+    })
+
+    expect(screen.getByRole('dialog', { name: 'Exportar animales de la sesión' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Filtros' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Se exportarán 3 registros')
+
+    await usuario.click(screen.getByRole('button', { name: 'Generar' }))
+
+    await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
+    expect(generarPdf.mock.calls[0][0].filtros).toEqual([{ etiqueta: 'Sesión', valor: 'S-261029-3' }])
+  })
+
+  it('describirResumen recibe las filas y el resultado va al generador (PDF y Excel)', async () => {
+    const usuario = userEvent.setup()
+    const describirResumen = vi.fn((filas) => [{ etiqueta: 'Animales', valor: String(filas.length) }])
+    renderizar({ describirResumen })
+
+    await usuario.click(screen.getByRole('button', { name: 'Generar' }))
+    await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
+
+    expect(describirResumen).toHaveBeenCalledWith(DATOS, { texto: '' })
+    expect(generarPdf.mock.calls[0][0].resumen).toEqual([{ etiqueta: 'Animales', valor: '3' }])
+  })
+
+  it('un listado que no usa resumen no manda la clave (el archivo queda como antes)', async () => {
+    const usuario = userEvent.setup()
+    renderizar()
+
+    await usuario.click(screen.getByRole('button', { name: 'Generar' }))
+    await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
+
+    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('resumen')
+  })
+
+  it('un resumen vacío tampoco se manda', async () => {
+    const usuario = userEvent.setup()
+    renderizar({ describirResumen: () => [] })
+
+    await usuario.click(screen.getByRole('button', { name: 'Generar' }))
+    await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
+
+    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('resumen')
+  })
+})
+
 describe('ModalExportar: accesibilidad', () => {
   it('agrupa los controles en fieldsets con leyenda', () => {
     renderizar()

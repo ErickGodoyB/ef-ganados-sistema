@@ -19,6 +19,7 @@ import {
   dimensionesDePng,
   formatearFechaHora,
   lineaDeFiltros,
+  lineaDeResumen,
   nombreDeArchivo,
   orientacionDelPdf,
   textoDeCelda,
@@ -66,6 +67,7 @@ async function cargarLogo() {
  * @param {object[]} datos.columnas Columnas (ver formatos.js).
  * @param {object[]} datos.filas Filas: objetos con un valor por clave de columna.
  * @param {'automatica'|'vertical'|'horizontal'} [datos.orientacion]
+ * @param {{etiqueta: string, valor: string}[]} [datos.resumen] Datos de resumen que van en la cabecera, después de los filtros (opcional).
  * @param {string} datos.usuario Quién genera el archivo.
  * @param {Date} [datos.ahora] Momento de generación (se puede fijar para pruebas).
  */
@@ -74,6 +76,7 @@ export async function construirPdf({
   filtros,
   columnas,
   filas,
+  resumen,
   orientacion = 'automatica',
   usuario,
   ahora = new Date(),
@@ -120,7 +123,16 @@ export async function construirPdf({
   y += 5
   const lineasFiltros = doc.splitTextToSize(lineaDeFiltros(filtros), anchoPagina - MARGEN * 2)
   doc.text(lineasFiltros, MARGEN, y)
-  y += lineasFiltros.length * 4 + 3
+  y += lineasFiltros.length * 4
+  const textoResumen = lineaDeResumen(resumen)
+  if (textoResumen) {
+    doc.setFont('helvetica', 'bold')
+    const lineasResumen = doc.splitTextToSize(textoResumen, anchoPagina - MARGEN * 2)
+    doc.text(lineasResumen, MARGEN, y + 1)
+    doc.setFont('helvetica', 'normal')
+    y += lineasResumen.length * 4 + 1
+  }
+  y += 3
 
   // ---- tabla ----
   autoTable(doc, {
@@ -134,6 +146,12 @@ export async function construirPdf({
     alternateRowStyles: { fillColor: FILA_ALTERNA },
     columnStyles: Object.fromEntries(columnas.map((columna, indice) => [indice, { halign: alineacionDe(columna) }])),
     showHead: 'everyPage',
+    // columnStyles alinea solo el cuerpo: el encabezado se alinea igual que su columna.
+    didParseCell: (datosCelda) => {
+      if (datosCelda.section === 'head') {
+        datosCelda.cell.styles.halign = alineacionDe(columnas[datosCelda.column.index])
+      }
+    },
   })
 
   // ---- total de registros ----

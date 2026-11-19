@@ -28,6 +28,14 @@
   border-radius: var(--radio-md);
 }
 
+/* Casilla de "solo activos" y botón "Exportar" en una fila (el botón baja solo si no entra). */
+.reporte-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
 /* Área táctil de al menos 44 px de alto: toda la línea es la etiqueta. */
 .reporte-casilla {
   display: inline-flex;

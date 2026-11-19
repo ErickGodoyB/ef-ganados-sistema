@@ -11,9 +11,13 @@
  */
 
 import { Award, Inbox, RefreshCw, TriangleAlert } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import BarraGmd from '../../componentes/BarraGmd'
+import BotonExportar from '../../componentes/BotonExportar'
+import ModalExportar from '../../componentes/ModalExportar'
+import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearGmd, formatearPeso } from '../../utilidades/formato'
+import { COLUMNAS_RANKING, describirFiltrosRanking, filasDeRanking } from './exportacionProveedores'
 import ModalAnimalesProveedor from './ModalAnimalesProveedor'
 import {
   esFilaSinProveedor,
@@ -47,7 +51,12 @@ export default function ReporteRendimientoProveedor() {
   const [soloActivos, setSoloActivos] = useState(false)
   const [verAnimalesDe, setVerAnimalesDe] = useState(null) // null | fila del ranking
   const refDisparador = useRef(null)
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
   const { filas, cargando, error, recargar } = useRendimientoProveedores(soloActivos)
+  const obtenerFilasExportacion = useCallback(() => filasDeRanking(filas), [filas])
+  const describirFiltrosExportacion = useCallback(() => describirFiltrosRanking(soloActivos), [soloActivos])
 
   const maximo = mayorGmdPromedio(filas)
   const idMejor = proveedorConMejorRendimiento(filas)
@@ -81,15 +90,25 @@ export default function ReporteRendimientoProveedor() {
         solo los animales con pesajes.
       </p>
 
-      <label className="reporte-casilla" htmlFor="reporte-solo-activos">
-        <input
-          id="reporte-solo-activos"
-          type="checkbox"
-          checked={soloActivos}
-          onChange={(evento) => setSoloActivos(evento.target.checked)}
+      <div className="reporte-controles">
+        <label className="reporte-casilla" htmlFor="reporte-solo-activos">
+          <input
+            id="reporte-solo-activos"
+            type="checkbox"
+            checked={soloActivos}
+            onChange={(evento) => setSoloActivos(evento.target.checked)}
+          />
+          Solo animales activos
+        </label>
+
+        <BotonExportar
+          onClick={(evento) => {
+            refBotonExportar.current = evento.currentTarget
+            setModalExportarAbierto(true)
+          }}
+          disabled={cargando || Boolean(error) || filas.length === 0}
         />
-        Solo animales activos
-      </label>
+      </div>
 
       {cargando && <p role="status">Cargando reporte…</p>}
 
@@ -197,6 +216,19 @@ export default function ReporteRendimientoProveedor() {
             ))}
           </div>
         </>
+      )}
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo="Rendimiento por proveedor"
+          listado="rendimiento-por-proveedor"
+          columnas={COLUMNAS_RANKING}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirFiltrosExportacion}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          refDisparador={refBotonExportar}
+        />
       )}
 
       {verAnimalesDe && (

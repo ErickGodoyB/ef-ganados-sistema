@@ -8,6 +8,7 @@ import {
   formatearFechaIso,
   formatearNumero,
   lineaDeFiltros,
+  lineaDeResumen,
   nombreDeArchivo,
   orientacionDelPdf,
   textoDeCelda,
@@ -65,12 +66,18 @@ describe('textoDeCelda', () => {
 })
 
 describe('alineacionDe', () => {
-  it('respeta la indicada y, si falta, derecha para números e izquierda para el resto', () => {
-    expect(alineacionDe({ tipo: 'numero' })).toBe('right')
-    expect(alineacionDe({ tipo: 'entero' })).toBe('right')
+  it('traduce la indicada: "centro" a center e "izquierda" a left', () => {
+    expect(alineacionDe({ tipo: 'texto', alineacion: 'centro' })).toBe('center')
+    expect(alineacionDe({ tipo: 'numero', alineacion: 'izquierda' })).toBe('left')
+  })
+
+  it('si falta, centra números, fechas y sí/no, y deja los textos a la izquierda', () => {
+    expect(alineacionDe({ tipo: 'numero' })).toBe('center')
+    expect(alineacionDe({ tipo: 'entero' })).toBe('center')
+    expect(alineacionDe({ tipo: 'fecha' })).toBe('center')
+    expect(alineacionDe({ tipo: 'booleano' })).toBe('center')
     expect(alineacionDe({ tipo: 'texto' })).toBe('left')
-    expect(alineacionDe({ tipo: 'fecha' })).toBe('left')
-    expect(alineacionDe({ tipo: 'numero', alineacion: 'center' })).toBe('center')
+    expect(alineacionDe({})).toBe('left')
   })
 })
 
@@ -88,6 +95,23 @@ describe('lineaDeFiltros', () => {
     expect(lineaDeFiltros([{ etiqueta: 'Raza', valor: '' }, { etiqueta: 'Lote', valor: '  ' }])).toBe('Sin filtros')
     expect(lineaDeFiltros([])).toBe('Sin filtros')
     expect(lineaDeFiltros(undefined)).toBe('Sin filtros')
+  })
+})
+
+describe('lineaDeResumen', () => {
+  it('une los datos con "·", como la línea de filtros', () => {
+    expect(
+      lineaDeResumen([
+        { etiqueta: 'Animales', valor: '20' },
+        { etiqueta: 'Peso promedio', valor: '312,4 kg' },
+      ]),
+    ).toBe('Animales: 20 · Peso promedio: 312,4 kg')
+  })
+
+  it('ignora los datos sin valor y, sin ninguno (o sin resumen), devuelve vacío', () => {
+    expect(lineaDeResumen([{ etiqueta: 'A', valor: '' }, { etiqueta: 'B', valor: '1' }])).toBe('B: 1')
+    expect(lineaDeResumen([])).toBe('')
+    expect(lineaDeResumen(undefined)).toBe('')
   })
 })
 

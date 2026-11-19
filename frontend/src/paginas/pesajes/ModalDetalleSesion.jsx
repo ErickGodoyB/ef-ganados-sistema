@@ -29,12 +29,21 @@
 import { Ban, CalendarCog, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
+import BotonExportar from '../../componentes/BotonExportar'
 import Modal from '../../componentes/Modal'
+import ModalExportar from '../../componentes/ModalExportar'
 import ValorGmd from '../../componentes/ValorGmd'
 import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
+import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import { calcularGmdPromedioSesion, calcularResumenPesos } from '../../utilidades/resumenSesion'
 import AgregarAnimalSesion from './AgregarAnimalSesion'
+import {
+  COLUMNAS_DETALLE_SESION,
+  contextoDeSesion,
+  filasDeDetalleSesion,
+  resumenDeDetalleSesion,
+} from './exportacionDetalleSesion'
 import './ModalDetalleSesion.css'
 import PanelAnularSesion from './PanelAnularSesion'
 import PanelCambiarFechaSesion from './PanelCambiarFechaSesion'
@@ -261,9 +270,26 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
 
   const hayAccionODialogoActivo = accionActiva != null || panelSesion != null
 
+  // Exportación (PDF/Excel) de los animales de esta sesión, sin filtros: el
+  // contexto (sesión, lote y fecha) va en la línea de filtros del archivo.
+  const [modalExportarAbierto, setModalExportarAbierto] = useState(false)
+  const refBotonExportar = useRef(null)
+  const usuarioExportacion = useUsuarioExportacion()
+  const obtenerFilasExportacion = useCallback(() => filasDeDetalleSesion(items, fechaActual), [items, fechaActual])
+  const describirContexto = useCallback(() => contextoDeSesion(sesion, fechaActual), [sesion, fechaActual])
+  const describirResumenExportacion = useCallback(() => resumenDeDetalleSesion(items), [items])
+  const codigoExportacion = calcularCodigoSesion(fechaActual, sesion.subGrupoId)
+
   return (
     <Modal titulo={tituloSesion(sesion, fechaActual)} onCerrar={onCerrar} refDisparador={refDisparador} tamano="grande">
       <div className="detalle-sesion-acciones-encabezado">
+        <BotonExportar
+          onClick={(evento) => {
+            refBotonExportar.current = evento.currentTarget
+            setModalExportarAbierto(true)
+          }}
+          disabled={cargando || Boolean(error) || items.length === 0}
+        />
         <button
           type="button"
           className="boton-secundario"
@@ -414,6 +440,22 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
         deshabilitado={hayAccionODialogoActivo}
         onAgregado={alAgregarAnimal}
       />
+
+      {modalExportarAbierto && (
+        <ModalExportar
+          titulo={`Sesión de pesaje ${codigoExportacion}`}
+          tituloModal="Exportar animales de la sesión"
+          listado={`sesion-${codigoExportacion}`}
+          columnas={COLUMNAS_DETALLE_SESION}
+          obtenerFilas={obtenerFilasExportacion}
+          describirFiltros={describirContexto}
+          describirResumen={describirResumenExportacion}
+          usuario={usuarioExportacion}
+          onCerrar={() => setModalExportarAbierto(false)}
+          onGenerado={(nombre) => mostrarAvisoLocal(`Archivo ${nombre} generado`)}
+          refDisparador={refBotonExportar}
+        />
+      )}
     </Modal>
   )
 }

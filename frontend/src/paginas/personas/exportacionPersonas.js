@@ -13,18 +13,18 @@ export const AVISO_DATOS_PERSONALES = 'El archivo contiene datos personales'
 
 /** Columnas exportables; arrancan marcadas las que el listado muestra (más el apellido, que el listado junta con el nombre). */
 export const COLUMNAS_PERSONAS = [
-  { clave: 'nombre', titulo: 'Nombre', tipo: 'texto', porDefecto: true },
-  { clave: 'apellido', titulo: 'Apellido', tipo: 'texto', porDefecto: true },
-  { clave: 'tipo', titulo: 'Tipo', tipo: 'texto', porDefecto: true },
-  { clave: 'ci', titulo: 'CI', tipo: 'texto', porDefecto: true },
-  { clave: 'ruc', titulo: 'RUC', tipo: 'texto', porDefecto: false },
-  { clave: 'telefono', titulo: 'Teléfono', tipo: 'texto', porDefecto: true },
-  { clave: 'correo', titulo: 'Correo', tipo: 'texto', porDefecto: false },
-  { clave: 'direccion', titulo: 'Dirección', tipo: 'texto', porDefecto: false },
-  { clave: 'animales', titulo: 'Animales', tipo: 'entero', porDefecto: true },
-  { clave: 'compras', titulo: 'Compras', tipo: 'entero', porDefecto: true },
-  { clave: 'comoProveedor', titulo: 'Proveedor de', tipo: 'entero', porDefecto: true },
-  { clave: 'pesajes', titulo: 'Pesajes', tipo: 'entero', porDefecto: true },
+  { clave: 'nombre', titulo: 'Nombre', tipo: 'texto', alineacion: 'izquierda', porDefecto: true },
+  { clave: 'apellido', titulo: 'Apellido', tipo: 'texto', alineacion: 'izquierda', porDefecto: true },
+  { clave: 'tipo', titulo: 'Tipo', tipo: 'texto', alineacion: 'izquierda', porDefecto: true },
+  { clave: 'ci', titulo: 'CI', tipo: 'texto', alineacion: 'izquierda', porDefecto: true },
+  { clave: 'ruc', titulo: 'RUC', tipo: 'texto', alineacion: 'izquierda', porDefecto: false },
+  { clave: 'telefono', titulo: 'Teléfono', tipo: 'texto', alineacion: 'izquierda', porDefecto: true },
+  { clave: 'correo', titulo: 'Correo', tipo: 'texto', alineacion: 'izquierda', porDefecto: false },
+  { clave: 'direccion', titulo: 'Dirección', tipo: 'texto', alineacion: 'izquierda', porDefecto: false },
+  { clave: 'animales', titulo: 'Animales', tipo: 'entero', alineacion: 'centro', porDefecto: true },
+  { clave: 'compras', titulo: 'Compras', tipo: 'entero', alineacion: 'centro', porDefecto: true },
+  { clave: 'comoProveedor', titulo: 'Proveedor de', tipo: 'entero', alineacion: 'centro', porDefecto: true },
+  { clave: 'pesajes', titulo: 'Pesajes', tipo: 'entero', alineacion: 'centro', porDefecto: true },
 ]
 
 /** Una fila de exportación a partir de una persona del resumen. */
