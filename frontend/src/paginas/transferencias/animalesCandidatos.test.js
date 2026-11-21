@@ -104,8 +104,15 @@ describe('ordenarAnimales', () => {
     expect(ordenarAnimales(conPeso).map((a) => a.aniId)).toEqual([3, 1, 2])
   })
 
-  it('las opciones del selector cubren GMD y peso actual en ambas direcciones y se traducen a campo/dirección', () => {
-    expect(OPCIONES_ORDEN.map((o) => o.valor)).toEqual(['gmd:desc', 'gmd:asc', 'pesoActual:desc', 'pesoActual:asc'])
+  it('las opciones del selector cubren GMD, peso actual y ganancia total en ambas direcciones y se traducen a campo/dirección', () => {
+    expect(OPCIONES_ORDEN.map((o) => o.valor)).toEqual([
+      'gmd:desc',
+      'gmd:asc',
+      'pesoActual:desc',
+      'pesoActual:asc',
+      'gananciaTotal:desc',
+      'gananciaTotal:asc',
+    ])
     expect(ordenDesdeValor('pesoActual:asc')).toEqual({ campo: 'pesoActual', direccion: 'asc' })
   })
 })

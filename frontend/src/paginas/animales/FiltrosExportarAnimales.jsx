@@ -93,6 +93,43 @@ export default function FiltrosExportarAnimales({ filtros, cambiarFiltro, opcion
       </div>
 
       <div className="campo">
+        <label htmlFor="exportar-animales-pesajes">Pesajes</label>
+        <select
+          id="exportar-animales-pesajes"
+          value={filtros.pesajes}
+          onChange={(evento) => cambiarFiltro('pesajes', evento.target.value)}
+        >
+          <option value="todos">Todos</option>
+          <option value="con">Con pesajes</option>
+          <option value="sin">Sin pesajes</option>
+        </select>
+      </div>
+
+      <div className="campo">
+        <label htmlFor="exportar-animales-peso-min">Peso actual mínimo (kg)</label>
+        <input
+          id="exportar-animales-peso-min"
+          type="text"
+          inputMode="decimal"
+          value={filtros.pesoMin}
+          onChange={(evento) => cambiarFiltro('pesoMin', evento.target.value)}
+          placeholder="Ej. 300"
+        />
+      </div>
+
+      <div className="campo">
+        <label htmlFor="exportar-animales-peso-max">Peso actual máximo (kg)</label>
+        <input
+          id="exportar-animales-peso-max"
+          type="text"
+          inputMode="decimal"
+          value={filtros.pesoMax}
+          onChange={(evento) => cambiarFiltro('pesoMax', evento.target.value)}
+          placeholder="Ej. 450"
+        />
+      </div>
+
+      <div className="campo">
         <label htmlFor="exportar-animales-gmd-min">GMD mínima (kg/día)</label>
         <input
           id="exportar-animales-gmd-min"

@@ -1,0 +1,118 @@
+/**
+ * Estilos del bloque "Por proveedor" del detalle de una sesión (ver
+ * BloquePorProveedor.jsx): tabla desde 768px y tarjetas en celular, una u
+ * otra según el ancho, sin JS. Solo variables de color de index.css.
+ */
+
+.por-proveedor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.por-proveedor-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* El display de las tarjetas va ANTES del @media que las oculta: con la
+   misma especificidad gana la regla posterior (ver
+   estilos/tablaYTarjetas.test.js). */
+.por-proveedor-tabla-solo-escritorio {
+  display: none;
+}
+
+.por-proveedor-tarjetas-solo-movil {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .por-proveedor-tabla-solo-escritorio {
+    display: block;
+    overflow-x: auto;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-md);
+  }
+
+  .por-proveedor-tarjetas-solo-movil {
+    display: none;
+  }
+}
+
+.por-proveedor-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.por-proveedor-tabla th,
+.por-proveedor-tabla td {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--borde);
+}
+
+.por-proveedor-tabla thead th {
+  white-space: nowrap;
+  background: var(--superficie-hover);
+}
+
+.por-proveedor-tabla tbody tr:last-child th,
+.por-proveedor-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.por-proveedor-nombre {
+  font-weight: 700;
+}
+
+.por-proveedor-etiqueta-mejor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: var(--color-exito-texto);
+  background: var(--color-exito-fondo);
+}
+
+.por-proveedor-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.por-proveedor-tarjeta-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.por-proveedor-tarjeta-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.por-proveedor-tarjeta-datos dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.por-proveedor-tarjeta-datos dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto);
+}

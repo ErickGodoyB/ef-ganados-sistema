@@ -38,6 +38,7 @@ import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioEx
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import { calcularGmdPromedioSesion, calcularResumenPesos } from '../../utilidades/resumenSesion'
 import AgregarAnimalSesion from './AgregarAnimalSesion'
+import BloquePorProveedor from './BloquePorProveedor'
 import {
   COLUMNAS_DETALLE_SESION,
   contextoDeSesion,
@@ -74,6 +75,10 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
   // listado de sesiones (ver usePreferenciasListadoPesajes), porque acá es
   // un detalle chico del modal, no una preferencia de toda la pantalla.
   const [mostrarResponsable, setMostrarResponsable] = useState(true)
+  // Proveedor: visible de entrada; peso de ingreso: opcional, oculto de entrada
+  // (cuando el anterior es el ingreso ya se ve en "Peso anterior").
+  const [mostrarProveedor, setMostrarProveedor] = useState(true)
+  const [mostrarPesoIngreso, setMostrarPesoIngreso] = useState(false)
 
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -384,6 +389,8 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
 
       {!cargando && !error && items.length > 0 && (
         <>
+          <BloquePorProveedor items={items} />
+
           <label className="detalle-sesion-toggle-responsable">
             <input
               type="checkbox"
@@ -392,6 +399,22 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
             />
             Mostrar responsable
           </label>
+          <label className="detalle-sesion-toggle-responsable">
+            <input
+              type="checkbox"
+              checked={mostrarProveedor}
+              onChange={(evento) => setMostrarProveedor(evento.target.checked)}
+            />
+            Mostrar proveedor
+          </label>
+          <label className="detalle-sesion-toggle-responsable">
+            <input
+              type="checkbox"
+              checked={mostrarPesoIngreso}
+              onChange={(evento) => setMostrarPesoIngreso(evento.target.checked)}
+            />
+            Mostrar peso de ingreso
+          </label>
 
           <div className="detalle-sesion-tabla-solo-escritorio">
             <TablaItemsSesion
@@ -399,6 +422,8 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
               fecha={formatearFecha(fechaActual)}
               fechaIso={fechaActual}
               mostrarResponsable={mostrarResponsable}
+              mostrarProveedor={mostrarProveedor}
+              mostrarPesoIngreso={mostrarPesoIngreso}
               accionActiva={accionActiva}
               guardando={guardandoAccion}
               errorAccion={errorAccion}
@@ -418,6 +443,8 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
                 fecha={formatearFecha(fechaActual)}
                 fechaIso={fechaActual}
                 mostrarResponsable={mostrarResponsable}
+                mostrarProveedor={mostrarProveedor}
+                mostrarPesoIngreso={mostrarPesoIngreso}
                 activa={accionActiva?.pesaId === item.pesaId}
                 tipoAccion={accionActiva?.pesaId === item.pesaId ? accionActiva.tipo : null}
                 deshabilitada={accionActiva != null && accionActiva.pesaId !== item.pesaId}

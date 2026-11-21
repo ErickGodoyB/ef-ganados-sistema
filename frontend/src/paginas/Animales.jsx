@@ -1,7 +1,7 @@
 /**
  * Listado de animales (RF010): trae el resumen desde el backend
  * (GET /api/animales/resumen) y permite buscar por caravana, filtrar por
- * lote (por subGrupoId; ver listadoAnimales.js), por raza, por proveedor, por GMD mínima y
+ * lote (por subGrupoId; ver listadoAnimales.js), por raza, por proveedor, con/sin pesajes, por peso actual mínimo y máximo, por GMD mínima y
  * máxima (los animales sin GMD quedan afuera cuando hay un límite válido),
  * por estado (apto/no apto para venta) y por estado de salida (Activos por
  * defecto/Salidos/Todos, un filtro aparte del de apto/no apto). Todo se
@@ -90,6 +90,10 @@ export default function Animales() {
   const [estadoSalida, setEstadoSalida] = useState(FILTROS_POR_DEFECTO.estadoSalida)
   const [raza, setRaza] = useState(FILTROS_POR_DEFECTO.raza)
   const [proveedor, setProveedor] = useState(FILTROS_POR_DEFECTO.proveedor)
+  const [pesajes, setPesajes] = useState(FILTROS_POR_DEFECTO.pesajes)
+  // Igual que los de GMD: texto a medio escribir se ignora (ver utilidades/filtrosAnimales.js).
+  const [pesoMin, setPesoMin] = useState(FILTROS_POR_DEFECTO.pesoMin)
+  const [pesoMax, setPesoMax] = useState(FILTROS_POR_DEFECTO.pesoMax)
   // Los límites de GMD se guardan como el texto que se escribe (no como
   // número) para poder aceptar un valor a medio escribir ("-", ","): el
   // filtro lo ignora hasta que sea un número (ver utilidades/filtrosAnimales.js).
@@ -120,8 +124,11 @@ export default function Animales() {
     estadoSalida,
     raza,
     proveedor,
+    pesajes,
     gmdMin,
     gmdMax,
+    pesoMin,
+    pesoMax,
     orden,
   })
   if (
@@ -131,11 +138,27 @@ export default function Animales() {
     filtrosPrevios.estadoSalida !== estadoSalida ||
     filtrosPrevios.raza !== raza ||
     filtrosPrevios.proveedor !== proveedor ||
+    filtrosPrevios.pesajes !== pesajes ||
+    filtrosPrevios.pesoMin !== pesoMin ||
+    filtrosPrevios.pesoMax !== pesoMax ||
     filtrosPrevios.gmdMin !== gmdMin ||
     filtrosPrevios.gmdMax !== gmdMax ||
     filtrosPrevios.orden !== orden
   ) {
-    setFiltrosPrevios({ busqueda, lote, estado, estadoSalida, raza, proveedor, gmdMin, gmdMax, orden })
+    setFiltrosPrevios({
+      busqueda,
+      lote,
+      estado,
+      estadoSalida,
+      raza,
+      proveedor,
+      pesajes,
+      gmdMin,
+      gmdMax,
+      pesoMin,
+      pesoMax,
+      orden,
+    })
     setPagina(1)
   }
 
@@ -166,11 +189,14 @@ export default function Animales() {
         estadoSalida,
         raza,
         proveedor,
+        pesajes,
         gmdMin,
         gmdMax,
+        pesoMin,
+        pesoMax,
         orden,
       }),
-    [animales, busqueda, lote, estado, estadoSalida, raza, proveedor, gmdMin, gmdMax, orden],
+    [animales, busqueda, lote, estado, estadoSalida, raza, proveedor, pesajes, gmdMin, gmdMax, pesoMin, pesoMax, orden],
   )
 
   const cantidadFiltros = contarFiltrosActivos({
@@ -180,8 +206,11 @@ export default function Animales() {
     estadoSalida,
     raza,
     proveedor,
+    pesajes,
     gmdMin,
     gmdMax,
+    pesoMin,
+    pesoMax,
   })
 
   const totalPaginas = Math.max(1, Math.ceil(resultado.length / filasPorPagina))
@@ -199,6 +228,9 @@ export default function Animales() {
     setEstadoSalida(FILTROS_POR_DEFECTO.estadoSalida)
     setRaza(FILTROS_POR_DEFECTO.raza)
     setProveedor(FILTROS_POR_DEFECTO.proveedor)
+    setPesajes(FILTROS_POR_DEFECTO.pesajes)
+    setPesoMin(FILTROS_POR_DEFECTO.pesoMin)
+    setPesoMax(FILTROS_POR_DEFECTO.pesoMax)
     setGmdMin(FILTROS_POR_DEFECTO.gmdMin)
     setGmdMax(FILTROS_POR_DEFECTO.gmdMax)
   }
@@ -408,6 +440,41 @@ export default function Animales() {
           </select>
         </div>
 
+        <div className="campo-filtro">
+          <label htmlFor="animales-filtro-pesajes">Pesajes</label>
+          <select id="animales-filtro-pesajes" value={pesajes} onChange={(evento) => setPesajes(evento.target.value)}>
+            <option value="todos">Todos</option>
+            <option value="con">Con pesajes</option>
+            <option value="sin">Sin pesajes</option>
+          </select>
+        </div>
+
+        <div className="campo-filtro animales-filtro-gmd">
+          <label htmlFor="animales-filtro-peso-min">Peso actual mínimo (kg)</label>
+          <input
+            id="animales-filtro-peso-min"
+            className="entrada"
+            type="text"
+            inputMode="decimal"
+            value={pesoMin}
+            onChange={(evento) => setPesoMin(evento.target.value)}
+            placeholder="Ej. 300"
+          />
+        </div>
+
+        <div className="campo-filtro animales-filtro-gmd">
+          <label htmlFor="animales-filtro-peso-max">Peso actual máximo (kg)</label>
+          <input
+            id="animales-filtro-peso-max"
+            className="entrada"
+            type="text"
+            inputMode="decimal"
+            value={pesoMax}
+            onChange={(evento) => setPesoMax(evento.target.value)}
+            placeholder="Ej. 450"
+          />
+        </div>
+
         <div className="campo-filtro animales-filtro-gmd">
           <label htmlFor="animales-filtro-gmd-min">GMD mínima (kg/día)</label>
           <input
@@ -572,8 +639,11 @@ export default function Animales() {
             raza,
             proveedor,
             estado,
+            pesajes,
             gmdMin,
             gmdMax,
+            pesoMin,
+            pesoMax,
             orden,
           })}
           renderFiltros={({ filtros, cambiarFiltro }) => (

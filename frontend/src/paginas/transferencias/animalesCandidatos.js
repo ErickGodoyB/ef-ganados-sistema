@@ -13,7 +13,7 @@
  * Animales y viven en utilidades/filtrosAnimales.js.
  */
 
-import { cumpleFiltroGmd, cumpleFiltroRaza } from '../../utilidades/filtrosAnimales'
+import { cumpleFiltrosComunes, valorNumericoDeAnimal } from '../../utilidades/filtrosAnimales'
 
 /** Un animal es candidato a transferirse si no tiene salida registrada. */
 export function esActivo(animal) {
@@ -39,11 +39,17 @@ export function obtenerLotesDeOrigen(animales) {
  * Aplica los filtros a los animales ACTIVOS:
  * - origen: 'todos', 'sin-lote' o el id del lote (como texto);
  * - raza: 'todas' o el id de la raza (como texto);
+ * - proveedor: 'todos', 'sin-proveedor' o el id del proveedor (como texto);
+ * - pesajes: 'todos', 'con' o 'sin' pesajes;
  * - gmdMin / gmdMax: texto de los límites (inclusivos). Si hay al menos un
  *   límite válido, los animales sin GMD (null: todavía no tienen dos
- *   pesajes) quedan afuera, porque no se puede saber si cumplen.
+ *   pesajes) quedan afuera, porque no se puede saber si cumplen;
+ * - pesoMin / pesoMax: límites (inclusivos) del peso actual.
  */
-export function filtrarAnimales(animales, { origen = 'todos', raza = 'todas', gmdMin = '', gmdMax = '' }) {
+export function filtrarAnimales(
+  animales,
+  { origen = 'todos', raza = 'todas', proveedor = 'todos', pesajes = 'todos', gmdMin = '', gmdMax = '', pesoMin = '', pesoMax = '' },
+) {
   return animales.filter((animal) => {
     if (!esActivo(animal)) {
       return false
@@ -54,16 +60,14 @@ export function filtrarAnimales(animales, { origen = 'todos', raza = 'todas', gm
     if (origen !== 'todos' && origen !== 'sin-lote' && String(animal.subGrupoId) !== origen) {
       return false
     }
-    if (!cumpleFiltroRaza(animal, raza)) {
-      return false
-    }
-    return cumpleFiltroGmd(animal, gmdMin, gmdMax)
+    // Las mismas reglas que el listado de Animales (raza, proveedor, GMD, peso actual y con/sin pesajes).
+    return cumpleFiltrosComunes(animal, { raza, proveedor, pesajes, gmdMin, gmdMax, pesoMin, pesoMax })
   })
 }
 
 /**
- * Opciones del selector "Ordenar por" de la lista de candidatos: por GMD o
- * por peso actual, cada uno en las dos direcciones. El valor es
+ * Opciones del selector "Ordenar por" de la lista de candidatos: por GMD,
+ * por peso actual o por ganancia total, cada uno en las dos direcciones. El valor es
  * "campo:direccion" (ver ordenDesdeValor).
  */
 export const OPCIONES_ORDEN = [
@@ -71,6 +75,8 @@ export const OPCIONES_ORDEN = [
   { valor: 'gmd:asc', etiqueta: 'GMD: menor a mayor' },
   { valor: 'pesoActual:desc', etiqueta: 'Peso actual: mayor a menor' },
   { valor: 'pesoActual:asc', etiqueta: 'Peso actual: menor a mayor' },
+  { valor: 'gananciaTotal:desc', etiqueta: 'Ganancia total: mayor a menor' },
+  { valor: 'gananciaTotal:asc', etiqueta: 'Ganancia total: menor a mayor' },
 ]
 
 /** Convierte el valor del selector ("gmd:desc") en { campo, direccion }. */
@@ -80,13 +86,15 @@ export function ordenDesdeValor(valor) {
 }
 
 function valorDeOrden(animal, campo) {
-  return campo === 'pesoActual' ? animal.pesoActual : animal.gmd
+  // Mismos valores que usa el orden del listado de Animales (utilidades/filtrosAnimales.js).
+  return valorNumericoDeAnimal(animal, campo) ?? null
 }
 
 /**
- * Ordena por GMD (campo 'gmd') o por peso actual (campo 'pesoActual'), de
- * mayor a menor ('desc') o de menor a mayor ('asc'). Los animales sin valor
- * (solo pasa con la GMD, que es null mientras no hay dos pesajes) van
+ * Ordena por GMD (campo 'gmd'), peso actual ('pesoActual') o ganancia total
+ * ('gananciaTotal'), de mayor a menor ('desc') o de menor a mayor ('asc').
+ * Los animales sin valor (la GMD es null mientras no hay dos pesajes, y la
+ * ganancia total mientras no hay ningún pesaje) van
  * siempre al final, en cualquiera de las dos direcciones; a igual valor,
  * por caravana, para que el orden sea estable. No modifica el arreglo
  * original.

@@ -38,7 +38,7 @@ import { useAuth } from '../../auth/useAuth'
 import Modal from '../../componentes/Modal'
 import Paginacion from '../../componentes/Paginacion'
 import { fechaHoyIso } from '../../utilidades/fechas'
-import { obtenerRazasDisponibles } from '../../utilidades/filtrosAnimales'
+import { obtenerProveedoresDisponibles, obtenerRazasDisponibles } from '../../utilidades/filtrosAnimales'
 import { formatearGmd } from '../../utilidades/formato'
 import '../animales/FormularioAnimal.css'
 import CampoResponsable from '../pesajes/CampoResponsable'
@@ -63,7 +63,16 @@ import './ModalNuevaTransferencia.css'
 
 const FILAS_POR_PAGINA = 25
 
-const FILTROS_INICIALES = { raza: 'todas', gmdMin: '', gmdMax: '', orden: 'gmd:desc' }
+const FILTROS_INICIALES = {
+  raza: 'todas',
+  proveedor: 'todos',
+  pesajes: 'todos',
+  gmdMin: '',
+  gmdMax: '',
+  pesoMin: '',
+  pesoMax: '',
+  orden: 'gmd:desc',
+}
 
 export default function ModalNuevaTransferencia({ onCerrar, onTransferida, refDisparador }) {
   const { animales, lotes, cargando, error, recargar, agregarLote } = useDatosNuevaTransferencia()
@@ -106,6 +115,7 @@ export default function ModalNuevaTransferencia({ onCerrar, onTransferida, refDi
   const activos = useMemo(() => animales.filter(esActivo), [animales])
   const lotesDeOrigen = useMemo(() => obtenerLotesDeOrigen(activos), [activos])
   const razas = useMemo(() => obtenerRazasDisponibles(activos), [activos])
+  const proveedores = useMemo(() => obtenerProveedoresDisponibles(activos), [activos])
 
   const hayOrigen = origen !== ''
   const filtrados = useMemo(
@@ -115,8 +125,12 @@ export default function ModalNuevaTransferencia({ onCerrar, onTransferida, refDi
             filtrarAnimales(animales, {
               origen,
               raza: filtros.raza,
+              proveedor: filtros.proveedor,
+              pesajes: filtros.pesajes,
               gmdMin: filtros.gmdMin,
               gmdMax: filtros.gmdMax,
+              pesoMin: filtros.pesoMin,
+              pesoMax: filtros.pesoMax,
             }),
             ordenDesdeValor(filtros.orden),
           )
@@ -453,6 +467,60 @@ export default function ModalNuevaTransferencia({ onCerrar, onTransferida, refDi
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="campo">
+                      <label htmlFor="transferencia-filtro-proveedor">Proveedor</label>
+                      <select
+                        id="transferencia-filtro-proveedor"
+                        value={filtros.proveedor}
+                        onChange={(evento) => cambiarFiltro('proveedor', evento.target.value)}
+                      >
+                        <option value="todos">Todos los proveedores</option>
+                        <option value="sin-proveedor">Sin proveedor</option>
+                        {proveedores.map((opcion) => (
+                          <option key={opcion.valor} value={opcion.valor}>
+                            {opcion.etiqueta}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="campo">
+                      <label htmlFor="transferencia-filtro-pesajes">Pesajes</label>
+                      <select
+                        id="transferencia-filtro-pesajes"
+                        value={filtros.pesajes}
+                        onChange={(evento) => cambiarFiltro('pesajes', evento.target.value)}
+                      >
+                        <option value="todos">Todos</option>
+                        <option value="con">Con pesajes</option>
+                        <option value="sin">Sin pesajes</option>
+                      </select>
+                    </div>
+
+                    <div className="campo">
+                      <label htmlFor="transferencia-filtro-peso-min">Peso actual mínimo (kg)</label>
+                      <input
+                        id="transferencia-filtro-peso-min"
+                        type="text"
+                        inputMode="decimal"
+                        value={filtros.pesoMin}
+                        onChange={(evento) => cambiarFiltro('pesoMin', evento.target.value)}
+                        placeholder="Ej. 300"
+                      />
+                    </div>
+
+                    <div className="campo">
+                      <label htmlFor="transferencia-filtro-peso-max">Peso actual máximo (kg)</label>
+                      <input
+                        id="transferencia-filtro-peso-max"
+                        type="text"
+                        inputMode="decimal"
+                        value={filtros.pesoMax}
+                        onChange={(evento) => cambiarFiltro('pesoMax', evento.target.value)}
+                        placeholder="Ej. 450"
+                      />
                     </div>
 
                     <div className="campo">

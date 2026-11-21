@@ -22,6 +22,8 @@ export default function TarjetaItemSesion({
   fecha,
   fechaIso,
   mostrarResponsable = true,
+  mostrarProveedor = true,
+  mostrarPesoIngreso = false,
   activa,
   tipoAccion,
   deshabilitada,
@@ -81,6 +83,18 @@ export default function TarjetaItemSesion({
             <ValorGmd gmd={item.gmd} />
           </dd>
         </div>
+        {mostrarProveedor && (
+          <div className="tarjeta-item-sesion-dato">
+            <dt>Proveedor</dt>
+            <dd>{item.proveedorNombre || 'Sin proveedor'}</dd>
+          </div>
+        )}
+        {mostrarPesoIngreso && (
+          <div className="tarjeta-item-sesion-dato">
+            <dt>Peso de ingreso</dt>
+            <dd>{formatearPeso(item.pesoIngreso)}</dd>
+          </div>
+        )}
         {mostrarResponsable && (
           <div className="tarjeta-item-sesion-dato">
             <dt>Responsable</dt>

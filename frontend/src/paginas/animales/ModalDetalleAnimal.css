@@ -61,3 +61,35 @@
   margin: 0 0 16px;
   color: var(--texto);
 }
+
+/* Bloque "Desde el ingreso": peso de ingreso, peso actual, ganancia total y
+   GMD acumulado juntos, dos por fila en celular y los cuatro en una desde 768px. */
+.detalle-animal-bloque {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  background: var(--superficie-hover);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+}
+
+@media (min-width: 768px) {
+  .detalle-animal-bloque {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.detalle-animal-bloque dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.detalle-animal-bloque dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}

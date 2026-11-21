@@ -29,6 +29,12 @@ function animal(aniId, caravana, extra = {}) {
     subGrupoDescripcion: 'Lote A',
     grupoDescripcion: 'Invernada',
     pesoActual: 250,
+    aniPesoInicial: 200,
+    cantidadPesajes: 2,
+    gananciaTotal: 50,
+    gmdAcumulado: 1,
+    proveedorId: null,
+    proveedorNombre: null,
     pesoAnterior: null,
     fechaPesoAnterior: null,
     pesoAnteriorEsIngreso: false,
@@ -58,7 +64,15 @@ const ANIMALES = [
     fechaPesoAnterior: '2026-02-01',
     fechaUltimoPesaje: '2026-03-03',
   }),
-  animal(3, 'CAR-003', { gmd: null, subGrupoId: 11, subGrupoDescripcion: 'Lote B', pesoActual: 220 }),
+  animal(3, 'CAR-003', {
+    gmd: null,
+    subGrupoId: 11,
+    subGrupoDescripcion: 'Lote B',
+    pesoActual: 220,
+    cantidadPesajes: 0,
+    gananciaTotal: null,
+    gmdAcumulado: null,
+  }),
   animal(4, 'CAR-004', {
     gmd: 2.2,
     pesoActual: 350,
@@ -205,7 +219,8 @@ describe('ModalNuevaTransferencia: columnas', () => {
 
     const [fila1, fila2] = within(screen.getByRole('table')).getAllByRole('row').slice(1)
     expect(within(fila1).getByText('300,0 kg')).toBeInTheDocument()
-    expect(within(fila1).getByText('200,0 kg')).toBeInTheDocument()
+    // 200 kg es el peso de ingreso (columna propia) y también el anterior, porque el anterior es el ingreso.
+    expect(within(fila1).getAllByText('200,0 kg')).toHaveLength(2)
     expect(within(fila1).getByText('ingreso')).toBeInTheDocument()
     expect(within(fila1).getByText('01/01/2026 · hace 30 días')).toBeInTheDocument()
     expect(within(fila2).getByText('190,0 kg')).toBeInTheDocument()
@@ -213,16 +228,17 @@ describe('ModalNuevaTransferencia: columnas', () => {
     expect(within(fila2).queryByText('ingreso')).not.toBeInTheDocument()
   })
 
-  it('un animal sin pesajes muestra "—" en el peso anterior y en la GMD', async () => {
+  it('un animal sin pesajes muestra "Sin pesajes" y "—" en la ganancia total, el peso anterior y la GMD', async () => {
     const usuario = userEvent.setup()
     await renderizar()
     await elegirOrigen(usuario, '11')
 
     const fila = within(screen.getByRole('table')).getAllByRole('row').find((f) => within(f).queryByText('CAR-003'))
-    expect(within(fila).getAllByText('—')).toHaveLength(2)
+    expect(within(fila).getAllByText('—')).toHaveLength(3)
+    expect(within(fila).getByText('Sin pesajes')).toBeInTheDocument()
   })
 
-  it('las columnas son casilla, caravana, raza, peso actual, peso anterior y GMD', async () => {
+  it('las columnas son casilla, caravana, raza, proveedor, pesajes, peso de ingreso, peso actual, ganancia total, peso anterior y GMD', async () => {
     const usuario = userEvent.setup()
     await renderizar()
     await elegirOrigen(usuario, '10')
@@ -232,7 +248,11 @@ describe('ModalNuevaTransferencia: columnas', () => {
       'Selección',
       'Caravana',
       'Raza',
+      'Proveedor',
+      'Pesajes',
+      'Peso de ingreso',
       'Peso actual',
+      'Ganancia total',
       'Peso anterior',
       'GMD',
     ])

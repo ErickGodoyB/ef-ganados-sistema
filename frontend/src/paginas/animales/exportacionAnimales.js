@@ -13,8 +13,9 @@ import { etiquetaMotivoSalida } from './tiposSalida'
 /**
  * Columnas exportables. "claveListado" es la clave de la misma columna en el
  * listado (columnas.js), para marcar de entrada las que la pantalla muestra;
- * las que el listado no tiene (grupo, dueño, peso inicial, apto, comprador)
- * arrancan sin marcar.
+ * las que el listado no tiene (grupo, dueño, apto, comprador) arrancan sin
+ * marcar. Los kilos llevan 1 decimal y el GMD 3, siempre los mismos dentro
+ * de la columna.
  */
 const DEFINICION_COLUMNAS = [
   { clave: 'caravana', titulo: 'Caravana', tipo: 'texto', alineacion: 'izquierda', claveListado: 'aniCaravana' },
@@ -23,10 +24,13 @@ const DEFINICION_COLUMNAS = [
   { clave: 'lote', titulo: 'Lote', tipo: 'texto', alineacion: 'izquierda', claveListado: 'lote' },
   { clave: 'duenio', titulo: 'Dueño', tipo: 'texto', alineacion: 'izquierda' },
   { clave: 'proveedor', titulo: 'Proveedor', tipo: 'texto', alineacion: 'izquierda', claveListado: 'proveedor' },
+  { clave: 'pesajes', titulo: 'Pesajes', tipo: 'entero', alineacion: 'centro', claveListado: 'pesajes' },
   { clave: 'ingreso', titulo: 'Ingreso', tipo: 'fecha', alineacion: 'centro', claveListado: 'fechaIngreso' },
-  { clave: 'pesoInicial', titulo: 'Peso inicial (kg)', tipo: 'numero', alineacion: 'centro', decimales: 1 },
+  { clave: 'pesoInicial', titulo: 'Peso de ingreso (kg)', tipo: 'numero', alineacion: 'centro', decimales: 1, claveListado: 'pesoIngreso' },
   { clave: 'pesoActual', titulo: 'Peso actual (kg)', tipo: 'numero', alineacion: 'centro', decimales: 1, claveListado: 'pesoActual' },
+  { clave: 'gananciaTotal', titulo: 'Ganancia total (kg)', tipo: 'numero', alineacion: 'centro', decimales: 1, claveListado: 'gananciaTotal' },
   { clave: 'gmd', titulo: 'GMD (kg/día)', tipo: 'numero', alineacion: 'centro', decimales: 3, claveListado: 'gmd' },
+  { clave: 'gmdAcumulado', titulo: 'GMD acumulado (kg/día)', tipo: 'numero', alineacion: 'centro', decimales: 3, claveListado: 'gmdAcumulado' },
   { clave: 'apto', titulo: 'Apto para venta', tipo: 'booleano', alineacion: 'centro' },
   { clave: 'estado', titulo: 'Estado', tipo: 'texto', alineacion: 'izquierda', claveListado: 'estado' },
   { clave: 'comprador', titulo: 'Comprador', tipo: 'texto', alineacion: 'izquierda' },
@@ -63,10 +67,13 @@ export function filaDeAnimal(animal) {
     lote: animal.subGrupoDescripcion,
     duenio: animal.duenioNombre,
     proveedor: animal.proveedorNombre,
+    pesajes: animal.cantidadPesajes,
     ingreso: animal.aniFechaIngreso,
     pesoInicial: animal.aniPesoInicial,
     pesoActual: animal.pesoActual,
+    gananciaTotal: animal.gananciaTotal,
     gmd: animal.gmd,
+    gmdAcumulado: animal.gmdAcumulado,
     apto: animal.aptoVenta,
     estado: textoEstado(animal),
     comprador: animal.compradorNombre,
@@ -80,14 +87,33 @@ export const OPCIONES_ORDEN_EXPORTACION = [
   { valor: 'gmd-asc', etiqueta: 'GMD, de menor a mayor', orden: { campo: 'gmd', direccion: 'asc' } },
   { valor: 'peso-desc', etiqueta: 'Peso actual, de mayor a menor', orden: { campo: 'pesoActual', direccion: 'desc' } },
   { valor: 'peso-asc', etiqueta: 'Peso actual, de menor a mayor', orden: { campo: 'pesoActual', direccion: 'asc' } },
+  { valor: 'ganancia-desc', etiqueta: 'Ganancia total, de mayor a menor', orden: { campo: 'gananciaTotal', direccion: 'desc' } },
+  { valor: 'ganancia-asc', etiqueta: 'Ganancia total, de menor a mayor', orden: { campo: 'gananciaTotal', direccion: 'asc' } },
+  { valor: 'pesajes-desc', etiqueta: 'Cantidad de pesajes, de mayor a menor', orden: { campo: 'cantidadPesajes', direccion: 'desc' } },
+  { valor: 'pesajes-asc', etiqueta: 'Cantidad de pesajes, de menor a mayor', orden: { campo: 'cantidadPesajes', direccion: 'asc' } },
 ]
 
 /**
  * Filtros iniciales del modal, copiados de los de la pantalla. El orden de la
- * pantalla solo se conserva si es uno de los del modal (GMD o peso, en
- * cualquier dirección); cualquier otro vuelve al orden por caravana.
+ * pantalla solo se conserva si es uno de los del modal (GMD, peso, ganancia
+ * o pesajes, en cualquier dirección); cualquier otro vuelve al orden por
+ * caravana. Los filtros de pesajes y de peso actual son opcionales (sin ellos,
+ * sin filtrar).
  */
-export function filtrosInicialesDeExportacion({ busqueda, estadoSalida, lote, raza, proveedor, estado, gmdMin, gmdMax, orden }) {
+export function filtrosInicialesDeExportacion({
+  busqueda,
+  estadoSalida,
+  lote,
+  raza,
+  proveedor,
+  estado,
+  gmdMin,
+  gmdMax,
+  pesajes = 'todos',
+  pesoMin = '',
+  pesoMax = '',
+  orden,
+}) {
   const coincidente = OPCIONES_ORDEN_EXPORTACION.find(
     (opcion) => opcion.orden.campo === orden?.campo && opcion.orden.direccion === orden?.direccion,
   )
@@ -98,8 +124,11 @@ export function filtrosInicialesDeExportacion({ busqueda, estadoSalida, lote, ra
     raza,
     proveedor,
     estado,
+    pesajes,
     gmdMin,
     gmdMax,
+    pesoMin,
+    pesoMax,
     orden: coincidente?.valor ?? 'caravana',
   }
 }
@@ -115,7 +144,8 @@ export function filasDeAnimalesParaExportar(animales, filtros) {
   return filtrarAnimalesParaExportar(animales, filtros).map(filaDeAnimal)
 }
 
-const ETIQUETAS_SALIDA ={ activos: 'Activos', salidos: 'Salidos' }
+const ETIQUETAS_SALIDA = { activos: 'Activos', salidos: 'Salidos' }
+const ETIQUETAS_PESAJES = { con: 'Con pesajes', sin: 'Sin pesajes' }
 const ETIQUETAS_APTITUD = { aptos: 'Aptos para venta', 'no-aptos': 'No aptos' }
 
 /**
@@ -150,6 +180,15 @@ export function describirFiltrosAnimales(filtros, { lotes, razas, proveedores })
   }
   if (filtros.estado !== 'todos') {
     lineas.push({ etiqueta: 'Aptitud', valor: ETIQUETAS_APTITUD[filtros.estado] })
+  }
+  if (filtros.pesajes && filtros.pesajes !== 'todos') {
+    lineas.push({ etiqueta: 'Pesajes', valor: ETIQUETAS_PESAJES[filtros.pesajes] })
+  }
+  if (filtros.pesoMin?.trim()) {
+    lineas.push({ etiqueta: 'Peso actual mínimo', valor: filtros.pesoMin.trim() })
+  }
+  if (filtros.pesoMax?.trim()) {
+    lineas.push({ etiqueta: 'Peso actual máximo', valor: filtros.pesoMax.trim() })
   }
   if (filtros.gmdMin.trim() !== '') {
     lineas.push({ etiqueta: 'GMD mínima', valor: filtros.gmdMin.trim() })

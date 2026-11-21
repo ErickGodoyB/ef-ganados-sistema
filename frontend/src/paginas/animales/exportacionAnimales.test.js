@@ -59,7 +59,7 @@ const OPCIONES = {
 }
 
 describe('columnasParaExportar', () => {
-  it('trae las 13 columnas pedidas, en orden', () => {
+  it('trae las 16 columnas, en orden', () => {
     expect(columnasParaExportar({}).map((columna) => columna.clave)).toEqual([
       'caravana',
       'raza',
@@ -67,10 +67,13 @@ describe('columnasParaExportar', () => {
       'lote',
       'duenio',
       'proveedor',
+      'pesajes',
       'ingreso',
       'pesoInicial',
       'pesoActual',
+      'gananciaTotal',
       'gmd',
+      'gmdAcumulado',
       'apto',
       'estado',
       'comprador',

@@ -12,8 +12,12 @@ export const COLUMNAS = [
   { clave: 'raza', etiqueta: 'Raza', campoOrden: 'razaDescripcion' },
   { clave: 'lote', etiqueta: 'Lote', campoOrden: 'lote' },
   { clave: 'proveedor', etiqueta: 'Proveedor', campoOrden: 'proveedor' },
+  { clave: 'pesajes', etiqueta: 'Pesajes', campoOrden: 'cantidadPesajes' },
+  { clave: 'pesoIngreso', etiqueta: 'Peso de ingreso', campoOrden: 'aniPesoInicial' },
   { clave: 'pesoActual', etiqueta: 'Peso actual', campoOrden: 'pesoActual' },
+  { clave: 'gananciaTotal', etiqueta: 'Ganancia total (kg)', campoOrden: 'gananciaTotal' },
   { clave: 'gmd', etiqueta: 'GMD', campoOrden: 'gmd' },
+  { clave: 'gmdAcumulado', etiqueta: 'GMD acumulado', campoOrden: 'gmdAcumulado' },
   { clave: 'estado', etiqueta: 'Estado', campoOrden: 'aptoVenta' },
   { clave: 'fechaIngreso', etiqueta: 'Fecha de ingreso', campoOrden: 'aniFechaIngreso' },
 ]

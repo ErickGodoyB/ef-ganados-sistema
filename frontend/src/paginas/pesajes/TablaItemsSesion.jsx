@@ -22,6 +22,8 @@ export default function TablaItemsSesion({
   fecha,
   fechaIso,
   mostrarResponsable = true,
+  mostrarProveedor = true,
+  mostrarPesoIngreso = false,
   accionActiva,
   guardando,
   errorAccion,
@@ -39,8 +41,10 @@ export default function TablaItemsSesion({
           <tr>
             <th scope="col">Caravana</th>
             <th scope="col">Raza</th>
+            {mostrarProveedor && <th scope="col">Proveedor</th>}
             <th scope="col">Peso</th>
             <th scope="col">Peso anterior</th>
+            {mostrarPesoIngreso && <th scope="col">Peso de ingreso</th>}
             <th scope="col">GMD</th>
             {mostrarResponsable && <th scope="col">Responsable</th>}
             <th scope="col">Observación</th>
@@ -61,6 +65,8 @@ export default function TablaItemsSesion({
                   key={item.pesaId}
                   item={item}
                   mostrarResponsable={mostrarResponsable}
+                  mostrarProveedor={mostrarProveedor}
+                  mostrarPesoIngreso={mostrarPesoIngreso}
                   guardando={guardando}
                   error={errorAccion}
                   onGuardar={(peso, observaciones) => onGuardarEdicion(item, peso, observaciones)}
@@ -76,6 +82,8 @@ export default function TablaItemsSesion({
                   item={item}
                   fecha={fecha}
                   mostrarResponsable={mostrarResponsable}
+                  mostrarProveedor={mostrarProveedor}
+                  mostrarPesoIngreso={mostrarPesoIngreso}
                   guardando={guardando}
                   error={errorAccion}
                   onCancelar={onCancelar}
@@ -88,6 +96,7 @@ export default function TablaItemsSesion({
               <tr key={item.pesaId}>
                 <td className="tabla-items-sesion-caravana">{item.caravana}</td>
                 <td>{item.razaDescripcion}</td>
+                {mostrarProveedor && <td>{item.proveedorNombre || 'Sin proveedor'}</td>}
                 <td>{formatearPeso(item.peso)}</td>
                 <td>
                   <ValorPesoAnterior
@@ -97,6 +106,7 @@ export default function TablaItemsSesion({
                     fechaPesaje={fechaIso}
                   />
                 </td>
+                {mostrarPesoIngreso && <td>{formatearPeso(item.pesoIngreso)}</td>}
                 <td>
                   <ValorGmd gmd={item.gmd} />
                 </td>
@@ -134,7 +144,7 @@ export default function TablaItemsSesion({
 }
 
 /** Fila de edición: solo peso y observación son editables; el resto se muestra fijo. */
-function FilaEdicion({ item, mostrarResponsable, guardando, error, onGuardar, onCancelar }) {
+function FilaEdicion({ item, mostrarResponsable, mostrarProveedor, mostrarPesoIngreso, guardando, error, onGuardar, onCancelar }) {
   const [peso, setPeso] = useState(String(item.peso).replace('.', ','))
   const [observaciones, setObservaciones] = useState(item.observaciones ?? '')
   const [errorLocal, setErrorLocal] = useState('')
@@ -152,6 +162,7 @@ function FilaEdicion({ item, mostrarResponsable, guardando, error, onGuardar, on
     <tr className="tabla-items-sesion-fila-edicion">
       <td className="tabla-items-sesion-caravana">{item.caravana}</td>
       <td>{item.razaDescripcion}</td>
+      {mostrarProveedor && <td>{item.proveedorNombre || 'Sin proveedor'}</td>}
       <td colSpan={2}>
         <label className="visualmente-oculto" htmlFor={`edicion-peso-${item.pesaId}`}>
           Peso de {item.caravana}
@@ -168,6 +179,7 @@ function FilaEdicion({ item, mostrarResponsable, guardando, error, onGuardar, on
           aria-invalid={Boolean(errorLocal)}
         />
       </td>
+      {mostrarPesoIngreso && <td>{formatearPeso(item.pesoIngreso)}</td>}
       <td>
         <ValorGmd gmd={item.gmd} />
       </td>
@@ -205,7 +217,17 @@ function FilaEdicion({ item, mostrarResponsable, guardando, error, onGuardar, on
 }
 
 /** Fila de confirmación de anulación: pide el motivo (chips + texto) y reemplaza las acciones por Cancelar/Anular. */
-function FilaConfirmarAnular({ item, fecha, mostrarResponsable, guardando, error, onCancelar, onConfirmar }) {
+function FilaConfirmarAnular({
+  item,
+  fecha,
+  mostrarResponsable,
+  mostrarProveedor,
+  mostrarPesoIngreso,
+  guardando,
+  error,
+  onCancelar,
+  onConfirmar,
+}) {
   const [motivo, setMotivo] = useState('')
   const [errorLocal, setErrorLocal] = useState('')
 
@@ -220,10 +242,11 @@ function FilaConfirmarAnular({ item, fecha, mostrarResponsable, guardando, error
 
   // El mensaje+motivo ocupa todas las columnas salvo las dos últimas
   // (Observación y Acciones, donde van Cancelar/Anular); si "Responsable"
-  // está oculta, hay una columna menos que cubrir.
+  // está oculta, hay una columna menos que cubrir (y una más por cada columna
+  // opcional visible: Proveedor y Peso de ingreso).
   return (
     <tr className="tabla-items-sesion-fila-anular">
-      <td colSpan={mostrarResponsable ? 6 : 5}>
+      <td colSpan={5 + (mostrarResponsable ? 1 : 0) + (mostrarProveedor ? 1 : 0) + (mostrarPesoIngreso ? 1 : 0)}>
         <p className="tabla-items-sesion-anular-texto">
           ¿Anular el pesaje de {item.caravana} del {fecha}? El pesaje deja de contar en reportes y se conserva en
           Anulados.

@@ -4,7 +4,16 @@
  * (y, si hace falta más adelante, testearla) sin depender de React.
  */
 
-import { cumpleFiltroGmd, cumpleFiltroRaza, parsearLimiteGmd } from '../../utilidades/filtrosAnimales'
+import {
+  cumpleFiltrosComunes,
+  obtenerProveedoresDisponibles,
+  parsearLimiteGmd,
+  valorNumericoDeAnimal,
+} from '../../utilidades/filtrosAnimales'
+
+// Las opciones de proveedor viven con los demás filtros compartidos; se
+// re-exportan acá porque el listado las pide junto a las de lote.
+export { obtenerProveedoresDisponibles }
 
 /**
  * Lotes distintos presentes en los datos (para las opciones del filtro),
@@ -29,22 +38,6 @@ export function obtenerLotesDisponibles(animales) {
   return [...vistos.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
 }
 
-/**
- * Proveedores distintos presentes en los datos (para las opciones del
- * filtro), identificados por proveedorId y ordenados por nombre. Los
- * animales sin proveedor no entran acá: "Sin proveedor" es una opción fija
- * del filtro (igual criterio que "Sin lote").
- */
-export function obtenerProveedoresDisponibles(animales) {
-  const vistos = new Map()
-  for (const animal of animales) {
-    if (animal.proveedorId != null && !vistos.has(animal.proveedorId)) {
-      vistos.set(animal.proveedorId, { valor: String(animal.proveedorId), etiqueta: animal.proveedorNombre })
-    }
-  }
-  return [...vistos.values()].sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { sensitivity: 'base' }))
-}
-
 function valorDeOrden(animal, campo) {
   switch (campo) {
     case 'aniCaravana':
@@ -55,16 +48,15 @@ function valorDeOrden(animal, campo) {
       return animal.subGrupoDescripcion?.toLowerCase() ?? null
     case 'proveedor':
       return animal.proveedorNombre?.toLowerCase() ?? null
-    case 'pesoActual':
-      return animal.pesoActual
-    case 'gmd':
-      return animal.gmd
     case 'aptoVenta':
       return animal.aptoVenta
     case 'aniFechaIngreso':
       return animal.aniFechaIngreso
     default:
-      return null
+      // GMD, peso actual, ganancia total, GMD acumulado, peso de ingreso y
+      // cantidad de pesajes (valores numéricos compartidos con el modal de
+      // transferencias); cualquier otro campo no ordena.
+      return valorNumericoDeAnimal(animal, campo) ?? null
   }
 }
 
@@ -112,15 +104,19 @@ export const FILTROS_POR_DEFECTO = {
   estadoSalida: 'activos',
   raza: 'todas',
   proveedor: 'todos',
+  pesajes: 'todos',
   gmdMin: '',
   gmdMax: '',
+  pesoMin: '',
+  pesoMax: '',
 }
 
 /**
  * Cuántos filtros están activos, para el indicador del listado: la
  * búsqueda, cada uno de los selectores que se aparta de su valor por
  * defecto, y cada límite de GMD válido (el mínimo y el máximo cuentan por
- * separado). Un límite a medio escribir ("-", ",") no cuenta, igual que no
+ * separado), el de pesajes (con/sin) y cada límite de peso actual válido. Un
+ * límite a medio escribir ("-", ",") no cuenta, igual que no
  * filtra (ver utilidades/filtrosAnimales.js). El orden no es un filtro.
  */
 export function contarFiltrosActivos({
@@ -130,8 +126,11 @@ export function contarFiltrosActivos({
   estadoSalida = FILTROS_POR_DEFECTO.estadoSalida,
   raza = FILTROS_POR_DEFECTO.raza,
   proveedor = FILTROS_POR_DEFECTO.proveedor,
+  pesajes = FILTROS_POR_DEFECTO.pesajes,
   gmdMin = FILTROS_POR_DEFECTO.gmdMin,
   gmdMax = FILTROS_POR_DEFECTO.gmdMax,
+  pesoMin = FILTROS_POR_DEFECTO.pesoMin,
+  pesoMax = FILTROS_POR_DEFECTO.pesoMax,
 }) {
   return [
     busqueda.trim() !== '',
@@ -140,8 +139,11 @@ export function contarFiltrosActivos({
     estadoSalida !== FILTROS_POR_DEFECTO.estadoSalida,
     raza !== FILTROS_POR_DEFECTO.raza,
     proveedor !== FILTROS_POR_DEFECTO.proveedor,
+    pesajes !== FILTROS_POR_DEFECTO.pesajes,
     parsearLimiteGmd(gmdMin) != null,
     parsearLimiteGmd(gmdMax) != null,
+    parsearLimiteGmd(pesoMin) != null,
+    parsearLimiteGmd(pesoMax) != null,
   ].filter(Boolean).length
 }
 
@@ -149,15 +151,29 @@ export function contarFiltrosActivos({
  * Aplica, en orden, la búsqueda por caravana (sin distinguir mayúsculas,
  * ignorando espacios en los extremos), los filtros de lote (por
  * subGrupoId; "sin-lote" filtra los que tienen subGrupoId null), raza (por
- * razaId), GMD mínima y máxima (si hay alguno válido, los animales sin GMD
- * quedan afuera; ver utilidades/filtrosAnimales.js), estado (apto/no apto
+ * razaId), proveedor, con/sin pesajes, peso actual mínimo y máximo, GMD
+ * mínima y máxima (si hay alguno válido, los animales sin GMD quedan
+ * afuera; ver utilidades/filtrosAnimales.js), estado (apto/no apto
  * para venta) y estado de salida (activos/salidos), y finalmente el orden
  * elegido. "raza", "gmdMin" y "gmdMax" son opcionales (por defecto, sin
  * filtrar). Devuelve un array nuevo; no modifica "animales".
  */
 export function filtrarYOrdenarAnimales(
   animales,
-  { busqueda, lote, estado, estadoSalida, raza = 'todas', proveedor = 'todos', gmdMin = '', gmdMax = '', orden },
+  {
+    busqueda,
+    lote,
+    estado,
+    estadoSalida,
+    raza = 'todas',
+    proveedor = 'todos',
+    pesajes = 'todos',
+    gmdMin = '',
+    gmdMax = '',
+    pesoMin = '',
+    pesoMax = '',
+    orden,
+  },
 ) {
   const termino = busqueda.trim().toLowerCase()
 
@@ -171,16 +187,9 @@ export function filtrarYOrdenarAnimales(
     if (lote !== 'todos' && lote !== 'sin-lote' && String(animal.subGrupoId) !== lote) {
       return false
     }
-    if (!cumpleFiltroRaza(animal, raza)) {
-      return false
-    }
-    if (proveedor === 'sin-proveedor' && animal.proveedorId != null) {
-      return false
-    }
-    if (proveedor !== 'todos' && proveedor !== 'sin-proveedor' && String(animal.proveedorId) !== proveedor) {
-      return false
-    }
-    if (!cumpleFiltroGmd(animal, gmdMin, gmdMax)) {
+    // Raza, proveedor, GMD, peso actual y con/sin pesajes: las mismas reglas
+    // que usa el modal "Nueva transferencia" (utilidades/filtrosAnimales.js).
+    if (!cumpleFiltrosComunes(animal, { raza, proveedor, pesajes, gmdMin, gmdMax, pesoMin, pesoMax })) {
       return false
     }
     if (estado === 'aptos' && !animal.aptoVenta) {

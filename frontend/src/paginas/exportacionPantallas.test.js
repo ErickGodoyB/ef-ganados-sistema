@@ -148,6 +148,7 @@ describe('exportación del detalle de una sesión', () => {
     expect(filaDeItemSesion(ITEMS[0], '2026-03-11')).toEqual({
       caravana: 'CAR-001',
       raza: 'Brangus',
+      proveedor: 'Sin proveedor',
       peso: 260,
       pesoAnterior: 250,
       fechaPesoAnterior: '2026-03-01',

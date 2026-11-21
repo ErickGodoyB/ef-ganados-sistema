@@ -23,8 +23,9 @@ import { LogOut, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ErrorHttp, peticionProtegida } from '../../api/cliente'
 import Modal from '../../componentes/Modal'
+import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
 import ValorGmd from '../../componentes/ValorGmd'
-import { formatearFecha, formatearFechaHora, formatearPeso } from '../../utilidades/formato'
+import { formatearFecha, formatearFechaHora, formatearGmd, formatearPeso } from '../../utilidades/formato'
 import EstadoBadge from './EstadoBadge'
 import FormularioAnimal from './FormularioAnimal'
 import FormularioSalidaAnimal from './FormularioSalidaAnimal'
@@ -179,16 +180,37 @@ export default function ModalDetalleAnimal({
               <dt>Fecha de ingreso</dt>
               <dd>{formatearFecha(animal.aniFechaIngreso)}</dd>
             </div>
-            <div className="detalle-animal-dato">
-              <dt>Peso inicial</dt>
-              <dd>{formatearPeso(animal.aniPesoInicial)}</dd>
+            <div className="detalle-animal-dato detalle-animal-dato--ancho">
+              <dt>Desde el ingreso</dt>
+              <dd>
+                <dl className="detalle-animal-bloque">
+                  <div>
+                    <dt>Peso de ingreso</dt>
+                    <dd>{formatearPeso(animal.aniPesoInicial)}</dd>
+                  </div>
+                  <div>
+                    <dt>Peso actual</dt>
+                    <dd>{formatearPeso(animal.pesoActual)}</dd>
+                  </div>
+                  <div>
+                    <dt>Ganancia total</dt>
+                    <dd>
+                      <ValorDiferenciaPeso diferencia={animal.gananciaTotal} sinDato="Todavía no tiene pesajes" />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>GMD acumulado</dt>
+                    <dd>
+                      <span className={animal.gmdAcumulado != null && animal.gmdAcumulado < 0 ? 'valor-negativo' : undefined}>
+                        {formatearGmd(animal.gmdAcumulado)}
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
+              </dd>
             </div>
             <div className="detalle-animal-dato">
-              <dt>Peso actual</dt>
-              <dd>{formatearPeso(animal.pesoActual)}</dd>
-            </div>
-            <div className="detalle-animal-dato">
-              <dt>GMD</dt>
+              <dt>GMD (último pesaje)</dt>
               <dd>
                 <ValorGmd gmd={animal.gmd} />
               </dd>

@@ -3,7 +3,8 @@
  * 768px y tarjetas en celular (se ve una u otra por CSS, ver
  * Transferencias.css; las dos están en el DOM, igual que en Pesajes).
  *
- * Columnas: casilla, caravana, raza, peso actual, peso anterior (con su
+ * Columnas: casilla, caravana, raza, proveedor, cantidad de pesajes, peso de
+ * ingreso, peso actual, ganancia total, peso anterior (con su
  * fecha y los días transcurridos hasta el último pesaje, ver
  * ValorPesoAnterior: si el anterior es el ingreso del animal, lo aclara) y
  * GMD. El peso anterior y su fecha vienen del resumen de animales, y los
@@ -18,6 +19,7 @@
  * destino), para que lo que se ve coincida con lo que se va a enviar.
  */
 
+import ValorDiferenciaPeso from '../../componentes/ValorDiferenciaPeso'
 import ValorGmd from '../../componentes/ValorGmd'
 import ValorPesoAnterior from '../../componentes/ValorPesoAnterior'
 import { formatearPeso } from '../../utilidades/formato'
@@ -49,6 +51,15 @@ function EtiquetaYaEnDestino() {
   return <span className="transferencia-etiqueta-destino">ya está en el destino</span>
 }
 
+/** "Sin pesajes" en vez de un 0 pelado (mismo criterio que el listado de Animales). */
+function textoPesajes(animal) {
+  return animal.cantidadPesajes === 0 ? 'Sin pesajes' : animal.cantidadPesajes
+}
+
+function GananciaTotal({ animal }) {
+  return <ValorDiferenciaPeso diferencia={animal.gananciaTotal} sinDato="Todavía no tiene pesajes" />
+}
+
 function PesoAnterior({ animal }) {
   return (
     <ValorPesoAnterior
@@ -75,7 +86,11 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
               </th>
               <th scope="col">Caravana</th>
               <th scope="col">Raza</th>
+              <th scope="col">Proveedor</th>
+              <th scope="col">Pesajes</th>
+              <th scope="col">Peso de ingreso</th>
               <th scope="col">Peso actual</th>
+              <th scope="col">Ganancia total</th>
               <th scope="col">Peso anterior</th>
               <th scope="col">GMD</th>
             </tr>
@@ -100,7 +115,13 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
                     {enDestino && <EtiquetaYaEnDestino />}
                   </td>
                   <td>{animal.razaDescripcion}</td>
+                  <td>{animal.proveedorNombre || 'Sin proveedor'}</td>
+                  <td>{textoPesajes(animal)}</td>
+                  <td>{formatearPeso(animal.aniPesoInicial)}</td>
                   <td>{formatearPeso(animal.pesoActual)}</td>
+                  <td>
+                    <GananciaTotal animal={animal} />
+                  </td>
                   <td>
                     <PesoAnterior animal={animal} />
                   </td>
@@ -139,6 +160,24 @@ export default function ListaAnimalesTransferencia({ animales, seleccionados, de
                 <div>
                   <dt>Raza</dt>
                   <dd>{animal.razaDescripcion}</dd>
+                </div>
+                <div>
+                  <dt>Proveedor</dt>
+                  <dd>{animal.proveedorNombre || 'Sin proveedor'}</dd>
+                </div>
+                <div>
+                  <dt>Pesajes</dt>
+                  <dd>{textoPesajes(animal)}</dd>
+                </div>
+                <div>
+                  <dt>Peso de ingreso</dt>
+                  <dd>{formatearPeso(animal.aniPesoInicial)}</dd>
+                </div>
+                <div>
+                  <dt>Ganancia total</dt>
+                  <dd>
+                    <GananciaTotal animal={animal} />
+                  </dd>
                 </div>
                 <div>
                   <dt>GMD</dt>
