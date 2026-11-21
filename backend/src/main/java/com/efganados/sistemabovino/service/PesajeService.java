@@ -126,6 +126,7 @@ public class PesajeService {
                 anterior.fecha(), anterior.esIngreso());
 
         Persona responsable = pesaje.getResponsable();
+        Persona proveedor = animal.getProveedor();
         return new ItemSesionPesaje(
                 pesaje.getPesaId(),
                 animal.getAniId(),
@@ -137,7 +138,10 @@ public class PesajeService {
                 anterior.esIngreso(),
                 anterior.fecha(),
                 responsable != null ? nombreCompleto(responsable) : null,
-                pesaje.getPesaObservaciones());
+                pesaje.getPesaObservaciones(),
+                proveedor != null ? proveedor.getPerId() : null,
+                proveedor != null ? nombreCompleto(proveedor) : null,
+                animal.getAniPesoInicial());
     }
 
     /**

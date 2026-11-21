@@ -251,6 +251,9 @@ public class AnimalController {
         Persona comprador = animal.getComprador();
         Persona proveedor = animal.getProveedor();
         Optional<AnimalService.PesoAnterior> anterior = animalService.pesoAnteriorDelUltimoPesaje(animal);
+        // La GMD acumulada y la ganancia salen de la regla única de AnimalService (no se recalculan acá).
+        AnimalService.RendimientoAcumulado rendimiento = animalService.rendimientoAcumulado(animal);
+        boolean tienePesajes = ultimoPesaje.isPresent();
 
         return new AnimalResumen(
                 animal.getAniId(),
@@ -280,7 +283,9 @@ public class AnimalController {
                 anterior.map(a -> a.fecha()).orElse(null),
                 anterior.map(a -> a.esIngreso()).orElse(false),
                 proveedor != null ? proveedor.getPerId() : null,
-                proveedor != null ? nombreCompleto(proveedor) : null);
+                proveedor != null ? nombreCompleto(proveedor) : null,
+                tienePesajes ? rendimiento.gananciaKg() : null,
+                rendimiento.gmd());
     }
 
     /** Nombre completo de la persona (ver {@link PersonaService#nombreCompleto}). */
@@ -397,6 +402,12 @@ public class AnimalController {
      * pesoAnteriorEsIngreso en true) si es su primer pesaje activo. Van en
      * null/false si el animal no tiene ningún pesaje activo. proveedorId/
      * proveedorNombre van en null si el animal no tiene proveedor.
+     * gananciaTotal es pesoActual menos aniPesoInicial (null si el animal no
+     * tiene ningún pesaje activo) y gmdAcumulado la GMD de todo el período
+     * desde el ingreso hasta el último pesaje activo (ver
+     * {@code AnimalService.rendimientoAcumulado}; null sin pesajes activos o
+     * con 0 días). A diferencia de gmd (último pesaje contra el anterior),
+     * esta mide todo el recorrido del animal.
      */
     public record AnimalResumen(Long aniId, String aniCaravana, Long duenioId, String duenioNombre, Long razaId,
             String razaDescripcion, Long subGrupoId, String subGrupoDescripcion, String grupoDescripcion,
@@ -404,7 +415,8 @@ public class AnimalController {
             boolean aptoVenta, LocalDate aniFechaIngreso, LocalDate aniFechaEgreso, LocalDate fechaUltimoPesaje,
             String aniMotivoSalida, String aniNotaSalida, Long compradorId, String compradorNombre,
             LocalDateTime aniFechaRegistro, Double pesoAnterior, LocalDate fechaPesoAnterior,
-            boolean pesoAnteriorEsIngreso, Long proveedorId, String proveedorNombre) {
+            boolean pesoAnteriorEsIngreso, Long proveedorId, String proveedorNombre, Double gananciaTotal,
+            Double gmdAcumulado) {
     }
 
     /**

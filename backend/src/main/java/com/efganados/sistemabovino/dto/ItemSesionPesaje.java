@@ -10,9 +10,12 @@ import java.time.LocalDate;
  * pesaje) el peso inicial y la fecha de ingreso del animal -
  * "pesoAnteriorEsIngreso"/"fechaPesoAnterior" existen para que la interfaz
  * pueda aclarar ese segundo caso en vez de mostrarlo como si fuera un pesaje
- * más. Se arma en {@code PesajeService.obtenerDetalleSesion()}.
+ * más. proveedorId/proveedorNombre son los del animal (null si no tiene
+ * proveedor) y pesoIngreso su peso inicial (aniPesoInicial), para poder
+ * comparar con el peso de la sesión. Se arma en
+ * {@code PesajeService.obtenerDetalleSesion()}.
  */
 public record ItemSesionPesaje(Long pesaId, Long animalId, String caravana, String razaDescripcion, double peso,
         Double pesoAnterior, Double gmd, boolean pesoAnteriorEsIngreso, LocalDate fechaPesoAnterior,
-        String responsableNombre, String observaciones) {
+        String responsableNombre, String observaciones, Long proveedorId, String proveedorNombre, double pesoIngreso) {
 }

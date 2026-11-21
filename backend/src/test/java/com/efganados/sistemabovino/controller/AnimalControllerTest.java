@@ -1,5 +1,6 @@
 package com.efganados.sistemabovino.controller;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -406,6 +407,91 @@ class AnimalControllerTest extends AutenticacionTestSupport {
                 .andExpect(jsonPath("$[0].aptoVenta").value(false))
                 .andExpect(jsonPath("$[0].cantidadPesajes").value(0))
                 .andExpect(jsonPath("$[0].fechaUltimoPesaje").value(nullValue()));
+    }
+
+    // ---- gananciaTotal y gmdAcumulado en el resumen ----
+
+    @Test
+    @DisplayName("Sin pesajes activos, gananciaTotal y gmdAcumulado son null")
+    void resumenSinPesajesTraeGananciaYGmdAcumuladoNulos() throws Exception {
+        Persona duenio = crearPersona("Dueño-GanSin");
+        Raza raza = crearRaza("Raza-GanSin", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-GanSin");
+        crearAnimal(duenio, raza, subGrupo, "CAR-GAN-000", 200.0);
+
+        mockMvc.perform(get("/api/animales/resumen").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].gananciaTotal").value(nullValue()))
+                .andExpect(jsonPath("$[0].gmdAcumulado").value(nullValue()));
+    }
+
+    @Test
+    @DisplayName("Con un pesaje: gananciaTotal = peso actual - peso inicial y gmdAcumulado = ganancia / días desde el ingreso")
+    void resumenConUnPesajeTraeGananciaYGmdAcumulado() throws Exception {
+        Persona duenio = crearPersona("Dueño-GanUno");
+        Raza raza = crearRaza("Raza-GanUno", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-GanUno");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-GAN-001", 200.0);
+        // Ingreso 01/01/2026: 10 días hasta el 11/01.
+        registrarPesaje(animal, duenio, 230.0, LocalDate.of(2026, 1, 11));
+
+        mockMvc.perform(get("/api/animales/resumen").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].gananciaTotal").value(30.0))
+                .andExpect(jsonPath("$[0].gmdAcumulado").value(3.0));
+    }
+
+    @Test
+    @DisplayName("Con varios pesajes usa el último contra el ingreso (no el promedio de los tramos), sin tocar la gmd del último intervalo")
+    void resumenConVariosPesajesTraeGananciaYGmdAcumulado() throws Exception {
+        Persona duenio = crearPersona("Dueño-GanVarios");
+        Raza raza = crearRaza("Raza-GanVarios", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-GanVarios");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-GAN-002", 200.0);
+        registrarPesaje(animal, duenio, 230.0, LocalDate.of(2026, 1, 11));
+        registrarPesaje(animal, duenio, 260.0, LocalDate.of(2026, 1, 31));
+
+        mockMvc.perform(get("/api/animales/resumen").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].gananciaTotal").value(60.0))
+                // 60 kg en 30 días; la gmd (último intervalo) es 30 kg en 20 días = 1.5.
+                .andExpect(jsonPath("$[0].gmdAcumulado").value(2.0))
+                .andExpect(jsonPath("$[0].gmd").value(1.5));
+    }
+
+    @Test
+    @DisplayName("Un pesaje anulado se ignora en la ganancia y en la GMD acumulada (y si es el único, quedan en null)")
+    void resumenIgnoraPesajesAnuladosEnGananciaYGmdAcumulado() throws Exception {
+        Persona duenio = crearPersona("Dueño-GanAnulado");
+        Raza raza = crearRaza("Raza-GanAnulado", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-GanAnulado");
+        Animal conActivo = crearAnimal(duenio, raza, subGrupo, "CAR-GAN-003", 200.0);
+        registrarPesaje(conActivo, duenio, 230.0, LocalDate.of(2026, 1, 11));
+        registrarPesajeAnulado(conActivo, duenio, 500.0, LocalDate.of(2026, 1, 31));
+        Animal soloAnulado = crearAnimal(duenio, raza, subGrupo, "CAR-GAN-004", 200.0);
+        registrarPesajeAnulado(soloAnulado, duenio, 500.0, LocalDate.of(2026, 1, 31));
+
+        mockMvc.perform(get("/api/animales/resumen").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.aniCaravana == 'CAR-GAN-003')].gananciaTotal").value(30.0))
+                .andExpect(jsonPath("$[?(@.aniCaravana == 'CAR-GAN-003')].gmdAcumulado").value(3.0))
+                .andExpect(jsonPath("$[?(@.aniCaravana == 'CAR-GAN-004')].gananciaTotal").value(contains(nullValue())))
+                .andExpect(jsonPath("$[?(@.aniCaravana == 'CAR-GAN-004')].gmdAcumulado").value(contains(nullValue())));
+    }
+
+    @Test
+    @DisplayName("Con el pesaje el mismo día del ingreso (0 días) la ganancia existe pero la GMD acumulada es null")
+    void resumenConDiasCeroTraeGananciaSinGmdAcumulado() throws Exception {
+        Persona duenio = crearPersona("Dueño-GanCero");
+        Raza raza = crearRaza("Raza-GanCero", 450.0);
+        SubGrupo subGrupo = crearSubGrupo("SubGrupo-GanCero");
+        Animal animal = crearAnimal(duenio, raza, subGrupo, "CAR-GAN-005", 200.0);
+        registrarPesaje(animal, duenio, 210.0, LocalDate.of(2026, 1, 1));
+
+        mockMvc.perform(get("/api/animales/resumen").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].gananciaTotal").value(10.0))
+                .andExpect(jsonPath("$[0].gmdAcumulado").value(nullValue()));
     }
 
     @Test

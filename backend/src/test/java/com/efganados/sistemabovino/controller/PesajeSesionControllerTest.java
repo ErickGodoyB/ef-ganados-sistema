@@ -439,6 +439,50 @@ class PesajeSesionControllerTest extends AutenticacionTestSupport {
     // ---- GET /api/pesajes/sesiones/detalle ----
 
     @Test
+    @DisplayName("El detalle de una sesión trae el proveedor del animal (id y nombre) y su peso de ingreso")
+    void detalleDeSesionTraeProveedorYPesoDeIngreso() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-DetProv", "Grupo-DetProv");
+        LocalDate fecha = LocalDate.of(2026, 1, 11);
+        Animal animal = crearAnimal("CAR-DETPROV-001", subGrupo, LocalDate.of(2026, 1, 1));
+        Persona proveedor = crearPersona("Pedro");
+        proveedor.setPerTipo("PROVEEDOR");
+        personaRepository.save(proveedor);
+        animal.setProveedor(proveedor);
+        animalRepository.save(animal);
+        registrarPesajeDirecto(animal, 230.0, fecha);
+
+        mockMvc.perform(get("/api/pesajes/sesiones/detalle")
+                        .header("Authorization", token)
+                        .param("fecha", fecha.toString())
+                        .param("subGrupoId", subGrupo.getSbId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].proveedorId").value(proveedor.getPerId()))
+                .andExpect(jsonPath("$[0].proveedorNombre").value("Pedro Apellido"))
+                // crearAnimal fija aniPesoInicial en 200.0; el peso de la sesión es otro.
+                .andExpect(jsonPath("$[0].pesoIngreso").value(200.0))
+                .andExpect(jsonPath("$[0].peso").value(230.0));
+    }
+
+    @Test
+    @DisplayName("Un animal sin proveedor trae proveedorId y proveedorNombre en null, y igual su peso de ingreso")
+    void detalleDeSesionSinProveedorTraeNulosYPesoDeIngreso() throws Exception {
+        SubGrupo subGrupo = crearSubGrupo("Lote-DetSinProv", "Grupo-DetSinProv");
+        LocalDate fecha = LocalDate.of(2026, 1, 11);
+        Animal animal = crearAnimal("CAR-DETSINPROV-001", subGrupo, LocalDate.of(2026, 1, 1));
+        registrarPesajeDirecto(animal, 230.0, fecha);
+
+        mockMvc.perform(get("/api/pesajes/sesiones/detalle")
+                        .header("Authorization", token)
+                        .param("fecha", fecha.toString())
+                        .param("subGrupoId", subGrupo.getSbId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].proveedorId").value(nullValue()))
+                .andExpect(jsonPath("$[0].proveedorNombre").value(nullValue()))
+                .andExpect(jsonPath("$[0].pesoIngreso").value(200.0));
+    }
+
+    @Test
     @DisplayName("El detalle de una sesión trae pesoAnterior y GMD correctos (primero contra el ingreso, segundo contra el primero el mismo día)")
     void detalleDeSesionTraePesoAnteriorYGmdCorrectos() throws Exception {
         SubGrupo subGrupo = crearSubGrupo("Lote-Detalle", "Grupo-Detalle");
