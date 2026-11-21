@@ -49,13 +49,18 @@ describe('PDF: alineación', () => {
     expect(celda.styles.halign).toBeUndefined()
   })
 
-  it('con resumen sigue generando un PDF válido', async () => {
+  it('con contexto, filtros y totales sigue generando un PDF válido', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('sin red')))
 
     const blob = await construirPdf({
       titulo: 'Prueba',
       filtros: [{ etiqueta: 'Raza', valor: 'Brahman' }],
-      resumen: [{ etiqueta: 'Animales', valor: '20' }, { etiqueta: 'Peso promedio', valor: '312,4 kg' }],
+      contexto: [{ etiqueta: 'Sesión', valor: 'S-261029-3' }, { etiqueta: 'Lote', valor: 'Recría' }],
+      totales: [
+        { etiqueta: 'Animales', valor: '20', numero: 20, decimales: 0 },
+        { etiqueta: 'Peso promedio', valor: '312,4 kg', numero: 312.4, decimales: 1, unidad: 'kg' },
+        { etiqueta: 'Mejor proveedor', valor: 'Ana' },
+      ],
       columnas: COLUMNAS,
       filas: FILAS,
       usuario: 'Ana',

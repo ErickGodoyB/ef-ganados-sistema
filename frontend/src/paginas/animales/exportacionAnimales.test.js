@@ -6,6 +6,7 @@ import {
   filasDeAnimalesParaExportar,
   filtrarAnimalesParaExportar,
   filtrosInicialesDeExportacion,
+  totalesDeAnimales,
 } from './exportacionAnimales'
 import { FILTROS_POR_DEFECTO } from './listadoAnimales'
 
@@ -239,6 +240,29 @@ describe('describirFiltrosAnimales', () => {
     expect(lineas).toEqual([
       { etiqueta: 'Lote', valor: 'Sin lote' },
       { etiqueta: 'Proveedor', valor: 'Pedro Vera' },
+    ])
+  })
+})
+
+describe('totalesDeAnimales', () => {
+  it('trae el total, los activos, el peso actual promedio y la GMD promedio (solo de los que tienen GMD)', () => {
+    const filas = filasDeAnimalesParaExportar(ANIMALES, FILTROS)
+
+    expect(totalesDeAnimales(filas)).toMatchObject([
+      { etiqueta: 'Animales', valor: '4', numero: 4 },
+      { etiqueta: 'Activos', valor: '3', numero: 3 },
+      { etiqueta: 'Peso actual promedio', numero: 312.5, decimales: 1, unidad: 'kg', valor: '312,5 kg' },
+      // CAR-003 no tiene GMD: (1,5 + 0,5 + 2,2) / 3.
+      { etiqueta: 'GMD promedio', numero: (1.5 + 0.5 + 2.2) / 3, decimales: 3, unidad: 'kg/día', valor: '1,400 kg/día' },
+    ])
+  })
+
+  it('sin animales: cero y promedios en "—"', () => {
+    expect(totalesDeAnimales([])).toMatchObject([
+      { valor: '0', numero: 0 },
+      { valor: '0', numero: 0 },
+      { valor: '—', numero: null },
+      { valor: '—', numero: null },
     ])
   })
 })

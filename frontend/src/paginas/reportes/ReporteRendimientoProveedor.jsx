@@ -17,7 +17,7 @@ import BotonExportar from '../../componentes/BotonExportar'
 import ModalExportar from '../../componentes/ModalExportar'
 import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearGmd, formatearPeso } from '../../utilidades/formato'
-import { COLUMNAS_RANKING, describirFiltrosRanking, filasDeRanking } from './exportacionProveedores'
+import { COLUMNAS_RANKING, describirFiltrosRanking, filasDeRanking, totalesDeRanking } from './exportacionProveedores'
 import ModalAnimalesProveedor from './ModalAnimalesProveedor'
 import {
   esFilaSinProveedor,
@@ -225,6 +225,7 @@ export default function ReporteRendimientoProveedor() {
           columnas={COLUMNAS_RANKING}
           obtenerFilas={obtenerFilasExportacion}
           describirFiltros={describirFiltrosExportacion}
+          describirTotales={totalesDeRanking}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           refDisparador={refBotonExportar}

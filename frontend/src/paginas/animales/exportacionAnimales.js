@@ -6,7 +6,7 @@
  * archivo siempre aplica las mismas reglas que la pantalla.
  */
 
-import { formatearFechaIso } from '../../utilidades/exportacion/formatos'
+import { formatearFechaIso, totalNumerico } from '../../utilidades/exportacion/formatos'
 import { filtrarYOrdenarAnimales } from './listadoAnimales'
 import { etiquetaMotivoSalida } from './tiposSalida'
 
@@ -200,4 +200,20 @@ export function describirFiltrosAnimales(filtros, { lotes, razas, proveedores })
     lineas.push({ etiqueta: 'Orden', valor: OPCIONES_ORDEN_EXPORTACION.find((opcion) => opcion.valor === filtros.orden)?.etiqueta ?? '' })
   }
   return lineas
+}
+
+/** Promedio de los números de una lista (ignora null); null si no queda ninguno. */
+function promedio(valores) {
+  const validos = valores.filter((valor) => typeof valor === 'number')
+  return validos.length === 0 ? null : validos.reduce((suma, valor) => suma + valor, 0) / validos.length
+}
+
+/** Totales del cuadro final: animales, cuántos están activos, peso actual promedio y GMD promedio (solo los que tienen GMD). */
+export function totalesDeAnimales(filas) {
+  return [
+    totalNumerico('Animales', filas.length),
+    totalNumerico('Activos', filas.filter((fila) => fila.estado === 'Activo').length),
+    totalNumerico('Peso actual promedio', promedio(filas.map((fila) => fila.pesoActual)), { decimales: 1, unidad: 'kg' }),
+    totalNumerico('GMD promedio', promedio(filas.map((fila) => fila.gmd)), { decimales: 3, unidad: 'kg/día' }),
+  ]
 }

@@ -132,9 +132,9 @@ describe('Pesajes (listado de sesiones): exportar', () => {
       { etiqueta: 'Desde', valor: '10/03/2026' },
       { etiqueta: 'Hasta', valor: '10/03/2026' },
     ])
-    expect(datos.resumen).toEqual([
-      { etiqueta: 'Sesiones', valor: '1' },
-      { etiqueta: 'Animales pesados', valor: '12' },
+    expect(datos.totales).toMatchObject([
+      { etiqueta: 'Sesiones', valor: '1', numero: 1 },
+      { etiqueta: 'Animales pesados', valor: '12', numero: 12 },
     ])
   })
 })
@@ -172,13 +172,16 @@ describe('Detalle de sesión: exportar', () => {
 
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
     const datos = generarPdf.mock.calls[0][0]
-    expect(datos.filtros).toEqual([
+    expect(datos.titulo).toBe('Detalle de sesión de pesaje')
+    // Sin filtros propios: el contexto va bajo el título, no en "Filtros aplicados".
+    expect(datos.filtros).toEqual([])
+    expect(datos.contexto).toEqual([
       { etiqueta: 'Sesión', valor: 'S-260311-3' },
       { etiqueta: 'Lote', valor: 'Lote A — Cría' },
       { etiqueta: 'Fecha', valor: '11/03/2026' },
     ])
     expect(datos.filas[0]).toMatchObject({ caravana: 'CAR-001', dias: 10, diferencia: 10 })
-    expect(datos.resumen.map((dato) => dato.etiqueta)).toEqual([
+    expect(datos.totales.map((dato) => dato.etiqueta)).toEqual([
       'Animales',
       'Peso promedio',
       'Mínimo',
@@ -279,9 +282,13 @@ describe('Detalle de transferencia: exportar', () => {
       ['CAR-001', true],
       ['CAR-002', false],
     ])
-    expect(datos.filtros[0]).toEqual({ etiqueta: 'Transferencia', valor: 'n.º 2' })
-    expect(datos.filtros.map((filtro) => filtro.etiqueta)).toEqual(['Transferencia', 'Fecha', 'Motivo', 'Responsable'])
-    expect(datos.resumen).toBeUndefined()
+    expect(datos.filtros).toEqual([])
+    expect(datos.contexto[0]).toEqual({ etiqueta: 'Transferencia', valor: 'n.º 2' })
+    expect(datos.contexto.map((dato) => dato.etiqueta)).toEqual(['Transferencia', 'Fecha', 'Motivo', 'Responsable'])
+    expect(datos.totales).toMatchObject([
+      { etiqueta: 'Animales', numero: 2 },
+      { etiqueta: 'Siguen en el destino', numero: 1 },
+    ])
   })
 })
 
@@ -307,6 +314,8 @@ describe('Reporte de proveedores: exportar', () => {
     expect(datos.filtros).toEqual([{ etiqueta: 'Solo animales activos', valor: 'Sí' }])
     expect(datos.filas.map((fila) => fila.posicion)).toEqual([1, null])
     expect(datos.columnas.map((columna) => columna.clave)).toContain('mejorAnimalGmd')
+    expect(datos.totales.map((dato) => dato.etiqueta)).toEqual(['Proveedores', 'Animales con datos', 'Mejor proveedor'])
+    expect(datos.totales[2].valor).toBe('Beto Beta (GMD promedio 3,500 kg/día)')
   })
 
   it('dentro de "Ver animales", exporta la lista del proveedor con el proveedor como contexto', async () => {
@@ -324,11 +333,10 @@ describe('Reporte de proveedores: exportar', () => {
     await waitFor(() => expect(generarExcel).not.toHaveBeenCalled())
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
     const datos = generarPdf.mock.calls[0][0]
-    expect(datos.filtros).toEqual([
-      { etiqueta: 'Proveedor', valor: 'Beto Beta' },
-      { etiqueta: 'Solo animales activos', valor: 'No' },
-    ])
+    expect(datos.contexto).toEqual([{ etiqueta: 'Proveedor', valor: 'Beto Beta' }])
+    expect(datos.filtros).toEqual([{ etiqueta: 'Solo animales activos', valor: 'No' }])
     expect(datos.filas[0]).toMatchObject({ caravana: 'B2', estado: 'Muerte', lote: 'Lote A' })
+    expect(datos.totales.map((dato) => dato.etiqueta)).toEqual(['Animales', 'Ganancia total', 'GMD acumulado promedio'])
   })
 })
 
@@ -351,11 +359,14 @@ describe('Historial de pesajes del animal: exportar', () => {
 
     await waitFor(() => expect(generarExcel).toHaveBeenCalledTimes(1))
     const datos = generarExcel.mock.calls[0][0]
-    expect(datos.filtros).toEqual([
+    expect(datos.titulo).toBe('Historial de pesajes')
+    expect(datos.contexto).toEqual([
       { etiqueta: 'Animal', valor: 'CAR-001' },
       { etiqueta: 'Raza', valor: 'Brangus' },
     ])
+    expect(datos.filtros).toEqual([])
     expect(datos.filas.map((fila) => fila.sesion)).toEqual(['Ingreso', 'S-260111-3'])
+    expect(datos.totales.map((dato) => dato.etiqueta)).toEqual(['Pesajes', 'Ganancia total', 'GMD acumulado'])
   })
 
   it('sin pesajes no ofrece exportar', async () => {

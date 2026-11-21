@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { contextoDeAnimal, filasDeHistorial } from './animales/exportacionHistorial'
+import { contextoDeAnimal, filasDeHistorial, totalesDeHistorial } from './animales/exportacionHistorial'
 import {
   contextoDeSesion,
   filaDeItemSesion,
   filasDeDetalleSesion,
-  resumenDeDetalleSesion,
+  totalesDeDetalleSesion,
 } from './pesajes/exportacionDetalleSesion'
 import {
   columnasSesionesParaExportar,
@@ -12,13 +12,15 @@ import {
   filaDeSesion,
   filasDeSesionesParaExportar,
   filtrosInicialesSesiones,
-  resumenDeSesiones,
+  totalesDeSesiones,
 } from './pesajes/exportacionSesiones'
 import {
   contextoDeProveedor,
   describirFiltrosRanking,
   filaDeAnimalProveedor,
   filasDeRanking,
+  totalesDeAnimalesProveedor,
+  totalesDeRanking,
 } from './reportes/exportacionProveedores'
 import {
   contextoDeTransferencia,
@@ -27,6 +29,8 @@ import {
   filaDeTransferencia,
   filasDeTransferenciasParaExportar,
   filtrosInicialesTransferencias,
+  totalesDeDetalleTransferencia,
+  totalesDeTransferencias,
 } from './transferencias/exportacionTransferencias'
 
 // ---- sesiones de pesaje (listado) ----
@@ -104,16 +108,16 @@ describe('exportación de sesiones de pesaje', () => {
     expect(describirFiltrosSesiones({ ...FILTROS_SESIONES, lote: 'sin-lote' }, lotes)).toEqual([{ etiqueta: 'Lote', valor: 'Sin lote' }])
   })
 
-  it('el resumen trae el total de sesiones y de animales pesados', () => {
+  it('los totales traen el total de sesiones y de animales pesados', () => {
     const filas = filasDeSesionesParaExportar(SESIONES, FILTROS_SESIONES)
 
-    expect(resumenDeSesiones(filas)).toEqual([
-      { etiqueta: 'Sesiones', valor: '3' },
-      { etiqueta: 'Animales pesados', valor: '25' },
+    expect(totalesDeSesiones(filas)).toMatchObject([
+      { etiqueta: 'Sesiones', valor: '3', numero: 3 },
+      { etiqueta: 'Animales pesados', valor: '25', numero: 25 },
     ])
-    expect(resumenDeSesiones([])).toEqual([
-      { etiqueta: 'Sesiones', valor: '0' },
-      { etiqueta: 'Animales pesados', valor: '0' },
+    expect(totalesDeSesiones([])).toMatchObject([
+      { etiqueta: 'Sesiones', valor: '0', numero: 0 },
+      { etiqueta: 'Animales pesados', valor: '0', numero: 0 },
     ])
   })
 })
@@ -177,18 +181,18 @@ describe('exportación del detalle de una sesión', () => {
     expect(contextoDeSesion(SESIONES[1], '2026-03-20')[1]).toEqual({ etiqueta: 'Lote', valor: 'Sin lote' })
   })
 
-  it('el resumen trae cantidad, promedio, mínimo, máximo y GMD promedio (solo de los que tienen GMD)', () => {
-    expect(resumenDeDetalleSesion(ITEMS)).toEqual([
-      { etiqueta: 'Animales', valor: '2' },
-      { etiqueta: 'Peso promedio', valor: '280,0 kg' },
-      { etiqueta: 'Mínimo', valor: '260,0 kg' },
-      { etiqueta: 'Máximo', valor: '300,0 kg' },
-      { etiqueta: 'GMD promedio', valor: '1,000 kg/día' },
+  it('los totales traen cantidad, promedio, mínimo, máximo y GMD promedio (solo de los que tienen GMD), con su número real', () => {
+    expect(totalesDeDetalleSesion(ITEMS)).toMatchObject([
+      { etiqueta: 'Animales', valor: '2', numero: 2 },
+      { etiqueta: 'Peso promedio', valor: '280,0 kg', numero: 280, decimales: 1, unidad: 'kg' },
+      { etiqueta: 'Mínimo', valor: '260,0 kg', numero: 260 },
+      { etiqueta: 'Máximo', valor: '300,0 kg', numero: 300 },
+      { etiqueta: 'GMD promedio', valor: '1,000 kg/día', numero: 1, decimales: 3, unidad: 'kg/día' },
     ])
   })
 
-  it('sin ninguna GMD, el resumen dice "—"', () => {
-    expect(resumenDeDetalleSesion([{ ...ITEMS[1] }]).at(-1)).toEqual({ etiqueta: 'GMD promedio', valor: '—' })
+  it('sin ninguna GMD, el total dice "—" y no trae número', () => {
+    expect(totalesDeDetalleSesion([{ ...ITEMS[1] }]).at(-1)).toMatchObject({ etiqueta: 'GMD promedio', valor: '—', numero: null })
   })
 })
 
@@ -351,11 +355,8 @@ describe('exportación del reporte por proveedor', () => {
     })
   })
 
-  it('el contexto de un proveedor trae su nombre y si se tomaron solo los activos', () => {
-    expect(contextoDeProveedor('Beto Beta', true)).toEqual([
-      { etiqueta: 'Proveedor', valor: 'Beto Beta' },
-      { etiqueta: 'Solo animales activos', valor: 'Sí' },
-    ])
+  it('el contexto de un proveedor es su nombre', () => {
+    expect(contextoDeProveedor('Beto Beta')).toEqual([{ etiqueta: 'Proveedor', valor: 'Beto Beta' }])
   })
 })
 
@@ -395,5 +396,82 @@ describe('exportación del historial de pesajes', () => {
       { etiqueta: 'Animal', valor: 'CAR-001' },
       { etiqueta: 'Raza', valor: 'Brangus' },
     ])
+  })
+})
+
+// ---- totales de las demás pantallas ----
+
+describe('totales de transferencias', () => {
+  it('el listado trae las transferencias y los animales movidos', () => {
+    const filas = filasDeTransferenciasParaExportar(TRANSFERENCIAS, FILTROS_TRANSFERENCIAS)
+
+    expect(totalesDeTransferencias(filas)).toMatchObject([
+      { etiqueta: 'Transferencias', valor: '3', numero: 3 },
+      { etiqueta: 'Animales movidos', valor: '8', numero: 8 },
+    ])
+  })
+
+  it('el detalle trae los animales y cuántos siguen en el destino', () => {
+    const filas = [
+      { sigueEnDestino: true },
+      { sigueEnDestino: false },
+      { sigueEnDestino: true },
+    ]
+
+    expect(totalesDeDetalleTransferencia(filas)).toMatchObject([
+      { etiqueta: 'Animales', numero: 3 },
+      { etiqueta: 'Siguen en el destino', numero: 2 },
+    ])
+  })
+})
+
+describe('totales del reporte por proveedor', () => {
+  it('el ranking cuenta proveedores (sin "Sin proveedor"), animales con datos y nombra al mejor', () => {
+    const filas = filasDeRanking(RANKING)
+
+    expect(totalesDeRanking(filas)).toMatchObject([
+      { etiqueta: 'Proveedores', numero: 2 },
+      { etiqueta: 'Animales con datos', numero: 3 },
+      { etiqueta: 'Mejor proveedor', valor: 'Beto Beta (GMD promedio 3,500 kg/día)' },
+    ])
+  })
+
+  it('sin ningún proveedor con GMD, el mejor es "—"', () => {
+    const filas = filasDeRanking([{ ...RANKING[1] }])
+
+    expect(totalesDeRanking(filas).at(-1)).toEqual({ etiqueta: 'Mejor proveedor', valor: '—' })
+  })
+
+  it('los animales de un proveedor suman la ganancia y promedian la GMD acumulada de los que la tienen', () => {
+    const filas = [
+      { ganancia: 100, gmd: 5 },
+      { ganancia: 20, gmd: null },
+      { ganancia: 30, gmd: 3 },
+    ]
+
+    expect(totalesDeAnimalesProveedor(filas)).toMatchObject([
+      { etiqueta: 'Animales', numero: 3 },
+      { etiqueta: 'Ganancia total', numero: 150, valor: '150,0 kg', unidad: 'kg' },
+      { etiqueta: 'GMD acumulado promedio', numero: 4, valor: '4,000 kg/día' },
+    ])
+    expect(totalesDeAnimalesProveedor([]).at(-1)).toMatchObject({ valor: '—', numero: null })
+  })
+})
+
+describe('totales del historial de pesajes', () => {
+  it('trae los pesajes (sin el ingreso) y la ganancia total y GMD acumulado del animal', () => {
+    const animal = { gananciaTotal: 50, gmdAcumulado: 2.5 }
+
+    expect(totalesDeHistorial(animal, [{}, {}])).toMatchObject([
+      { etiqueta: 'Pesajes', numero: 2 },
+      { etiqueta: 'Ganancia total', numero: 50, valor: '50,0 kg' },
+      { etiqueta: 'GMD acumulado', numero: 2.5, valor: '2,500 kg/día' },
+    ])
+  })
+
+  it('un animal sin pesajes: ganancia y GMD en "—"', () => {
+    const totales = totalesDeHistorial({ gananciaTotal: null, gmdAcumulado: null }, [])
+
+    expect(totales.map((total) => total.valor)).toEqual(['0', '—', '—'])
   })
 })

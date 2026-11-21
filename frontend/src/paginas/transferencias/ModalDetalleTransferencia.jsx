@@ -23,6 +23,7 @@ import {
   COLUMNAS_DETALLE_TRANSFERENCIA,
   contextoDeTransferencia,
   filaDeAnimalTransferencia,
+  totalesDeDetalleTransferencia,
 } from './exportacionTransferencias'
 import { formatearFecha, formatearFechaHora } from '../../utilidades/formato'
 import FormularioDevolucion from './FormularioDevolucion'
@@ -208,12 +209,13 @@ export default function ModalDetalleTransferencia({ transferenciaId, onCerrar, o
 
       {modalExportarAbierto && detalle && (
         <ModalExportar
-          titulo={`Transferencia n.º ${detalle.traId}`}
+          titulo="Detalle de transferencia"
           tituloModal="Exportar animales de la transferencia"
           listado={`transferencia-${detalle.traId}`}
           columnas={COLUMNAS_DETALLE_TRANSFERENCIA}
           obtenerFilas={obtenerFilasExportacion}
-          describirFiltros={describirContexto}
+          describirContexto={describirContexto}
+          describirTotales={totalesDeDetalleTransferencia}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           refDisparador={refBotonExportar}

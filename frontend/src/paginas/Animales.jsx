@@ -45,6 +45,7 @@ import {
   describirFiltrosAnimales,
   filasDeAnimalesParaExportar,
   filtrosInicialesDeExportacion,
+  totalesDeAnimales,
 } from './animales/exportacionAnimales'
 import FiltrosExportarAnimales from './animales/FiltrosExportarAnimales'
 import ModalDetalleAnimal from './animales/ModalDetalleAnimal'
@@ -655,6 +656,7 @@ export default function Animales() {
           )}
           obtenerFilas={obtenerFilasExportacion}
           describirFiltros={describirFiltrosExportacion}
+          describirTotales={totalesDeAnimales}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           onGenerado={(nombre) => mostrarAviso(`Archivo ${nombre} generado`)}

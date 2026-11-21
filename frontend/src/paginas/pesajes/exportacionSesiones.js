@@ -7,7 +7,7 @@
  */
 
 import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
-import { formatearFechaIso, formatearNumero } from '../../utilidades/exportacion/formatos'
+import { formatearFechaIso, totalNumerico } from '../../utilidades/exportacion/formatos'
 import { filtrarYOrdenarSesiones } from './listadoSesiones'
 
 /**
@@ -93,11 +93,8 @@ export function describirFiltrosSesiones(filtros, lotes) {
   return lineas
 }
 
-/** Resumen de la cabecera: total de sesiones y de animales pesados (suma de los de cada sesión). */
-export function resumenDeSesiones(filas) {
+/** Totales del cuadro final: total de sesiones y de animales pesados (suma de los de cada sesión). */
+export function totalesDeSesiones(filas) {
   const animales = filas.reduce((suma, fila) => suma + (fila.animales ?? 0), 0)
-  return [
-    { etiqueta: 'Sesiones', valor: formatearNumero(filas.length, 0) },
-    { etiqueta: 'Animales pesados', valor: formatearNumero(animales, 0) },
-  ]
+  return [totalNumerico('Sesiones', filas.length), totalNumerico('Animales pesados', animales)]
 }

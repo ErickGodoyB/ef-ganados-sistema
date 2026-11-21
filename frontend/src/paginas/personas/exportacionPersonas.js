@@ -5,6 +5,7 @@
  * filtrarYOrdenarPersonas (el mismo del listado), ordenando por nombre.
  */
 
+import { totalNumerico } from '../../utilidades/exportacion/formatos'
 import { filtrarYOrdenarPersonas } from './listadoPersonas'
 import { etiquetaTipo, TIPOS_PERSONA } from './tiposPersona'
 
@@ -65,4 +66,13 @@ export function describirFiltrosPersonas(filtros) {
     lineas.push({ etiqueta: 'Tipo', valor: tipo?.etiqueta ?? filtros.tipo })
   }
   return lineas
+}
+
+/** Totales del cuadro final: cantidad de personas y cuántas hay de cada tipo (solo los tipos presentes). */
+export function totalesDePersonas(filas) {
+  const porTipo = TIPOS_PERSONA.map((tipo) => ({
+    tipo,
+    cantidad: filas.filter((fila) => fila.tipo === tipo.etiqueta).length,
+  })).filter((grupo) => grupo.cantidad > 0)
+  return [totalNumerico('Personas', filas.length), ...porTipo.map((grupo) => totalNumerico(grupo.tipo.plural, grupo.cantidad))]
 }

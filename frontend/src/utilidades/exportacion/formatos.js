@@ -106,15 +106,65 @@ export function lineaDeFiltros(filtros) {
 }
 
 /**
- * Línea de resumen de la cabecera (va después de los filtros), ej.
- * "Animales: 20 · Peso promedio: 312,4 kg". Se ignoran los datos sin valor;
- * sin ninguno devuelve '' (no se dibuja nada).
+ * Línea de contexto bajo el título ("Sesión S-261029-3 · Lote Recría"): cada
+ * dato es "etiqueta valor", sin dos puntos, unidos con "·". Se ignoran los
+ * datos sin valor; sin ninguno devuelve ''.
  *
- * @param {{etiqueta: string, valor: string}[]} [resumen]
+ * @param {{etiqueta: string, valor: string}[]} [contexto]
  */
-export function lineaDeResumen(resumen) {
-  const datos = (resumen ?? []).filter((dato) => dato.valor !== undefined && dato.valor !== null && String(dato.valor).trim() !== '')
-  return datos.map((dato) => `${dato.etiqueta}: ${dato.valor}`).join(' · ')
+export function lineaDeContexto(contexto) {
+  return (contexto ?? [])
+    .filter((dato) => dato.valor !== undefined && dato.valor !== null && String(dato.valor).trim() !== '')
+    .map((dato) => `${dato.etiqueta} ${dato.valor}`)
+    .join(' · ')
+}
+
+/**
+ * Un total numérico para el cuadro "Totales": "valor" es el texto que ve el
+ * PDF (con coma decimal y la unidad, ej. "312,4 kg") y "numero" el valor real
+ * que escribe el Excel en su celda (con "decimales" fijos, y la unidad en la
+ * etiqueta). Sin número (null) queda "—" en los dos.
+ *
+ * @param {string} etiqueta
+ * @param {number|null|undefined} numero
+ * @param {{decimales?: number, unidad?: string}} [opciones]
+ */
+export function totalNumerico(etiqueta, numero, { decimales = 0, unidad } = {}) {
+  const hay = typeof numero === 'number' && Number.isFinite(numero)
+  return {
+    etiqueta,
+    valor: hay ? `${formatearNumero(numero, decimales)}${unidad ? ` ${unidad}` : ''}` : '—',
+    numero: hay ? numero : null,
+    decimales,
+    unidad,
+  }
+}
+
+/** Un total de texto para el cuadro "Totales" (ej. el mejor proveedor). */
+export function totalTexto(etiqueta, valor) {
+  return { etiqueta, valor }
+}
+
+/** Los totales con valor, para dibujar (se descartan los vacíos). */
+export function totalesConValor(totales) {
+  return (totales ?? []).filter((total) => total.valor !== undefined && total.valor !== null && String(total.valor).trim() !== '')
+}
+
+/**
+ * Datos de la cabecera de un archivo exportado, ya como texto, para que el PDF
+ * y el Excel armen la misma: título, contexto (línea chica bajo el título),
+ * cuándo y quién lo generó, y los filtros aplicados ("Sin filtros" si no hay).
+ */
+export function armarCabecera({ titulo, contexto, filtros, usuario, ahora }) {
+  const hayFiltros = lineaDeFiltros(filtros) !== 'Sin filtros'
+  return {
+    titulo,
+    contexto: lineaDeContexto(contexto),
+    generado: `Generado el ${formatearFechaHora(ahora)}`,
+    por: `por ${usuario}`,
+    hayFiltros,
+    filtros: lineaDeFiltros(filtros),
+  }
 }
 
 /** Nombre del archivo: <listado>_aaaa-mm-dd.<extension>, ej. "animales_2026-11-18.pdf". */

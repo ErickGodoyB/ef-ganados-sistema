@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { anchoDeColumna, construirExcel, FILA_CABECERA, filaDeCabecera, valorDeCeldaExcel } from './generarExcel'
+import { anchoDeColumna, celdaDeTotal, construirExcel, FILA_CABECERA, repartoDeEncabezado, valorDeCeldaExcel } from './generarExcel'
+import { totalNumerico, totalTexto } from './formatos'
 import { construirPdf } from './generarPdf'
 
 /** Primeros bytes de un Blob (FileReader: el Blob de jsdom no trae arrayBuffer()). */
@@ -99,10 +100,13 @@ describe('construirExcel (prueba de humo)', () => {
     await libro.xlsx.load(await leerBytes(blob))
     const hoja = libro.getWorksheet('Animales')
 
-    expect(hoja.getCell('A1').value).toBe('EF Ganados')
-    expect(hoja.getCell('A2').value).toBe('Animales')
-    expect(hoja.getCell('A3').value).toBe('Filtros: Raza: Brahman')
-    expect(hoja.getCell('A4').value).toBe('Generado el 08/11/2026 09:05 por Ana Pérez')
+    // Fila 1: el nombre del listado, centrado y combinado. Fila 3: filtros a la izquierda y "generado por" a la derecha.
+    expect(hoja.getCell('A1').value).toBe('Animales')
+    expect(hoja.getCell('A1').alignment.horizontal).toBe('center')
+    expect(hoja.getCell('A3').value).toBe('Filtros aplicados: Raza: Brahman')
+    expect(hoja.getCell('C3').value).toBe('Generado el 08/11/2026 09:05')
+    expect(hoja.getCell('C4').value).toBe('por Ana Pérez')
+    expect(hoja.getCell('C3').alignment.horizontal).toBe('right')
     const cabecera = hoja.getRow(FILA_CABECERA)
     expect(cabecera.getCell(1).value).toBe('Nombre')
     expect(cabecera.getCell(1).font.bold).toBe(true)
@@ -122,7 +126,7 @@ describe('construirExcel (prueba de humo)', () => {
   })
 })
 
-describe('construirExcel: alineación y resumen', () => {
+describe('construirExcel: encabezado, alineación y totales', () => {
   async function leerLibro(datos) {
     const ExcelJS = (await import('exceljs')).default
     const blob = await construirExcel({ titulo: 'Animales', filtros: [], columnas: COLUMNAS, filas: FILAS, usuario: 'Ana', ahora: AHORA, ...datos })
@@ -147,23 +151,82 @@ describe('construirExcel: alineación y resumen', () => {
     expect(hoja.getRow(FILA_CABECERA + 1).getCell(2).numFmt).toBe('#,##0.0')
   })
 
-  it('sin resumen, la cabecera de la tabla queda en la fila de siempre', async () => {
-    const hoja = await leerLibro({})
+  it('el contexto va centrado bajo el título y sin filtros dice "Sin filtros"', async () => {
+    const hoja = await leerLibro({ contexto: [{ etiqueta: 'Sesión', valor: 'S-1' }, { etiqueta: 'Lote', valor: 'A' }] })
 
-    expect(hoja.getCell('A5').value).toBeNull()
+    expect(hoja.getCell('A2').value).toBe('Sesión S-1 · Lote A')
+    expect(hoja.getCell('A2').alignment.horizontal).toBe('center')
+    expect(hoja.getCell('A3').value).toBe('Filtros aplicados: Sin filtros')
     expect(hoja.getRow(FILA_CABECERA).getCell(1).value).toBe('Nombre')
     expect(hoja.views[0].ySplit).toBe(FILA_CABECERA)
   })
 
-  it('con resumen, va en la cabecera después de los filtros y la tabla baja una fila', async () => {
+  it('los totales van al final, con su valor como número real cuando corresponde', async () => {
     const hoja = await leerLibro({
-      resumen: [{ etiqueta: 'Animales', valor: '20' }, { etiqueta: 'Peso promedio', valor: '312,4 kg' }],
+      totales: [
+        totalNumerico('Animales', 2),
+        totalNumerico('Peso promedio', 245.5, { decimales: 1, unidad: 'kg' }),
+        totalNumerico('GMD promedio', null, { decimales: 3, unidad: 'kg/día' }),
+        totalTexto('Mejor proveedor', 'Ana (GMD 3,5)'),
+      ],
     })
 
-    expect(hoja.getCell('A5').value).toBe('Animales: 20 · Peso promedio: 312,4 kg')
-    expect(hoja.getRow(filaDeCabecera([{ etiqueta: 'a', valor: 'b' }])).getCell(1).value).toBe('Nombre')
-    expect(hoja.getRow(FILA_CABECERA + 2).getCell(1).value).toBe('Ñandú Núñez')
-    expect(hoja.views[0].ySplit).toBe(FILA_CABECERA + 1)
+    // Tabla: filas 7 y 8; en blanco la 9; "Totales" en la 10 y un total por fila desde la 11.
+    expect(hoja.getCell('A10').value).toBe('Totales')
+    expect(hoja.getCell('A11').value).toBe('Animales')
+    expect(hoja.getCell('C11').value).toBe(2)
+    expect(typeof hoja.getCell('C11').value).toBe('number')
+    expect(hoja.getCell('A12').value).toBe('Peso promedio (kg)')
+    expect(hoja.getCell('C12').value).toBe(245.5)
+    expect(hoja.getCell('C12').numFmt).toBe('#,##0.0')
+    // Sin dato: texto "—", no un número.
+    expect(hoja.getCell('C13').value).toBe('—')
+    expect(hoja.getCell('C14').value).toBe('Ana (GMD 3,5)')
+  })
+
+  it('los totales quedan fuera del autofiltro de la tabla', async () => {
+    const hoja = await leerLibro({ totales: [totalNumerico('Animales', 2)] })
+
+    // La tabla ocupa de la cabecera (fila 6) a la última fila de datos (8): los totales, más abajo, quedan afuera.
+    expect(hoja.autoFilter).toBe('A6:D8')
+  })
+
+  it('sin totales propios, cierra con el total de registros', async () => {
+    const hoja = await leerLibro({})
+
+    expect(hoja.getCell('A10').value).toBe('Total de registros')
+    expect(hoja.getCell('C10').value).toBe(2)
+  })
+
+  it('con pocas columnas (menos de 4) filtros y "generado por" van uno debajo del otro, a todo el ancho', async () => {
+    const hoja = await leerLibro({ columnas: COLUMNAS.slice(0, 2) })
+
+    expect(hoja.getCell('A3').value).toBe('Filtros aplicados: Sin filtros')
+    expect(hoja.getCell('A4').value).toBe('Generado el 08/11/2026 09:05 por Ana')
+  })
+
+  it('con una sola columna no falla (no combina una celda consigo misma)', async () => {
+    const hoja = await leerLibro({ columnas: COLUMNAS.slice(0, 1) })
+
+    expect(hoja.getCell('A1').value).toBe('Animales')
+  })
+})
+
+describe('repartoDeEncabezado y celdaDeTotal', () => {
+  it('con 4 o más columnas se divide en mitades; con menos, no', () => {
+    expect(repartoDeEncabezado(4)).toEqual({ dividido: true, izquierdaHasta: 2, derechaDesde: 3 })
+    expect(repartoDeEncabezado(7)).toEqual({ dividido: true, izquierdaHasta: 4, derechaDesde: 5 })
+    expect(repartoDeEncabezado(3).dividido).toBe(false)
+  })
+
+  it('un total numérico va como número con su formato y la unidad en la etiqueta; el resto, como texto', () => {
+    expect(celdaDeTotal(totalNumerico('GMD promedio', 1.2, { decimales: 3, unidad: 'kg/día' }))).toEqual({
+      etiqueta: 'GMD promedio (kg/día)',
+      valor: 1.2,
+      formato: '#,##0.000',
+    })
+    expect(celdaDeTotal(totalNumerico('Animales', 20))).toEqual({ etiqueta: 'Animales', valor: 20, formato: '#,##0' })
+    expect(celdaDeTotal(totalTexto('Mejor proveedor', 'Ana'))).toEqual({ etiqueta: 'Mejor proveedor', valor: 'Ana', formato: null })
   })
 })
 

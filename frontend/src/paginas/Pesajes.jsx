@@ -29,7 +29,7 @@ import {
   describirFiltrosSesiones,
   filasDeSesionesParaExportar,
   filtrosInicialesSesiones,
-  resumenDeSesiones,
+  totalesDeSesiones,
 } from './pesajes/exportacionSesiones'
 import FiltrosExportarSesiones from './pesajes/FiltrosExportarSesiones'
 import { filtrarYOrdenarSesiones, obtenerLotesDisponibles } from './pesajes/listadoSesiones'
@@ -424,7 +424,7 @@ export default function Pesajes() {
           )}
           obtenerFilas={obtenerFilasExportacion}
           describirFiltros={describirFiltrosExportacion}
-          describirResumen={resumenDeSesiones}
+          describirTotales={totalesDeSesiones}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           onGenerado={(nombre) => mostrarAviso('Archivo ' + nombre + ' generado')}

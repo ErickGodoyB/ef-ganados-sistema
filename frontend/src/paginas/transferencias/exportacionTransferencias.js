@@ -5,7 +5,7 @@
  * animales, con el contexto de la transferencia en la línea de filtros).
  */
 
-import { formatearFechaIso } from '../../utilidades/exportacion/formatos'
+import { formatearFechaIso, totalNumerico } from '../../utilidades/exportacion/formatos'
 import { filtrarTransferencias } from './listadoTransferencias'
 import { etiquetaMotivoTransferencia, MOTIVOS_ELEGIBLES } from './motivos'
 
@@ -92,12 +92,26 @@ export function filaDeAnimalTransferencia(animal) {
   }
 }
 
-/** Contexto de la transferencia para la línea de filtros: "Transferencia: n.º 4 · Fecha: … · Motivo: … · Responsable: …". */
+/** Contexto de la transferencia, bajo el título: "Transferencia n.º 4 · Fecha … · Motivo … · Responsable …". */
 export function contextoDeTransferencia(detalle) {
   return [
     { etiqueta: 'Transferencia', valor: `n.º ${detalle.traId}` },
     { etiqueta: 'Fecha', valor: formatearFechaIso(detalle.fecha) },
     { etiqueta: 'Motivo', valor: etiquetaMotivoTransferencia(detalle.motivo) },
     { etiqueta: 'Responsable', valor: detalle.responsableNombre },
+  ]
+}
+
+/** Totales del cuadro final del listado: transferencias y animales movidos (suma de los de cada una). */
+export function totalesDeTransferencias(filas) {
+  const animales = filas.reduce((suma, fila) => suma + (fila.animales ?? 0), 0)
+  return [totalNumerico('Transferencias', filas.length), totalNumerico('Animales movidos', animales)]
+}
+
+/** Totales del cuadro final del detalle: animales de la transferencia y cuántos siguen en el lote de destino. */
+export function totalesDeDetalleTransferencia(filas) {
+  return [
+    totalNumerico('Animales', filas.length),
+    totalNumerico('Siguen en el destino', filas.filter((fila) => fila.sigueEnDestino).length),
   ]
 }

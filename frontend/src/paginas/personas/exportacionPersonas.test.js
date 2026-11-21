@@ -5,6 +5,7 @@ import {
   describirFiltrosPersonas,
   filaDePersona,
   filasDePersonasParaExportar,
+  totalesDePersonas,
 } from './exportacionPersonas'
 
 const PERSONAS = [
@@ -122,5 +123,27 @@ describe('describirFiltrosPersonas', () => {
 describe('AVISO_DATOS_PERSONALES', () => {
   it('es el texto pedido', () => {
     expect(AVISO_DATOS_PERSONALES).toBe('El archivo contiene datos personales')
+  })
+})
+
+describe('totalesDePersonas', () => {
+  it('trae el total y la cantidad por tipo (solo los tipos presentes), con el plural', () => {
+    const filas = filasDePersonasParaExportar(PERSONAS, { busqueda: '', tipo: 'todos' })
+
+    expect(totalesDePersonas(filas)).toMatchObject([
+      { etiqueta: 'Personas', valor: '2', numero: 2 },
+      { etiqueta: 'Propietarios', numero: 1 },
+      { etiqueta: 'Proveedores', numero: 1 },
+    ])
+  })
+
+  it('con un solo tipo trae solo ese', () => {
+    const filas = filasDePersonasParaExportar(PERSONAS, { busqueda: '', tipo: 'PROVEEDOR' })
+
+    expect(totalesDePersonas(filas).map((total) => total.etiqueta)).toEqual(['Personas', 'Proveedores'])
+  })
+
+  it('sin personas, solo el total en cero', () => {
+    expect(totalesDePersonas([])).toMatchObject([{ etiqueta: 'Personas', numero: 0 }])
   })
 })

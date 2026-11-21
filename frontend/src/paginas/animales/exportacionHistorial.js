@@ -5,6 +5,7 @@
  */
 
 import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
+import { totalNumerico } from '../../utilidades/exportacion/formatos'
 import { diasEntreFechas } from '../../utilidades/fechas'
 import { calcularDiferenciaPeso } from '../../utilidades/peso'
 
@@ -58,10 +59,23 @@ export function filasDeHistorial(animal, pesajes) {
   return [ingreso, ...filas]
 }
 
-/** Contexto para la línea de filtros: el animal (caravana y raza). */
+/** Contexto del historial, bajo el título: "Animal CAR-001 · Raza Brangus". */
 export function contextoDeAnimal(animal) {
   return [
     { etiqueta: 'Animal', valor: animal.aniCaravana },
     { etiqueta: 'Raza', valor: animal.razaDescripcion },
+  ]
+}
+
+/**
+ * Totales del cuadro final: pesajes (sin contar el ingreso), ganancia total y
+ * GMD acumulado del animal. Los dos últimos son los del resumen del animal (los
+ * calcula el servidor con la regla única del sistema), no se recalculan acá.
+ */
+export function totalesDeHistorial(animal, pesajes) {
+  return [
+    totalNumerico('Pesajes', pesajes.length),
+    totalNumerico('Ganancia total', animal.gananciaTotal, { decimales: 1, unidad: 'kg' }),
+    totalNumerico('GMD acumulado', animal.gmdAcumulado, { decimales: 3, unidad: 'kg/día' }),
   ]
 }

@@ -245,13 +245,14 @@ describe('ModalExportar: estados', () => {
 })
 
 describe('ModalExportar: sin filtros y resumen', () => {
-  it('sin renderFiltros no muestra la sección de filtros, y el contexto va como línea de filtros', async () => {
+  it('sin renderFiltros no muestra la sección de filtros, y el contexto va bajo el título', async () => {
     const usuario = userEvent.setup()
     renderizar({
       renderFiltros: undefined,
       filtrosIniciales: undefined,
       obtenerFilas: () => DATOS,
-      describirFiltros: () => [{ etiqueta: 'Sesión', valor: 'S-261029-3' }],
+      describirFiltros: undefined,
+      describirContexto: () => [{ etiqueta: 'Sesión', valor: 'S-261029-3' }],
       tituloModal: 'Exportar animales de la sesión',
     })
 
@@ -262,39 +263,42 @@ describe('ModalExportar: sin filtros y resumen', () => {
     await usuario.click(screen.getByRole('button', { name: 'Generar' }))
 
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
-    expect(generarPdf.mock.calls[0][0].filtros).toEqual([{ etiqueta: 'Sesión', valor: 'S-261029-3' }])
+    // Sin filtros propios queda "Sin filtros"; el contexto viaja aparte, para la línea bajo el título.
+    expect(generarPdf.mock.calls[0][0].filtros).toEqual([])
+    expect(generarPdf.mock.calls[0][0].contexto).toEqual([{ etiqueta: 'Sesión', valor: 'S-261029-3' }])
   })
 
-  it('describirResumen recibe las filas y el resultado va al generador (PDF y Excel)', async () => {
+  it('describirTotales recibe las filas y el resultado va al generador', async () => {
     const usuario = userEvent.setup()
-    const describirResumen = vi.fn((filas) => [{ etiqueta: 'Animales', valor: String(filas.length) }])
-    renderizar({ describirResumen })
+    const describirTotales = vi.fn((filas) => [{ etiqueta: 'Animales', valor: String(filas.length) }])
+    renderizar({ describirTotales })
 
     await usuario.click(screen.getByRole('button', { name: 'Generar' }))
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
 
-    expect(describirResumen).toHaveBeenCalledWith(DATOS, { texto: '' })
-    expect(generarPdf.mock.calls[0][0].resumen).toEqual([{ etiqueta: 'Animales', valor: '3' }])
+    expect(describirTotales).toHaveBeenCalledWith(DATOS, { texto: '' })
+    expect(generarPdf.mock.calls[0][0].totales).toEqual([{ etiqueta: 'Animales', valor: '3' }])
   })
 
-  it('un listado que no usa resumen no manda la clave (el archivo queda como antes)', async () => {
+  it('un listado que no usa totales ni contexto no manda esas claves', async () => {
     const usuario = userEvent.setup()
     renderizar()
 
     await usuario.click(screen.getByRole('button', { name: 'Generar' }))
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
 
-    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('resumen')
+    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('totales')
+    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('contexto')
   })
 
-  it('un resumen vacío tampoco se manda', async () => {
+  it('totales vacíos tampoco se mandan', async () => {
     const usuario = userEvent.setup()
-    renderizar({ describirResumen: () => [] })
+    renderizar({ describirTotales: () => [] })
 
     await usuario.click(screen.getByRole('button', { name: 'Generar' }))
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
 
-    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('resumen')
+    expect(generarPdf.mock.calls[0][0]).not.toHaveProperty('totales')
   })
 })
 

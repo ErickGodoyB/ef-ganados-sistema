@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   alineacionDe,
+  armarCabecera,
   dimensionesDePng,
   fechaIsoADateUtc,
   fechaIsoDe,
@@ -8,10 +9,13 @@ import {
   formatearFechaIso,
   formatearNumero,
   lineaDeFiltros,
-  lineaDeResumen,
+  lineaDeContexto,
   nombreDeArchivo,
   orientacionDelPdf,
   textoDeCelda,
+  totalesConValor,
+  totalNumerico,
+  totalTexto,
 } from './formatos'
 
 describe('formatearNumero', () => {
@@ -98,20 +102,83 @@ describe('lineaDeFiltros', () => {
   })
 })
 
-describe('lineaDeResumen', () => {
-  it('une los datos con "·", como la línea de filtros', () => {
+describe('lineaDeContexto', () => {
+  it('une los datos como "etiqueta valor" (sin dos puntos) con "·"', () => {
     expect(
-      lineaDeResumen([
-        { etiqueta: 'Animales', valor: '20' },
-        { etiqueta: 'Peso promedio', valor: '312,4 kg' },
+      lineaDeContexto([
+        { etiqueta: 'Sesión', valor: 'S-261029-3' },
+        { etiqueta: 'Lote', valor: 'Recría' },
       ]),
-    ).toBe('Animales: 20 · Peso promedio: 312,4 kg')
+    ).toBe('Sesión S-261029-3 · Lote Recría')
   })
 
-  it('ignora los datos sin valor y, sin ninguno (o sin resumen), devuelve vacío', () => {
-    expect(lineaDeResumen([{ etiqueta: 'A', valor: '' }, { etiqueta: 'B', valor: '1' }])).toBe('B: 1')
-    expect(lineaDeResumen([])).toBe('')
-    expect(lineaDeResumen(undefined)).toBe('')
+  it('ignora los datos sin valor y, sin ninguno (o sin contexto), devuelve vacío', () => {
+    expect(lineaDeContexto([{ etiqueta: 'A', valor: '' }, { etiqueta: 'B', valor: '1' }])).toBe('B 1')
+    expect(lineaDeContexto([])).toBe('')
+    expect(lineaDeContexto(undefined)).toBe('')
+  })
+})
+
+describe('totalNumerico y totalTexto', () => {
+  it('totalNumerico trae el texto con coma y unidad, y el número real', () => {
+    expect(totalNumerico('Peso promedio', 312.44, { decimales: 1, unidad: 'kg' })).toEqual({
+      etiqueta: 'Peso promedio',
+      valor: '312,4 kg',
+      numero: 312.44,
+      decimales: 1,
+      unidad: 'kg',
+    })
+    expect(totalNumerico('Animales', 20)).toMatchObject({ valor: '20', numero: 20, decimales: 0 })
+  })
+
+  it('sin número queda "—" y numero en null', () => {
+    expect(totalNumerico('GMD promedio', null, { decimales: 3, unidad: 'kg/día' })).toMatchObject({ valor: '—', numero: null })
+    expect(totalNumerico('GMD promedio', undefined)).toMatchObject({ valor: '—', numero: null })
+  })
+
+  it('totalTexto es solo etiqueta y valor', () => {
+    expect(totalTexto('Mejor proveedor', 'Ana')).toEqual({ etiqueta: 'Mejor proveedor', valor: 'Ana' })
+  })
+
+  it('totalesConValor descarta los vacíos', () => {
+    expect(totalesConValor([{ etiqueta: 'A', valor: '' }, { etiqueta: 'B', valor: '1' }, { etiqueta: 'C' }])).toEqual([
+      { etiqueta: 'B', valor: '1' },
+    ])
+    expect(totalesConValor(undefined)).toEqual([])
+  })
+})
+
+describe('armarCabecera', () => {
+  const AHORA = new Date(2026, 10, 8, 9, 5)
+
+  it('arma el título, el contexto, cuándo y quién lo generó, y los filtros', () => {
+    const cabecera = armarCabecera({
+      titulo: 'Detalle de sesión de pesaje',
+      contexto: [
+        { etiqueta: 'Sesión', valor: 'S-261029-3' },
+        { etiqueta: 'Lote', valor: 'Recría' },
+      ],
+      filtros: [{ etiqueta: 'Raza', valor: 'Brahman' }],
+      usuario: 'Ana Pérez',
+      ahora: AHORA,
+    })
+
+    expect(cabecera).toEqual({
+      titulo: 'Detalle de sesión de pesaje',
+      contexto: 'Sesión S-261029-3 · Lote Recría',
+      generado: 'Generado el 08/11/2026 09:05',
+      por: 'por Ana Pérez',
+      hayFiltros: true,
+      filtros: 'Raza: Brahman',
+    })
+  })
+
+  it('sin filtros dice "Sin filtros" y sin contexto, el contexto queda vacío', () => {
+    const cabecera = armarCabecera({ titulo: 'Animales', filtros: [], usuario: 'Ana', ahora: AHORA })
+
+    expect(cabecera.hayFiltros).toBe(false)
+    expect(cabecera.filtros).toBe('Sin filtros')
+    expect(cabecera.contexto).toBe('')
   })
 })
 

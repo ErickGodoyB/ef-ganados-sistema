@@ -17,6 +17,7 @@ import {
   COLUMNAS_TRANSFERENCIAS,
   describirFiltrosTransferencias,
   filasDeTransferenciasParaExportar,
+  totalesDeTransferencias,
 } from './exportacionTransferencias'
 import FiltrosExportarTransferencias from './FiltrosExportarTransferencias'
 import { useTransferencias } from './useTransferencias'
@@ -60,6 +61,7 @@ export default function ModalExportarTransferencias({ filtrosIniciales, onCerrar
       renderFiltros={({ filtros, cambiarFiltro }) => <FiltrosExportarTransferencias filtros={filtros} cambiarFiltro={cambiarFiltro} />}
       obtenerFilas={obtenerFilas}
       describirFiltros={describirFiltrosTransferencias}
+      describirTotales={totalesDeTransferencias}
       usuario={usuario}
       onCerrar={onCerrar}
       onGenerado={onGenerado}

@@ -17,7 +17,13 @@ import ModalExportar from '../../componentes/ModalExportar'
 import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearFecha, formatearGmd, formatearPeso } from '../../utilidades/formato'
 import { etiquetaMotivoSalida } from '../animales/tiposSalida'
-import { COLUMNAS_ANIMALES_PROVEEDOR, contextoDeProveedor, filaDeAnimalProveedor } from './exportacionProveedores'
+import {
+  COLUMNAS_ANIMALES_PROVEEDOR,
+  contextoDeProveedor,
+  describirFiltrosRanking,
+  filaDeAnimalProveedor,
+  totalesDeAnimalesProveedor,
+} from './exportacionProveedores'
 import './ModalAnimalesProveedor.css'
 
 /** "Activo" tal cual, o el motivo de salida legible (VENTA → "Venta"). */
@@ -67,7 +73,8 @@ export default function ModalAnimalesProveedor({ proveedorId, proveedorNombre, s
     () => animales.map((animal) => filaDeAnimalProveedor(animal, textoEstado)),
     [animales],
   )
-  const describirContexto = useCallback(() => contextoDeProveedor(proveedorNombre, soloActivos), [proveedorNombre, soloActivos])
+  const describirContexto = useCallback(() => contextoDeProveedor(proveedorNombre), [proveedorNombre])
+  const describirFiltrosExportacion = useCallback(() => describirFiltrosRanking(soloActivos), [soloActivos])
 
   return (
     <Modal titulo={`Animales de ${proveedorNombre}`} onCerrar={onCerrar} refDisparador={refDisparador} tamano="grande">
@@ -187,12 +194,14 @@ export default function ModalAnimalesProveedor({ proveedorId, proveedorNombre, s
 
       {modalExportarAbierto && (
         <ModalExportar
-          titulo={`Animales de ${proveedorNombre}`}
+          titulo="Animales del proveedor"
           tituloModal="Exportar animales del proveedor"
           listado={`animales-de-${proveedorNombre.toLowerCase().replace(/\s+/g, '-')}`}
           columnas={COLUMNAS_ANIMALES_PROVEEDOR}
           obtenerFilas={obtenerFilasExportacion}
-          describirFiltros={describirContexto}
+          describirContexto={describirContexto}
+          describirFiltros={describirFiltrosExportacion}
+          describirTotales={totalesDeAnimalesProveedor}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           refDisparador={refBotonExportar}

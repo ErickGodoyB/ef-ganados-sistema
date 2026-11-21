@@ -6,7 +6,7 @@
  */
 
 import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
-import { formatearFechaIso, formatearNumero } from '../../utilidades/exportacion/formatos'
+import { formatearNumero, formatearFechaIso, totalNumerico, totalTexto } from '../../utilidades/exportacion/formatos'
 import { diasEntreFechas } from '../../utilidades/fechas'
 import { calcularDiferenciaPeso } from '../../utilidades/peso'
 import { calcularGmdPromedioSesion, calcularResumenPesos } from '../../utilidades/resumenSesion'
@@ -64,7 +64,7 @@ function textoLote(sesion) {
   return sesion.grupoDescripcion ? `${sesion.subGrupoDescripcion} — ${sesion.grupoDescripcion}` : sesion.subGrupoDescripcion
 }
 
-/** Contexto de la sesión para la línea de filtros: "Sesión: S-AAMMDD-N · Lote: X · Fecha: dd/mm/aaaa". */
+/** Contexto de la sesión, en la línea chica bajo el título: "Sesión S-AAMMDD-N · Lote X · Fecha dd/mm/aaaa". */
 export function contextoDeSesion(sesion, fechaIso) {
   return [
     { etiqueta: 'Sesión', valor: calcularCodigoSesion(fechaIso, sesion.subGrupoId) },
@@ -73,7 +73,7 @@ export function contextoDeSesion(sesion, fechaIso) {
   ]
 }
 
-/** Texto de un proveedor del bloque "Por proveedor" para la cabecera: animales, peso promedio, diferencia promedio y GMD promedio. */
+/** Texto de un proveedor del bloque "Por proveedor" para el cuadro de totales: animales, peso promedio, diferencia promedio y GMD promedio. */
 function textoDeProveedor(fila) {
   const partes = [
     `${formatearNumero(fila.animales, 0)} ${fila.animales === 1 ? 'animal' : 'animales'}`,
@@ -85,24 +85,24 @@ function textoDeProveedor(fila) {
 }
 
 /**
- * Resumen de la cabecera: cantidad, promedio, mínimo, máximo y GMD promedio
- * (los mismos del detalle) y, si los animales de la sesión son de 2 o más
- * proveedores, una entrada "Proveedor X" por cada uno (el bloque "Por
+ * Totales del cuadro final: animales, peso promedio, mínimo, máximo y GMD
+ * promedio (los mismos del detalle) y, si los animales de la sesión son de 2
+ * o más proveedores, una entrada "Proveedor X" por cada uno (el bloque "Por
  * proveedor" de la pantalla).
  */
-export function resumenDeDetalleSesion(items) {
+export function totalesDeDetalleSesion(items) {
   const pesos = calcularResumenPesos(items.map((item) => item.peso))
   const { gmdPromedio } = calcularGmdPromedioSesion(items.map((item) => item.gmd))
-  const resumen = [
-    { etiqueta: 'Animales', valor: formatearNumero(pesos.cantidad, 0) },
-    { etiqueta: 'Peso promedio', valor: `${formatearNumero(pesos.promedio, 1)} kg` },
-    { etiqueta: 'Mínimo', valor: `${formatearNumero(pesos.minimo, 1)} kg` },
-    { etiqueta: 'Máximo', valor: `${formatearNumero(pesos.maximo, 1)} kg` },
-    { etiqueta: 'GMD promedio', valor: gmdPromedio == null ? '—' : `${formatearNumero(gmdPromedio, 3)} kg/día` },
+  const totales = [
+    totalNumerico('Animales', pesos.cantidad),
+    totalNumerico('Peso promedio', pesos.promedio, { decimales: 1, unidad: 'kg' }),
+    totalNumerico('Mínimo', pesos.minimo, { decimales: 1, unidad: 'kg' }),
+    totalNumerico('Máximo', pesos.maximo, { decimales: 1, unidad: 'kg' }),
+    totalNumerico('GMD promedio', gmdPromedio, { decimales: 3, unidad: 'kg/día' }),
   ]
   const porProveedor = resumenPorProveedor(items)
   if (mostrarPorProveedor(porProveedor)) {
-    resumen.push(...porProveedor.map((fila) => ({ etiqueta: `Proveedor ${fila.nombre}`, valor: textoDeProveedor(fila) })))
+    totales.push(...porProveedor.map((fila) => totalTexto(`Proveedor ${fila.nombre}`, textoDeProveedor(fila))))
   }
-  return resumen
+  return totales
 }

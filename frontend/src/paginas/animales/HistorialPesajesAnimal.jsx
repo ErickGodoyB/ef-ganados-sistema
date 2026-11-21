@@ -29,7 +29,7 @@ import { calcularCodigoSesion } from '../../utilidades/codigoSesion'
 import { useUsuarioExportacion } from '../../utilidades/exportacion/useUsuarioExportacion'
 import { formatearFecha, formatearPeso } from '../../utilidades/formato'
 import { calcularDiferenciaPeso } from '../../utilidades/peso'
-import { COLUMNAS_HISTORIAL, contextoDeAnimal, filasDeHistorial } from './exportacionHistorial'
+import { COLUMNAS_HISTORIAL, contextoDeAnimal, filasDeHistorial, totalesDeHistorial } from './exportacionHistorial'
 import './HistorialPesajesAnimal.css'
 
 export default function HistorialPesajesAnimal({ animal }) {
@@ -44,6 +44,7 @@ export default function HistorialPesajesAnimal({ animal }) {
   const usuarioExportacion = useUsuarioExportacion()
   const obtenerFilasExportacion = useCallback(() => filasDeHistorial(animal, pesajes), [animal, pesajes])
   const describirContexto = useCallback(() => contextoDeAnimal(animal), [animal])
+  const describirTotales = useCallback(() => totalesDeHistorial(animal, pesajes), [animal, pesajes])
 
   useEffect(() => {
     let cancelado = false
@@ -233,12 +234,13 @@ export default function HistorialPesajesAnimal({ animal }) {
 
       {modalExportarAbierto && (
         <ModalExportar
-          titulo={`Historial de pesajes de ${animal.aniCaravana}`}
+          titulo="Historial de pesajes"
           tituloModal="Exportar historial de pesajes"
           listado={`historial-de-pesajes-${animal.aniCaravana}`}
           columnas={COLUMNAS_HISTORIAL}
           obtenerFilas={obtenerFilasExportacion}
-          describirFiltros={describirContexto}
+          describirContexto={describirContexto}
+          describirTotales={describirTotales}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           refDisparador={refBotonExportar}

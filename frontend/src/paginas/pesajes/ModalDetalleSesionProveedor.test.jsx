@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { peticionProtegida } from '../../api/cliente'
 import { generarPdf } from '../../utilidades/exportacion/generarPdf'
 import ModalDetalleSesion from './ModalDetalleSesion'
-import { COLUMNAS_DETALLE_SESION, filaDeItemSesion, resumenDeDetalleSesion } from './exportacionDetalleSesion'
+import { COLUMNAS_DETALLE_SESION, filaDeItemSesion, totalesDeDetalleSesion } from './exportacionDetalleSesion'
 
 vi.mock('../../auth/useAuth', () => ({
   useAuth: () => ({ personaId: 1, cargandoYo: false, errorYo: '' }),
@@ -179,8 +179,8 @@ describe('Detalle de sesión: exportación con proveedor', () => {
     expect(filaDeItemSesion(DOS_PROVEEDORES[2], '2026-07-05').proveedor).toBe('Sin proveedor')
   })
 
-  it('el resumen suma una entrada por proveedor solo cuando hay 2 o más', () => {
-    const con = resumenDeDetalleSesion(DOS_PROVEEDORES)
+  it('los totales suman una entrada por proveedor solo cuando hay 2 o más', () => {
+    const con = totalesDeDetalleSesion(DOS_PROVEEDORES)
     expect(con.map((dato) => dato.etiqueta)).toEqual([
       'Animales',
       'Peso promedio',
@@ -195,7 +195,7 @@ describe('Detalle de sesión: exportación con proveedor', () => {
     )
     expect(con[6].valor).toBe('1 animal, peso promedio 220,0 kg, diferencia promedio 10,0 kg, GMD promedio 0,500 kg/día')
 
-    expect(resumenDeDetalleSesion(UN_PROVEEDOR).map((dato) => dato.etiqueta)).toEqual([
+    expect(totalesDeDetalleSesion(UN_PROVEEDOR).map((dato) => dato.etiqueta)).toEqual([
       'Animales',
       'Peso promedio',
       'Mínimo',
@@ -204,7 +204,7 @@ describe('Detalle de sesión: exportación con proveedor', () => {
     ])
   })
 
-  it('al exportar desde el detalle, el resumen del archivo incluye el bloque por proveedor', async () => {
+  it('al exportar desde el detalle, los totales del archivo incluyen el bloque por proveedor', async () => {
     const usuario = userEvent.setup()
     await abrir()
 
@@ -213,7 +213,7 @@ describe('Detalle de sesión: exportación con proveedor', () => {
 
     await waitFor(() => expect(generarPdf).toHaveBeenCalledTimes(1))
     const datos = generarPdf.mock.calls[0][0]
-    expect(datos.resumen.map((dato) => dato.etiqueta)).toContain('Proveedor Pedro Vera')
+    expect(datos.totales.map((dato) => dato.etiqueta)).toContain('Proveedor Pedro Vera')
     expect(datos.columnas.map((columna) => columna.clave)).toContain('proveedor')
     expect(datos.columnas.map((columna) => columna.clave)).not.toContain('pesoIngreso')
   })

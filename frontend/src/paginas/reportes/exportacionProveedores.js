@@ -4,6 +4,7 @@
  * animales de un proveedor (con el proveedor como contexto).
  */
 
+import { formatearNumero, totalNumerico, totalTexto } from '../../utilidades/exportacion/formatos'
 import { posicionEnRanking } from './rankingProveedores'
 
 // ---- ranking ----
@@ -70,10 +71,35 @@ export function filaDeAnimalProveedor(animal, textoEstado) {
   }
 }
 
-/** Contexto para la línea de filtros: el proveedor y si se tomaron solo los animales activos. */
-export function contextoDeProveedor(proveedorNombre, soloActivos) {
+/** Contexto del detalle, bajo el título: el proveedor ("Proveedor Beto Beta"). */
+export function contextoDeProveedor(proveedorNombre) {
+  return [{ etiqueta: 'Proveedor', valor: proveedorNombre }]
+}
+
+/**
+ * Totales del cuadro final del ranking: proveedores (sin contar la fila "Sin
+ * proveedor"), animales con datos y el mejor proveedor (el primero con GMD
+ * promedio, que es como llega ordenado del servidor).
+ */
+export function totalesDeRanking(filas) {
+  const proveedores = filas.filter((fila) => fila.posicion != null)
+  const mejor = proveedores.find((fila) => fila.gmdPromedio != null)
   return [
-    { etiqueta: 'Proveedor', valor: proveedorNombre },
-    { etiqueta: 'Solo animales activos', valor: soloActivos ? 'Sí' : 'No' },
+    totalNumerico('Proveedores', proveedores.length),
+    totalNumerico('Animales con datos', filas.reduce((suma, fila) => suma + (fila.conDatos ?? 0), 0)),
+    totalTexto('Mejor proveedor', mejor ? `${mejor.proveedor} (GMD promedio ${formatearNumero(mejor.gmdPromedio, 3)} kg/día)` : '—'),
+  ]
+}
+
+/** Totales del cuadro final de los animales de un proveedor: animales, ganancia total (suma) y GMD acumulado promedio. */
+export function totalesDeAnimalesProveedor(filas) {
+  const gmds = filas.map((fila) => fila.gmd).filter((gmd) => typeof gmd === 'number')
+  return [
+    totalNumerico('Animales', filas.length),
+    totalNumerico('Ganancia total', filas.reduce((suma, fila) => suma + (fila.ganancia ?? 0), 0), { decimales: 1, unidad: 'kg' }),
+    totalNumerico('GMD acumulado promedio', gmds.length === 0 ? null : gmds.reduce((suma, gmd) => suma + gmd, 0) / gmds.length, {
+      decimales: 3,
+      unidad: 'kg/día',
+    }),
   ]
 }

@@ -21,6 +21,7 @@ import {
   COLUMNAS_PERSONAS,
   describirFiltrosPersonas,
   filasDePersonasParaExportar,
+  totalesDePersonas,
 } from './personas/exportacionPersonas'
 import FiltrosExportarPersonas from './personas/FiltrosExportarPersonas'
 import { filtrarYOrdenarPersonas } from './personas/listadoPersonas'
@@ -279,6 +280,7 @@ export default function Personas() {
           )}
           obtenerFilas={obtenerFilasExportacion}
           describirFiltros={describirFiltrosPersonas}
+          describirTotales={totalesDePersonas}
           usuario={usuarioExportacion}
           aviso={AVISO_DATOS_PERSONALES}
           onCerrar={() => setModalExportarAbierto(false)}

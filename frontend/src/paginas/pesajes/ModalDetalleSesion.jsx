@@ -43,7 +43,7 @@ import {
   COLUMNAS_DETALLE_SESION,
   contextoDeSesion,
   filasDeDetalleSesion,
-  resumenDeDetalleSesion,
+  totalesDeDetalleSesion,
 } from './exportacionDetalleSesion'
 import './ModalDetalleSesion.css'
 import PanelAnularSesion from './PanelAnularSesion'
@@ -282,7 +282,7 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
   const usuarioExportacion = useUsuarioExportacion()
   const obtenerFilasExportacion = useCallback(() => filasDeDetalleSesion(items, fechaActual), [items, fechaActual])
   const describirContexto = useCallback(() => contextoDeSesion(sesion, fechaActual), [sesion, fechaActual])
-  const describirResumenExportacion = useCallback(() => resumenDeDetalleSesion(items), [items])
+  const describirTotalesExportacion = useCallback(() => totalesDeDetalleSesion(items), [items])
   const codigoExportacion = calcularCodigoSesion(fechaActual, sesion.subGrupoId)
 
   return (
@@ -470,13 +470,13 @@ export default function ModalDetalleSesion({ sesion, onCerrar, onCambiada, onQue
 
       {modalExportarAbierto && (
         <ModalExportar
-          titulo={`Sesión de pesaje ${codigoExportacion}`}
+          titulo="Detalle de sesión de pesaje"
           tituloModal="Exportar animales de la sesión"
           listado={`sesion-${codigoExportacion}`}
           columnas={COLUMNAS_DETALLE_SESION}
           obtenerFilas={obtenerFilasExportacion}
-          describirFiltros={describirContexto}
-          describirResumen={describirResumenExportacion}
+          describirContexto={describirContexto}
+          describirTotales={describirTotalesExportacion}
           usuario={usuarioExportacion}
           onCerrar={() => setModalExportarAbierto(false)}
           onGenerado={(nombre) => mostrarAvisoLocal(`Archivo ${nombre} generado`)}

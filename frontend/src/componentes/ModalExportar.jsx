@@ -39,10 +39,12 @@ function textoRegistros(cantidad) {
  *   Controles de filtro del listado. Si no se pasa (listados de solo lectura, o detalles que exportan
  *   todo lo que muestran), el modal no muestra la sección de filtros.
  * @param {(filtros: object) => object[]} props.obtenerFilas Filas a exportar con esos filtros (ya filtradas y ordenadas).
- * @param {(filtros: object) => {etiqueta: string, valor: string}[]} props.describirFiltros Filtros aplicados, para el encabezado del archivo
- *   (o, sin controles de filtro, el contexto de lo que se exporta: "Sesión: … · Lote: …").
- * @param {(filas: object[], filtros: object) => {etiqueta: string, valor: string}[]} [props.describirResumen]
- *   Datos de resumen de las filas a exportar, para la cabecera del archivo (opcional).
+ * @param {(filtros: object) => {etiqueta: string, valor: string}[]} [props.describirFiltros] Filtros aplicados,
+ *   para "Filtros aplicados:" del archivo (sin esta prop, o sin filtros, dice "Sin filtros").
+ * @param {(filtros: object) => {etiqueta: string, valor: string}[]} [props.describirContexto] Contexto de lo que
+ *   se exporta, en la línea chica bajo el título ("Sesión S-… · Lote X"); lo usan los detalles.
+ * @param {(filas: object[], filtros: object) => object[]} [props.describirTotales] Totales propios del listado
+ *   para el cuadro del final del archivo (ver totalNumerico y totalTexto en utilidades/exportacion/formatos.js).
  * @param {string} [props.tituloModal] Título del diálogo; por defecto "Exportar <titulo>".
  * @param {string} props.usuario Quién genera el archivo.
  * @param {string} [props.aviso] Aviso fijo del modal (ej. que el archivo contiene datos personales).
@@ -57,8 +59,9 @@ export default function ModalExportar({
   filtrosIniciales = {},
   renderFiltros,
   obtenerFilas,
-  describirFiltros,
-  describirResumen,
+  describirFiltros = () => [],
+  describirContexto,
+  describirTotales,
   tituloModal,
   usuario,
   aviso,
@@ -99,7 +102,8 @@ export default function ModalExportar({
     setGenerando(true)
     setError('')
     try {
-      const resumen = describirResumen?.(filas, filtros)
+      const totales = describirTotales?.(filas, filtros)
+      const contexto = describirContexto?.(filtros)
       const datos = {
         listado,
         titulo,
@@ -107,8 +111,9 @@ export default function ModalExportar({
         columnas: columnasElegidas,
         filas,
         usuario,
-        // Sin resumen el archivo queda exactamente igual que antes.
-        ...(resumen && resumen.length > 0 ? { resumen } : {}),
+        // Sin contexto o sin totales propios, el archivo no los lleva.
+        ...(contexto && contexto.length > 0 ? { contexto } : {}),
+        ...(totales && totales.length > 0 ? { totales } : {}),
       }
       const nombre =
         formato === 'pdf' ? await generarPdf({ ...datos, orientacion }) : await generarExcel(datos)
