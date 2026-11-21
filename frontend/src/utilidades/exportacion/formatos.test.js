@@ -103,17 +103,17 @@ describe('lineaDeFiltros', () => {
 })
 
 describe('lineaDeContexto', () => {
-  it('une los datos como "etiqueta valor" (sin dos puntos) con "·"', () => {
+  it('une los datos como "etiqueta: valor" con "·"', () => {
     expect(
       lineaDeContexto([
         { etiqueta: 'Sesión', valor: 'S-261029-3' },
         { etiqueta: 'Lote', valor: 'Recría' },
       ]),
-    ).toBe('Sesión S-261029-3 · Lote Recría')
+    ).toBe('Sesión: S-261029-3 · Lote: Recría')
   })
 
   it('ignora los datos sin valor y, sin ninguno (o sin contexto), devuelve vacío', () => {
-    expect(lineaDeContexto([{ etiqueta: 'A', valor: '' }, { etiqueta: 'B', valor: '1' }])).toBe('B 1')
+    expect(lineaDeContexto([{ etiqueta: 'A', valor: '' }, { etiqueta: 'B', valor: '1' }])).toBe('B: 1')
     expect(lineaDeContexto([])).toBe('')
     expect(lineaDeContexto(undefined)).toBe('')
   })
@@ -165,7 +165,7 @@ describe('armarCabecera', () => {
 
     expect(cabecera).toEqual({
       titulo: 'Detalle de sesión de pesaje',
-      contexto: 'Sesión S-261029-3 · Lote Recría',
+      contexto: 'Sesión: S-261029-3 · Lote: Recría',
       generado: 'Generado el 08/11/2026 09:05',
       por: 'por Ana Pérez',
       hayFiltros: true,

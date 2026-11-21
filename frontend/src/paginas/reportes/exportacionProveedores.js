@@ -71,7 +71,7 @@ export function filaDeAnimalProveedor(animal, textoEstado) {
   }
 }
 
-/** Contexto del detalle, bajo el título: el proveedor ("Proveedor Beto Beta"). */
+/** Contexto del detalle, bajo el título: el proveedor ("Proveedor: Beto Beta"). */
 export function contextoDeProveedor(proveedorNombre) {
   return [{ etiqueta: 'Proveedor', valor: proveedorNombre }]
 }

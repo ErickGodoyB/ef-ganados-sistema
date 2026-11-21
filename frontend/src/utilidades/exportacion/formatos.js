@@ -106,8 +106,8 @@ export function lineaDeFiltros(filtros) {
 }
 
 /**
- * Línea de contexto bajo el título ("Sesión S-261029-3 · Lote Recría"): cada
- * dato es "etiqueta valor", sin dos puntos, unidos con "·". Se ignoran los
+ * Línea de contexto bajo el título ("Sesión: S-261029-3 · Lote: Recría"): cada
+ * dato es "etiqueta: valor", unidos con "·". Se ignoran los
  * datos sin valor; sin ninguno devuelve ''.
  *
  * @param {{etiqueta: string, valor: string}[]} [contexto]
@@ -115,7 +115,7 @@ export function lineaDeFiltros(filtros) {
 export function lineaDeContexto(contexto) {
   return (contexto ?? [])
     .filter((dato) => dato.valor !== undefined && dato.valor !== null && String(dato.valor).trim() !== '')
-    .map((dato) => `${dato.etiqueta} ${dato.valor}`)
+    .map((dato) => `${dato.etiqueta}: ${dato.valor}`)
     .join(' · ')
 }
 

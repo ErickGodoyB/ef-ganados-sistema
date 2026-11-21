@@ -42,7 +42,7 @@ function textoRegistros(cantidad) {
  * @param {(filtros: object) => {etiqueta: string, valor: string}[]} [props.describirFiltros] Filtros aplicados,
  *   para "Filtros aplicados:" del archivo (sin esta prop, o sin filtros, dice "Sin filtros").
  * @param {(filtros: object) => {etiqueta: string, valor: string}[]} [props.describirContexto] Contexto de lo que
- *   se exporta, en la línea chica bajo el título ("Sesión S-… · Lote X"); lo usan los detalles.
+ *   se exporta, en la línea chica bajo el título ("Sesión: S-… · Lote: X"); lo usan los detalles.
  * @param {(filas: object[], filtros: object) => object[]} [props.describirTotales] Totales propios del listado
  *   para el cuadro del final del archivo (ver totalNumerico y totalTexto en utilidades/exportacion/formatos.js).
  * @param {string} [props.tituloModal] Título del diálogo; por defecto "Exportar <titulo>".

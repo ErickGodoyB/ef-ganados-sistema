@@ -154,7 +154,7 @@ describe('construirExcel: encabezado, alineación y totales', () => {
   it('el contexto va centrado bajo el título y sin filtros dice "Sin filtros"', async () => {
     const hoja = await leerLibro({ contexto: [{ etiqueta: 'Sesión', valor: 'S-1' }, { etiqueta: 'Lote', valor: 'A' }] })
 
-    expect(hoja.getCell('A2').value).toBe('Sesión S-1 · Lote A')
+    expect(hoja.getCell('A2').value).toBe('Sesión: S-1 · Lote: A')
     expect(hoja.getCell('A2').alignment.horizontal).toBe('center')
     expect(hoja.getCell('A3').value).toBe('Filtros aplicados: Sin filtros')
     expect(hoja.getRow(FILA_CABECERA).getCell(1).value).toBe('Nombre')

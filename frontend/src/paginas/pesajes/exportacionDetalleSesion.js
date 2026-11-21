@@ -64,7 +64,7 @@ function textoLote(sesion) {
   return sesion.grupoDescripcion ? `${sesion.subGrupoDescripcion} — ${sesion.grupoDescripcion}` : sesion.subGrupoDescripcion
 }
 
-/** Contexto de la sesión, en la línea chica bajo el título: "Sesión S-AAMMDD-N · Lote X · Fecha dd/mm/aaaa". */
+/** Contexto de la sesión, en la línea chica bajo el título: "Sesión: S-AAMMDD-N · Lote: X · Fecha: dd/mm/aaaa". */
 export function contextoDeSesion(sesion, fechaIso) {
   return [
     { etiqueta: 'Sesión', valor: calcularCodigoSesion(fechaIso, sesion.subGrupoId) },

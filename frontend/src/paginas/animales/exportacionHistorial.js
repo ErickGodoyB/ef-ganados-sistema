@@ -59,7 +59,7 @@ export function filasDeHistorial(animal, pesajes) {
   return [ingreso, ...filas]
 }
 
-/** Contexto del historial, bajo el título: "Animal CAR-001 · Raza Brangus". */
+/** Contexto del historial, bajo el título: "Animal: CAR-001 · Raza: Brangus". */
 export function contextoDeAnimal(animal) {
   return [
     { etiqueta: 'Animal', valor: animal.aniCaravana },

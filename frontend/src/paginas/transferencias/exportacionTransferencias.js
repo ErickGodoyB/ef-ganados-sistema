@@ -92,7 +92,7 @@ export function filaDeAnimalTransferencia(animal) {
   }
 }
 
-/** Contexto de la transferencia, bajo el título: "Transferencia n.º 4 · Fecha … · Motivo … · Responsable …". */
+/** Contexto de la transferencia, bajo el título: "Transferencia: n.º 4 · Fecha: … · Motivo: … · Responsable: …". */
 export function contextoDeTransferencia(detalle) {
   return [
     { etiqueta: 'Transferencia', valor: `n.º ${detalle.traId}` },
